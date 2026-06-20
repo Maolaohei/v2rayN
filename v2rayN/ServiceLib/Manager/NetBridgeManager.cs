@@ -173,21 +173,29 @@ public sealed class NetBridgeManager
 
             if (_netBridgeService == null)
             {
+                _isProxyRunning = false;
+                _isInitialized = false;
                 return false;
             }
 
             var stopped = _netBridgeService.Stop();
             if (!stopped)
             {
+                // Even if native stop fails, reset state so next Init() re-initializes
+                _isProxyRunning = false;
+                _isInitialized = false;
                 return false;
             }
 
             _isProxyRunning = false;
+            _isInitialized = false;
         }
         catch (Exception ex)
         {
             var error = $"Failed to stop NetBridgeService: {ex.Message}";
             await SafeInvoke(true, error);
+            _isProxyRunning = false;
+            _isInitialized = false;
             return false;
         }
 

@@ -612,14 +612,47 @@ public class StatusBarViewModel : MyReactiveObject
 
         if (EnableLegacyProtect)
         {
+            // Stop TUN first: publish reload to restart core without TUN,
+            // then wait for TUN adapter to fully release before starting WinDivert
+            AppEvents.ReloadRequested.Publish();
+            await WaitForTunStop();
+
             await StartNetBridgeAsync();
         }
         else
         {
             await StopNetBridgeAsync();
+            AppEvents.ReloadRequested.Publish();
         }
+    }
 
-        AppEvents.ReloadRequested.Publish();
+    private async Task WaitForTunStop()
+    {
+        // Give core a moment to begin shutdown
+        await Task.Delay(300);
+        // Poll every 50ms, max 3 seconds
+        for (var i = 0; i < 60; i++)
+        {
+            if (!IsTunAdapterActive())
+            {
+                return;
+            }
+            await Task.Delay(50);
+        }
+    }
+
+    private static bool IsTunAdapterActive()
+    {
+        try
+        {
+            return System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+                .Any(ni => ni.Name.Contains("wintun", StringComparison.OrdinalIgnoreCase)
+                        || ni.Name.Contains("sing", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private async Task StartNetBridgeAsync()
