@@ -14,6 +14,7 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     private readonly Func<string, Task>? _log;
     private readonly TimeSpan _idleThreshold;
     private System.Threading.Timer? _stuckTimer;
+    private int _checkRunning;
     private long _lastTrafficBytes;
     private DateTime _lastTrafficTime = DateTime.UtcNow;
 
@@ -46,12 +47,20 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     private async Task CheckStuckState()
     {
         if (!_isRunning()) return;
+        if (Interlocked.CompareExchange(ref _checkRunning, 1, 0) != 0) return;
 
-        var idle = DateTime.UtcNow - _lastTrafficTime;
-        if (idle < _idleThreshold) return;
+        try
+        {
+            var idle = DateTime.UtcNow - _lastTrafficTime;
+            if (idle < _idleThreshold) return;
 
-        if (_log != null) await _log.Invoke($"NetBridge stuck: no traffic for {(int)idle.TotalSeconds}s, triggering recovery");
-        await _forceRecover();
+            if (_log != null) await _log.Invoke($"NetBridge stuck: no traffic for {(int)idle.TotalSeconds}s, triggering recovery");
+            await _forceRecover();
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _checkRunning, 0);
+        }
     }
 
     public static async Task<bool> VerifyConnectivityAsync()

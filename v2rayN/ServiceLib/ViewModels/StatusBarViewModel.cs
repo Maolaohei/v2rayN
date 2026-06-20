@@ -615,7 +615,13 @@ public class StatusBarViewModel : MyReactiveObject
             // Stop TUN first: publish reload to restart core without TUN,
             // then wait for TUN adapter to fully release before starting WinDivert
             AppEvents.ReloadRequested.Publish();
-            await WaitForTunStop();
+            var tunStopped = await WaitForTunStop();
+
+            if (!tunStopped)
+            {
+                NoticeManager.Instance.SendMessageEx(ResUI.OperationFailed);
+                return;
+            }
 
             await StartNetBridgeAsync();
         }
@@ -626,7 +632,7 @@ public class StatusBarViewModel : MyReactiveObject
         }
     }
 
-    private async Task WaitForTunStop()
+    private async Task<bool> WaitForTunStop()
     {
         // Give core a moment to begin shutdown
         await Task.Delay(300);
@@ -635,10 +641,11 @@ public class StatusBarViewModel : MyReactiveObject
         {
             if (!IsTunAdapterActive())
             {
-                return;
+                return true;
             }
             await Task.Delay(50);
         }
+        return false;
     }
 
     private static bool IsTunAdapterActive()

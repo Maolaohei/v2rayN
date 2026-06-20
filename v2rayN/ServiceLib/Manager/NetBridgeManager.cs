@@ -84,7 +84,7 @@ public sealed class NetBridgeManager
         {
             Interlocked.Increment(ref _totalConnections);
             _processConnections.AddOrUpdate(processName, 1, (_, count) => count + 1);
-            _healthMonitor?.RecordTraffic(_totalConnections);
+            _healthMonitor?.RecordTraffic(Interlocked.Read(ref _totalConnections));
 
             // Log at most once per second to avoid flooding
             var now = Environment.TickCount;
@@ -249,6 +249,7 @@ public sealed class NetBridgeManager
 
     #region Watchdog
 
+    private int _watchdogRunning;
     private void StartWatchdog()
     {
         StopWatchdog();
@@ -256,6 +257,7 @@ public sealed class NetBridgeManager
         _watchdogTimer = new System.Threading.Timer(async _ =>
         {
             if (!_isProxyRunning) return;
+            if (Interlocked.CompareExchange(ref _watchdogRunning, 1, 0) != 0) return;
 
             try
             {
@@ -264,19 +266,23 @@ public sealed class NetBridgeManager
                 {
                     await SafeInvoke(true, "NetBridge health check failed, attempting restart...");
                     _isProxyRunning = false;
-                    _ = RestartAsync();
+                    await RestartAsync();
                 }
                 else if (!await NetBridgeHealthMonitor.VerifyConnectivityAsync())
                 {
                     await SafeInvoke(true, "NetBridge connectivity lost, forcing restart...");
                     _isProxyRunning = false;
-                    _ = RestartAsync();
+                    await RestartAsync();
                 }
             }
             catch
             {
                 _isProxyRunning = false;
-                _ = RestartAsync();
+                await RestartAsync();
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _watchdogRunning, 0);
             }
         }, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
     }
