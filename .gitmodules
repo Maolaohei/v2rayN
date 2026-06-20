@@ -3,4 +3,4 @@
 	url = https://github.com/2dust/GlobalHotKeys
 [submodule "v2rayN/NetBridge"]
 	path = v2rayN/NetBridge
-	url = https://github.com/2dust/NetBridge
+	url = https://github.com/Maolaohei/NetBridge.git
