@@ -181,9 +181,9 @@ public sealed class NetBridgeManager
                     return;
                 }
 
-                if (!_netBridgeService.IsRunning && _isProxyRunning)
+                if (_isProxyRunning)
                 {
-                    await SafeInvoke(true, "NetBridge crashed, attempting restart...");
+                    await SafeInvoke(true, "NetBridge health check failed, attempting restart...");
                     _isProxyRunning = false;
                     _ = RestartAsync();
                 }
