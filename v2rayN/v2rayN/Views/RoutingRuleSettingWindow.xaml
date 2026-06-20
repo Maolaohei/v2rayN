@@ -67,6 +67,92 @@
             </ToolBar>
         </ToolBarTray>
 
+        <materialDesign:Card
+            Margin="{StaticResource Margin4}"
+            Padding="8"
+            DockPanel.Dock="Top">
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,4"
+                    FontWeight="SemiBold"
+                    Text="规则测试 — 输入域名/IP/端口/进程名，测试所有规则匹配" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBox
+                        x:Name="txtTestInput"
+                        Width="350"
+                        Margin="0,0,8,0"
+                        VerticalContentAlignment="Center"
+                        Style="{StaticResource DefTextBox}" />
+                    <TextBlock
+                        x:Name="txtTestInputWatermark"
+                        Width="350"
+                        Margin="8,0,8,0"
+                        VerticalAlignment="Center"
+                        IsHitTestVisible="False"
+                        Foreground="Gray"
+                        FontSize="12"
+                        Text="例如: google.com / 8.8.8.8 / 443 / chrome.exe" />
+                    <Button
+                        x:Name="btnTestRule"
+                        Width="80"
+                        Padding="8,4"
+                        Content="测试"
+                        Style="{StaticResource DefButton}" />
+                    <Button
+                        x:Name="btnCopyTestResult"
+                        Width="80"
+                        Padding="8,4"
+                        Content="复制结果"
+                        Style="{StaticResource DefButton}" />
+                    <TextBlock
+                        x:Name="txtTestSummary"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold" />
+                </StackPanel>
+                <ListBox
+                    x:Name="lstTestResults"
+                    Margin="0,6,0,0"
+                    MaxHeight="200"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border
+                                Margin="0,1"
+                                Padding="6,3"
+                                Background="{Binding RowBg}"
+                                CornerRadius="3">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock
+                                        Width="35"
+                                        FontWeight="Bold"
+                                        Text="{Binding LineNum}" />
+                                    <TextBlock
+                                        Width="150"
+                                        Text="{Binding RuleName}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Width="150"
+                                        Foreground="Gray"
+                                        Text="{Binding RuleFields}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Width="40"
+                                        Text="{Binding Outbound}" />
+                                    <TextBlock
+                                        Width="80"
+                                        Foreground="{Binding StatusColor}"
+                                        Text="{Binding StatusIcon}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </materialDesign:Card>
+
         <StackPanel
             Margin="{StaticResource Margin8}"
             HorizontalAlignment="Right"

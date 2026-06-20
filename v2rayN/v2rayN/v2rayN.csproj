@@ -15,6 +15,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MaterialDesignThemes" />
+		<PackageReference Include="Google.Protobuf" />
 		<PackageReference Include="H.NotifyIcon.Wpf" />
 		<PackageReference Include="ReactiveUI.Fody">
 			<TreatAsUsed>true</TreatAsUsed>
