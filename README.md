@@ -49,6 +49,4 @@ dotnet build v2rayN/v2rayN.csproj --configuration Release
 dotnet test ServiceLib.Tests/ServiceLib.Tests.csproj
 ```
 
-## 许可证
-
-[GPL-3.0](LICENSE)
+## 许可证MIT
