@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Data;
+using System.Windows.Interop;
+using System.Windows.Media.Imaging;
 using ServiceLib.Manager;
 using ServiceLib.Resx;
 
@@ -123,13 +125,14 @@ public partial class ProcessListSettingWindow
                 .Select(g =>
                 {
                     var procName = g.Key + ".exe";
-                    var appName = GetApplicationName(procName);
+                    var (appName, filePath) = GetProcessInfo(procName);
                     return new ProcessItem
                     {
                         Name = procName,
                         DisplayName = appName != null ? $"{procName}（{appName}）" : procName,
                         IsSelected = false,
-                        IsActive = activeSet.Contains(procName)
+                        IsActive = activeSet.Contains(procName),
+                        Icon = filePath != null ? GetFileIcon(filePath) : null
                     };
                 })
                 .OrderBy(p => p.Name)
@@ -144,7 +147,7 @@ public partial class ProcessListSettingWindow
         UpdateStatus();
     }
 
-    private static string? GetApplicationName(string processName)
+    private static (string? appName, string? filePath) GetProcessInfo(string processName)
     {
         try
         {
@@ -156,15 +159,12 @@ public partial class ProcessListSettingWindow
                     var mainModule = proc.MainModule;
                     if (mainModule != null)
                     {
+                        var filePath = mainModule.FileName;
                         var fileVersion = mainModule.FileVersionInfo;
-                        if (!string.IsNullOrEmpty(fileVersion.ProductName))
-                        {
-                            return fileVersion.ProductName;
-                        }
-                        if (!string.IsNullOrEmpty(fileVersion.FileDescription))
-                        {
-                            return fileVersion.FileDescription;
-                        }
+                        var appName = !string.IsNullOrEmpty(fileVersion.ProductName)
+                            ? fileVersion.ProductName
+                            : fileVersion.FileDescription;
+                        return (appName, filePath);
                     }
                 }
                 catch { }
@@ -176,7 +176,7 @@ public partial class ProcessListSettingWindow
         }
         catch { }
 
-        return null;
+        return (null, null);
     }
 
     #region Running Process Search
@@ -401,11 +401,77 @@ public partial class ProcessListSettingWindow
 
     #endregion
 
+    #region Icon Extraction
+
+    [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr SHGetFileInfo(
+        string pszPath, uint dwFileAttributes,
+        out SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+    [DllImport("user32.dll")]
+    private static extern bool DestroyIcon(IntPtr hIcon);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct SHFILEINFO
+    {
+        public IntPtr hIcon;
+        public int iIcon;
+        public uint dwAttributes;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string szDisplayName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+        public string szTypeName;
+    }
+
+    private const uint SHGFI_ICON = 0x00000100;
+    private const uint SHGFI_SMALLICON = 0x00000001;
+
+    private static readonly Dictionary<string, BitmapSource?> _iconCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private static BitmapSource? GetFileIcon(string filePath)
+    {
+        if (_iconCache.TryGetValue(filePath, out var cached))
+        {
+            return cached;
+        }
+
+        BitmapSource? result = null;
+        var shInfo = new SHFILEINFO();
+        var hIcon = SHGetFileInfo(filePath, 0, out shInfo,
+            (uint)Marshal.SizeOf(shInfo), SHGFI_ICON | SHGFI_SMALLICON);
+
+        if (hIcon != IntPtr.Zero)
+        {
+            try
+            {
+                result = Imaging.CreateBitmapSourceFromHIcon(
+                    shInfo.hIcon,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+                result.Freeze();
+            }
+            finally
+            {
+                DestroyIcon(shInfo.hIcon);
+            }
+        }
+
+        if (_iconCache.Count < 300)
+        {
+            _iconCache[filePath] = result;
+        }
+
+        return result;
+    }
+
+    #endregion
+
     private class ProcessItem
     {
         public string Name { get; set; } = "";
         public string DisplayName { get; set; } = "";
         public bool IsSelected { get; set; }
         public bool IsActive { get; set; }
+        public BitmapSource? Icon { get; set; }
     }
 }

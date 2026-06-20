@@ -1,3 +1,4 @@
+using ServiceLib.HealthCheck.Models;
 using ServiceLib.Resx;
 using ServiceLib.Handler;
 using v2rayN.Manager;
@@ -93,9 +94,10 @@ public partial class StatusBarView
                 break;
 
             case EViewAction.TunHealthCheckResult:
-                if (obj is string reportText)
+                if (obj is HealthCheckReport report)
                 {
-                    MessageBox.Show(reportText, ResUI.TunHealthCheckTitle, MessageBoxButton.OK, MessageBoxImage.Information);
+                    var window = new TunHealthCheckResultWindow(report);
+                    window.ShowDialog();
                 }
                 break;
 

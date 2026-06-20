@@ -129,10 +129,19 @@
                         ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <CheckBox
-                                    Margin="4,2"
-                                    Content="{Binding DisplayName}"
-                                    IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                <StackPanel Orientation="Horizontal" Margin="4,2">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,0,6,0"
+                                        RenderOptions.BitmapScalingMode="HighQuality"
+                                        Source="{Binding Icon}"
+                                        ToolTip="{Binding Name}" />
+                                    <CheckBox
+                                        Margin="0"
+                                        Content="{Binding DisplayName}"
+                                        IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

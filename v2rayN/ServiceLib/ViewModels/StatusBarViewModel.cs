@@ -428,8 +428,7 @@ public class StatusBarViewModel : MyReactiveObject
         NoticeManager.Instance.SendMessageEx(reportText);
         await TestServerAvailabilitySub(report.Summary);
 
-        var reportTextChinese = TunHealthCheckService.FormatReport(report, "zh");
-        _updateView?.Invoke(EViewAction.TunHealthCheckResult, reportTextChinese);
+        _updateView?.Invoke(EViewAction.TunHealthCheckResult, report);
 
         try
         {

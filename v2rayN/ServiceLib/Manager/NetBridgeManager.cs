@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net.NetworkInformation;
 using NetBridgeLib.Services;
 
 namespace ServiceLib.Manager;
@@ -19,6 +20,7 @@ public sealed class NetBridgeManager
     private int _restartCount;
     private const int MaxRestartAttempts = 3;
     private const int RestartCooldownSeconds = 60;
+    private System.Threading.Timer? _networkChangeDebounceTimer;
 
     // Connection statistics
     private long _totalConnections;
@@ -145,6 +147,7 @@ public sealed class NetBridgeManager
             _isProxyRunning = true;
             _restartCount = 0;
             StartWatchdog();
+            StartNetworkMonitor();
         }
         catch (Exception ex)
         {
@@ -166,6 +169,7 @@ public sealed class NetBridgeManager
         try
         {
             StopWatchdog();
+            StopNetworkMonitor();
 
             if (_netBridgeService == null)
             {
@@ -273,6 +277,43 @@ public sealed class NetBridgeManager
         {
             await SafeInvoke(true, $"NetBridge restart failed: {ex.Message}");
         }
+    }
+
+    #endregion
+
+    #region Network Change Detection
+
+    private void StartNetworkMonitor()
+    {
+        StopNetworkMonitor();
+        NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
+    }
+
+    private void StopNetworkMonitor()
+    {
+        NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
+        _networkChangeDebounceTimer?.Dispose();
+        _networkChangeDebounceTimer = null;
+    }
+
+    private void OnNetworkAddressChanged(object? sender, EventArgs e)
+    {
+        if (!_isProxyRunning) return;
+
+        // Debounce: WiFi switch may fire multiple events in rapid succession
+        _networkChangeDebounceTimer?.Dispose();
+        _networkChangeDebounceTimer = new System.Threading.Timer(async _ =>
+        {
+            try
+            {
+                await SafeInvoke(false, "Network change detected, restarting NetBridge...");
+                await RestartAsync();
+            }
+            catch (Exception ex)
+            {
+                await SafeInvoke(true, $"Network change restart failed: {ex.Message}");
+            }
+        }, null, TimeSpan.FromSeconds(2), Timeout.InfiniteTimeSpan);
     }
 
     #endregion
