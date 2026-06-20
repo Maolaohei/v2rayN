@@ -55,6 +55,8 @@ jobs:
         run: wget -nv -O v2rayN-windows-${{ env.Arch }}.zip "https://github.com/2dust/v2rayN-core-bin/raw/refs/heads/master/v2rayN-windows-${{ env.Arch }}.zip"
 
       - name: Download Bray-Core xray (latest release)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           XRAY_URL=$(gh api repos/Maolaohei/Bray-Core/releases/latest --jq ".assets[] | select(.name == \"Xray-${{ env.XrayArch }}.zip\") | .browser_download_url")
           wget -nv -O xray.zip "$XRAY_URL"
