@@ -36,17 +36,12 @@
 本项目基于以下开源项目：
 
 - **[2dust/v2rayN](https://github.com/2dust/v2rayN)** - v2rayN 主项目（GPL-3.0）
+- **[2dust/NetBridge](https://github.com/2dust/NetBridge)** - 进程流量劫持核心（MIT）
 - **[DHR60](https://github.com/DHR60)** - 节点检查改进（PR #9603）
 - **[Xray-core](https://github.com/XTLS/Xray-core)** - Xray 核心
 - **[sing-box](https://github.com/SagerNet/sing-box)** - sing-box 核心
 - **[WinDivert](https://github.com/basil00/WinDivert)** - Windows 网络包拦截驱动
 
-## 构建
+## 许可证
 
-```bash
-dotnet restore
-dotnet build v2rayN/v2rayN.csproj --configuration Release
-dotnet test ServiceLib.Tests/ServiceLib.Tests.csproj
-```
-
-## 许可证MIT
+[MIT](LICENSE)
