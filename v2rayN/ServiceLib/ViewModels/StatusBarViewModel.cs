@@ -1,3 +1,5 @@
+using ServiceLib.HealthCheck;
+
 namespace ServiceLib.ViewModels;
 
 public class StatusBarViewModel : MyReactiveObject
@@ -30,6 +32,8 @@ public class StatusBarViewModel : MyReactiveObject
     public ReactiveCommand<Unit, Unit> NotifyLeftClickCmd { get; }
     public ReactiveCommand<Unit, Unit> ShowWindowCmd { get; }
     public ReactiveCommand<Unit, Unit> HideWindowCmd { get; }
+    public ReactiveCommand<Unit, Unit> TunHealthCheckCmd { get; }
+    public ReactiveCommand<Unit, Unit> ProcessListSettingCmd { get; }
 
     #region System Proxy
 
@@ -88,6 +92,9 @@ public class StatusBarViewModel : MyReactiveObject
     public bool EnableTun { get; set; }
 
     [Reactive]
+    public bool EnableLegacyProtect { get; set; }
+
+    [Reactive]
     public bool BlIsNonWindows { get; set; }
 
     #endregion UI
@@ -109,6 +116,8 @@ public class StatusBarViewModel : MyReactiveObject
         {
             _config.TunModeItem.EnableTun = EnableTun = false;
         }
+
+        EnableLegacyProtect = _config.TunModeItem.EnableLegacyProtect;
 
         #region WhenAnyValue && ReactiveCommand
 
@@ -133,9 +142,24 @@ public class StatusBarViewModel : MyReactiveObject
                 y => y == true)
             .Subscribe(async c => await DoEnableTun(c));
 
+        this.WhenAnyValue(
+                x => x.EnableLegacyProtect,
+                y => y == true)
+            .Subscribe(async c => await DoEnableLegacyProtect(c));
+
         CopyProxyCmdToClipboardCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await CopyProxyCmdToClipboard();
+        });
+
+        TunHealthCheckCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await RunTunHealthCheck();
+        });
+
+        ProcessListSettingCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await ShowProcessListSetting();
         });
 
         NotifyLeftClickCmd = ReactiveCommand.CreateFromTask(async () =>
@@ -224,6 +248,15 @@ public class StatusBarViewModel : MyReactiveObject
             .Subscribe(async result => await SetListenerType(result));
 
         #endregion AppEvents
+
+        if (EnableLegacyProtect)
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(1000);
+                await StartNetBridgeAsync();
+            });
+        }
 
         _ = Init();
     }
@@ -375,6 +408,48 @@ public class StatusBarViewModel : MyReactiveObject
         await Task.CompletedTask;
     }
 
+    public async Task RunTunHealthCheck()
+    {
+        if (!AppManager.Instance.IsRunningCore(ECoreType.Xray) && !AppManager.Instance.IsRunningCore(ECoreType.sing_box))
+        {
+            NoticeManager.Instance.SendMessageEx("Core is not running, please start a server first");
+            return;
+        }
+
+        await TestServerAvailabilitySub("Running TUN health check...");
+
+        var service = new TunHealthCheckService(_config);
+        var report = await service.RunFullCheckAsync(async msg =>
+        {
+            await TestServerAvailabilitySub(msg);
+        });
+
+        var reportText = TunHealthCheckService.FormatReport(report, "en");
+        NoticeManager.Instance.SendMessageEx(reportText);
+        await TestServerAvailabilitySub(report.Summary);
+
+        var reportTextChinese = TunHealthCheckService.FormatReport(report, "zh");
+        _updateView?.Invoke(EViewAction.TunHealthCheckResult, reportTextChinese);
+
+        try
+        {
+            var jsonPath = Path.Combine(Utils.GetLogPath(), $"tun-health-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+            var json = TunHealthCheckService.ExportJson(report);
+            await File.WriteAllTextAsync(jsonPath, json);
+            NoticeManager.Instance.SendMessageEx($"Report exported to: {jsonPath}");
+        }
+        catch { }
+    }
+
+    public async Task ShowProcessListSetting()
+    {
+        var currentProcesses = _config.TunModeItem.ProtectedProcesses ?? new List<string>();
+        var processText = string.Join(",", currentProcesses);
+        var dnsViaBridge = _config.NetBridgeItem?.EnableDnsViaProxy ?? false;
+        _updateView?.Invoke(EViewAction.ProcessListSetting, (processText, dnsViaBridge));
+        await Task.CompletedTask;
+    }
+
     #region System proxy and Routings
 
     private async Task SetListenerType(ESysProxyType type)
@@ -490,8 +565,84 @@ public class StatusBarViewModel : MyReactiveObject
             }
         }
 
+        if (EnableTun)
+        {
+            EnableLegacyProtect = false;
+            _config.TunModeItem.EnableLegacyProtect = false;
+        }
+
         await ConfigHandler.SaveConfig(_config);
         AppEvents.ReloadRequested.Publish();
+    }
+
+    private async Task DoEnableLegacyProtect(bool c)
+    {
+        if (_config.TunModeItem.EnableLegacyProtect == EnableLegacyProtect)
+        {
+            return;
+        }
+
+        _config.TunModeItem.EnableLegacyProtect = EnableLegacyProtect;
+
+        if (EnableLegacyProtect && AllowEnableTun() == false)
+        {
+            if (Utils.IsWindows())
+            {
+                _config.TunModeItem.EnableLegacyProtect = false;
+                await AppManager.Instance.RebootAsAdmin();
+                return;
+            }
+            else
+            {
+                bool? passwordResult = await _updateView?.Invoke(EViewAction.PasswordInput, null);
+                if (passwordResult == false)
+                {
+                    _config.TunModeItem.EnableLegacyProtect = false;
+                    return;
+                }
+            }
+        }
+
+        if (EnableLegacyProtect)
+        {
+            EnableTun = false;
+            _config.TunModeItem.EnableTun = false;
+        }
+
+        await ConfigHandler.SaveConfig(_config);
+
+        if (EnableLegacyProtect)
+        {
+            await StartNetBridgeAsync();
+        }
+        else
+        {
+            await StopNetBridgeAsync();
+        }
+
+        AppEvents.ReloadRequested.Publish();
+    }
+
+    private async Task StartNetBridgeAsync()
+    {
+        await NetBridgeManager.Instance.Init(async (isError, msg) =>
+        {
+            NoticeManager.Instance.SendMessageEx(msg);
+        });
+
+        var succeed = await NetBridgeManager.Instance.Start();
+        if (succeed)
+        {
+            var ruleProcess = _config.NetBridgeItem?.RuleProcess ?? "";
+            await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+            await NetBridgeManager.Instance.UpdateRoutes(ruleProcess);
+            await NetBridgeManager.Instance.SetDnsViaProxy(_config.NetBridgeItem?.EnableDnsViaProxy ?? false);
+        }
+    }
+
+    private async Task StopNetBridgeAsync()
+    {
+        await NetBridgeManager.Instance.Stop();
     }
 
     private bool AllowEnableTun()

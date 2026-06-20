@@ -20,15 +20,21 @@
             DockPanel.Dock="Top"
             Orientation="Horizontal">
 
-            <ComboBox
-                x:Name="cmbMsgFilter"
-                Width="200"
-                Margin="{StaticResource MarginLeftRight8}"
-                materialDesign:HintAssist.Hint="{x:Static resx:ResUI.MsgFilterTitle}"
-                materialDesign:TextFieldAssist.HasClearButton="True"
-                AutomationProperties.Name="{x:Static resx:ResUI.MsgFilterTitle}"
-                IsEditable="True"
-                Style="{StaticResource DefComboBox}" />
+            <Grid Width="200" Margin="{StaticResource MarginLeftRight8}">
+                <TextBox
+                    x:Name="txtMsgFilter"
+                    VerticalContentAlignment="Center"
+                    TextChanged="TxtMsgFilter_TextChanged"
+                    KeyDown="TxtMsgFilter_KeyDown" />
+                <TextBlock
+                    x:Name="txtMsgFilterWatermark"
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Center"
+                    IsHitTestVisible="False"
+                    Foreground="Gray"
+                    FontSize="12"
+                    Text="{x:Static resx:ResUI.MsgFilterTitle}" />
+            </Grid>
             <Button
                 x:Name="btnCopy"
                 Width="24"

@@ -12,6 +12,8 @@ public class DownloadService
     public event ErrorEventHandler? Error;
 
     private static readonly string _tag = "DownloadService";
+    private static readonly HttpClient _noRedirectClient = new(new SocketsHttpHandler { AllowAutoRedirect = false });
+    private static readonly ConcurrentDictionary<string, HttpClient> _proxyClients = new();
 
     /// <summary>
     /// Downloads data with the specified proxy and reports progress messages.
@@ -75,12 +77,9 @@ public class DownloadService
     /// </summary>
     public async Task<string?> UrlRedirectAsync(string url, bool blProxy)
     {
-        var webRequestHandler = new SocketsHttpHandler
-        {
-            AllowAutoRedirect = false,
-            Proxy = await GetWebProxy(blProxy)
-        };
-        var client = new HttpClient(webRequestHandler);
+        var client = blProxy
+            ? _proxyClients.GetOrAdd("redirect", _ => new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false, Proxy = new WebProxy($"socks5://{Global.Loopback}:{AppManager.Instance.GetLocalPort(EInboundProtocol.socks)}"), UseProxy = true }))
+            : _noRedirectClient;
 
         var response = await client.GetAsync(url);
         if (response.StatusCode == HttpStatusCode.Redirect && response.Headers.Location is not null)
@@ -155,28 +154,32 @@ public class DownloadService
     {
         try
         {
-            var client = new HttpClient(new SocketsHttpHandler()
-            {
-                Proxy = webProxy,
-                UseProxy = webProxy != null
-            });
+            var proxyKey = webProxy?.ToString() ?? "";
+            var client = _proxyClients.GetOrAdd(proxyKey, _ =>
+                new HttpClient(new SocketsHttpHandler()
+                {
+                    Proxy = webProxy,
+                    UseProxy = webProxy != null
+                }));
 
             if (userAgent.IsNullOrEmpty())
             {
                 userAgent = Utils.GetVersion(false);
             }
-            client.DefaultRequestHeaders.UserAgent.TryParseAdd(userAgent);
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.UserAgent.TryParseAdd(userAgent);
 
             Uri uri = new(url);
-            //Authorization Header
             if (uri.UserInfo.IsNotEmpty())
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Utils.Base64Encode(uri.UserInfo));
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Utils.Base64Encode(uri.UserInfo));
             }
 
             using var cts = new CancellationTokenSource();
-            var result = await client.GetStringAsync(url, cts.Token).WaitAsync(TimeSpan.FromSeconds(timeout), cts.Token);
-            return result;
+            var response = await client.SendAsync(request, cts.Token).WaitAsync(TimeSpan.FromSeconds(timeout), cts.Token);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync(cts.Token);
         }
         catch (Exception ex)
         {

@@ -10,7 +10,7 @@ public partial class MsgView
 
         this.WhenActivated(disposables =>
         {
-            this.Bind(ViewModel, vm => vm.MsgFilter, v => v.cmbMsgFilter.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.MsgFilter, v => v.txtMsgFilter.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.AutoRefresh, v => v.togAutoRefresh.IsChecked).DisposeWith(disposables);
         });
 
@@ -20,8 +20,21 @@ public partial class MsgView
         menuMsgViewCopy.Click += menuMsgViewCopy_Click;
         menuMsgViewCopyAll.Click += menuMsgViewCopyAll_Click;
         menuMsgViewClear.Click += menuMsgViewClear_Click;
+    }
 
-        cmbMsgFilter.ItemsSource = Global.PresetMsgFilters;
+    private void TxtMsgFilter_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        txtMsgFilterWatermark.Visibility = string.IsNullOrEmpty(txtMsgFilter.Text)
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
+    }
+
+    private void TxtMsgFilter_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter)
+        {
+            e.Handled = true;
+        }
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)

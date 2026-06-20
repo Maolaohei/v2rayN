@@ -3,6 +3,8 @@ namespace ServiceLib.Services.CoreConfig;
 public partial class CoreConfigSingboxService(CoreConfigContext context)
 {
     private static readonly string _tag = "CoreConfigSingboxService";
+    private static readonly Regex EdRegex = new(@"[?&]ed=(\d+)", RegexOptions.Compiled);
+    private static readonly Regex EhRegex = new(@"[?&]eh=([^&]+)", RegexOptions.Compiled);
     private readonly Config _config = context.AppConfig;
     private readonly ProfileItem _node = context.Node;
 

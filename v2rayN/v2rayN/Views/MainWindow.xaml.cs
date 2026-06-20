@@ -10,7 +10,6 @@ public partial class MainWindow
     private static Config _config;
     private CheckUpdateView? _checkUpdateView;
     private BackupAndRestoreView? _backupAndRestoreView;
-    private NetBridgeView? _netBridgeView;
 
     public MainWindow()
     {
@@ -23,12 +22,10 @@ public partial class MainWindow
         Closing += MainWindow_Closing;
         PreviewKeyDown += MainWindow_PreviewKeyDown;
         menuSettingsSetUWP.Click += MenuSettingsSetUWP_Click;
-        menuPromotion.Click += MenuPromotion_Click;
         menuClose.Click += MenuClose_Click;
         menuCheckUpdate.Click += MenuCheckUpdate_Click;
         btnNewUpdate.Click += MenuCheckUpdate_Click;
         menuBackupAndRestore.Click += MenuBackupAndRestore_Click;
-        menuNetBridge.Click += MenuNetBridge_Click;
 
         ViewModel = new MainWindowViewModel(UpdateViewHandler);
 
@@ -319,11 +316,6 @@ public partial class MainWindow
         ShowHideWindow(false);
     }
 
-    private void MenuPromotion_Click(object sender, RoutedEventArgs e)
-    {
-        ProcUtils.ProcessStart($"{Utils.Base64Decode(Global.PromotionUrl)}?t={DateTime.Now.Ticks}");
-    }
-
     private void MenuSettingsSetUWP_Click(object sender, RoutedEventArgs e)
     {
         ProcUtils.ProcessStart(Utils.GetBinPath("EnableLoopback.exe"));
@@ -376,19 +368,6 @@ public partial class MainWindow
     {
         _backupAndRestoreView ??= new BackupAndRestoreView();
         DialogHost.Show(_backupAndRestoreView, "RootDialog");
-    }
-
-    private void MenuNetBridge_Click(object sender, RoutedEventArgs e)
-    {
-        if (Utils.IsAdministrator())
-        {
-            _netBridgeView ??= new NetBridgeView();
-            DialogHost.Show(_netBridgeView, "RootDialog");
-        }
-        else
-        {
-            NoticeManager.Instance.SendMessageAndEnqueue(ResUI.RunAsAdmin);
-        }
     }
 
     #endregion Event

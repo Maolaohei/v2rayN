@@ -906,19 +906,6 @@
                             Grid.Column="0"
                             Margin="{StaticResource Margin4}"
                             VerticalAlignment="Center"
-                            Text="{x:Static resx:ResUI.TbLegacyProtect}" />
-                        <ToggleSwitch
-                            x:Name="togEnableLegacyProtect"
-                            Grid.Row="8"
-                            Grid.Column="1"
-                            Margin="{StaticResource Margin4}"
-                            HorizontalAlignment="Left" />
-
-                        <TextBlock
-                            Grid.Row="9"
-                            Grid.Column="0"
-                            Margin="{StaticResource Margin4}"
-                            VerticalAlignment="Center"
                             Text="{x:Static resx:ResUI.TbRouteExcludeAddress}" />
                         <TextBox
                             x:Name="txtRouteExcludeAddress"

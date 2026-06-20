@@ -48,6 +48,17 @@ public sealed class SQLiteHelper
         return await _dbAsync.UpdateAllAsync(models, runInTransaction: true).ConfigureAwait(false);
     }
 
+    public async Task InsertOrReplaceAllAsync(IEnumerable models)
+    {
+        await _dbAsync.RunInTransactionAsync(tran =>
+        {
+            foreach (var model in models)
+            {
+                tran.InsertOrReplace(model);
+            }
+        });
+    }
+
     public async Task<int> DeleteAsync(object model)
     {
         return await _dbAsync.DeleteAsync(model);
@@ -58,14 +69,14 @@ public sealed class SQLiteHelper
         return await _dbAsync.DeleteAllAsync<T>();
     }
 
-    public async Task<int> ExecuteAsync(string sql)
+    public async Task<int> ExecuteAsync(string sql, params object?[] args)
     {
-        return await _dbAsync.ExecuteAsync(sql);
+        return await _dbAsync.ExecuteAsync(sql, args);
     }
 
-    public async Task<List<T>> QueryAsync<T>(string sql) where T : new()
+    public async Task<List<T>> QueryAsync<T>(string sql, params object?[] args) where T : new()
     {
-        return await _dbAsync.QueryAsync<T>(sql);
+        return await _dbAsync.QueryAsync<T>(sql, args);
     }
 
     public AsyncTableQuery<T> TableAsync<T>() where T : new()

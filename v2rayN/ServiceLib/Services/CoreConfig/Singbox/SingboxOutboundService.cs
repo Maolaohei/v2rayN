@@ -474,14 +474,13 @@ public partial class CoreConfigSingboxService
                     // Parse eh and ed parameters from path using regex
                     if (!wsPath.IsNullOrEmpty())
                     {
-                        var edRegex = new Regex(@"[?&]ed=(\d+)");
-                        var edMatch = edRegex.Match(wsPath);
+                        var edMatch = EdRegex.Match(wsPath);
                         if (edMatch.Success && int.TryParse(edMatch.Groups[1].Value, out var edValue))
                         {
                             transport.max_early_data = edValue;
                             transport.early_data_header_name = "Sec-WebSocket-Protocol";
 
-                            wsPath = edRegex.Replace(wsPath, "");
+                            wsPath = EdRegex.Replace(wsPath, "");
                             wsPath = wsPath.Replace("?&", "?");
                             if (wsPath.EndsWith('?'))
                             {
@@ -489,8 +488,7 @@ public partial class CoreConfigSingboxService
                             }
                         }
 
-                        var ehRegex = new Regex(@"[?&]eh=([^&]+)");
-                        var ehMatch = ehRegex.Match(wsPath);
+                        var ehMatch = EhRegex.Match(wsPath);
                         if (ehMatch.Success)
                         {
                             transport.early_data_header_name = Uri.UnescapeDataString(ehMatch.Groups[1].Value);

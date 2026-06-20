@@ -1,3 +1,5 @@
+using ServiceLib.Resx;
+using ServiceLib.Handler;
 using v2rayN.Manager;
 
 namespace v2rayN.Views;
@@ -14,6 +16,8 @@ public partial class StatusBarView
         ViewModel?.InitUpdateView(UpdateViewHandler);
 
         menuExit.Click += menuExit_Click;
+        btnTunHealthCheck.Click += btnTunHealthCheck_Click;
+        btnProcessListSetting.Click += btnProcessListSetting_Click;
         txtRunningServerDisplay.PreviewMouseDown += txtRunningInfoDisplay_MouseDoubleClick;
         txtRunningInfoDisplay.PreviewMouseDown += txtRunningInfoDisplay_MouseDoubleClick;
 
@@ -58,6 +62,7 @@ public partial class StatusBarView
             this.OneWayBind(ViewModel, vm => vm.SpeedProxyDisplay, v => v.txtSpeedProxyDisplay.Text).DisposeWith(disposables);
             this.OneWayBind(ViewModel, vm => vm.SpeedDirectDisplay, v => v.txtSpeedDirectDisplay.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.EnableTun, v => v.togEnableTun.IsChecked).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.EnableLegacyProtect, v => v.togEnableLegacyProtect.IsChecked).DisposeWith(disposables);
 
             this.Bind(ViewModel, vm => vm.SystemProxySelected, v => v.cmbSystemProxy.SelectedIndex).DisposeWith(disposables);
             this.OneWayBind(ViewModel, vm => vm.RoutingItems, v => v.cmbRoutings2.ItemsSource).DisposeWith(disposables);
@@ -86,6 +91,38 @@ public partial class StatusBarView
 
                 WindowsUtils.SetClipboardData((string)obj);
                 break;
+
+            case EViewAction.TunHealthCheckResult:
+                if (obj is string reportText)
+                {
+                    MessageBox.Show(reportText, ResUI.TunHealthCheckTitle, MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                break;
+
+            case EViewAction.ProcessListSetting:
+                if (obj is (string processText, bool dnsViaBridge))
+                {
+                    var window = new ProcessListSettingWindow(processText, dnsViaBridge);
+                    if (window.ShowDialog() == true)
+                    {
+                        var processes = window.ResultProcessList
+                            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                            .ToList();
+                        AppManager.Instance.Config.TunModeItem.ProtectedProcesses = processes;
+                        AppManager.Instance.Config.NetBridgeItem ??= new();
+                        AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = window.ResultDnsViaBridge;
+                        AppManager.Instance.Config.NetBridgeItem.RuleProcess = window.ResultProcessList;
+                        _ = ConfigHandler.SaveConfig(AppManager.Instance.Config);
+
+                        if (NetBridgeManager.Instance.IsRunning)
+                        {
+                            _ = NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                            _ = NetBridgeManager.Instance.UpdateRoutes(window.ResultProcessList);
+                            _ = NetBridgeManager.Instance.SetDnsViaProxy(window.ResultDnsViaBridge);
+                        }
+                    }
+                }
+                break;
         }
         return await Task.FromResult(true);
     }
@@ -94,6 +131,16 @@ public partial class StatusBarView
     {
         tbNotify.Dispose();
         await AppManager.Instance.AppExitAsync(true);
+    }
+
+    private void btnTunHealthCheck_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.RunTunHealthCheck();
+    }
+
+    private void btnProcessListSetting_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.ShowProcessListSetting();
     }
 
     private void txtRunningInfoDisplay_MouseDoubleClick(object sender, MouseButtonEventArgs e)

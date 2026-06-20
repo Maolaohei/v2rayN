@@ -897,6 +897,9 @@
   <data name="TbEnableTunAs" xml:space="preserve">
     <value>启用 Tun</value>
   </data>
+  <data name="BtnHealthCheck" xml:space="preserve">
+    <value>一键诊断</value>
+  </data>
   <data name="TbSettingsNewPort4LAN" xml:space="preserve">
     <value>为局域网开启新的端口</value>
   </data>
@@ -1684,7 +1687,31 @@
     <value>ICMP 路由策略</value>
   </data>
   <data name="TbLegacyProtect" xml:space="preserve">
-    <value>旧版 TUN 保护</value>
+    <value>启动进程劫持</value>
+  </data>
+  <data name="ProcessListSettingTitle" xml:space="preserve">
+    <value>进程流量劫持设置</value>
+  </data>
+  <data name="ProcessListSettingDesc" xml:space="preserve">
+    <value>选择需要劫持流量的进程，或管理当前生效进程</value>
+  </data>
+  <data name="ProcessListRunning" xml:space="preserve">
+    <value>当前运行的进程</value>
+  </data>
+  <data name="ProcessListActive" xml:space="preserve">
+    <value>目标生效进程</value>
+  </data>
+  <data name="ProcessListAddSelected" xml:space="preserve">
+    <value>添加选中</value>
+  </data>
+  <data name="ProcessListAdd" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="ProcessListRemove" xml:space="preserve">
+    <value>移除</value>
+  </data>
+  <data name="ProcessListDnsViaBridge" xml:space="preserve">
+    <value>DNS 通过 Bridge</value>
   </data>
   <data name="TbCamouflageDomain" xml:space="preserve">
     <value>伪装域名</value>
@@ -1762,18 +1789,48 @@
     <value>将数据包末端拆分为更小片段发送，可能影响吞吐与延迟。</value>
   </data>
   <data name="TbEnableNetBridge" xml:space="preserve">
-    <value>启用进程流量劫持（实验性），类似 Proxifer 功能；可以和系统代理并存；和 TUN 模式冲突，请不要同时开启；请在防火墙中允许 v2rayN 使用专用网络</value>
+    <value>启用进程流量劫持，类似 Proxifer 功能；可以和系统代理并存；和 TUN 模式冲突，请不要同时开启；请在防火墙中允许 v2rayN 使用专用网络</value>
   </data>
   <data name="NetBridgeRuleTips" xml:space="preserve">
     <value>需要代理的进程名，多个进程请用逗号分隔；不在列表中的进程也会被劫持，但是会直连</value>
   </data>
   <data name="menuNetBridge" xml:space="preserve">
-    <value>进程流量劫持（实验性）</value>
+    <value>进程流量劫持</value>
   </data>
   <data name="TbEnabletDnsViaProxy" xml:space="preserve">
     <value>DNS 通过 Bridge</value>
   </data>
+  <data name="MsgNetBridgeConflictWithTun" xml:space="preserve">
+    <value>进程流量劫持与 TUN 模式冲突，请先关闭 TUN</value>
+  </data>
+  <data name="MsgNetBridgeDriverNotFound" xml:space="preserve">
+    <value>未找到 WinDivert 驱动，请检查 NetBridge 文件是否完整</value>
+  </data>
   <data name="TbSaveNetBridgeRule" xml:space="preserve">
     <value>保存规则</value>
+  </data>
+  <data name="MsgInsecureConfiguration" xml:space="preserve">
+    <value>检测到不安全配置：AllowInsecure 已启用，但未提供证书。这可能会导致中间人攻击。</value>
+  </data>
+  <data name="ProcessListPresetBrowser" xml:space="preserve">
+    <value>浏览器</value>
+  </data>
+  <data name="ProcessListPresetDev" xml:space="preserve">
+    <value>开发工具</value>
+  </data>
+  <data name="ProcessListPresetAll" xml:space="preserve">
+    <value>全部常用</value>
+  </data>
+  <data name="ProcessListPresetAdded" xml:space="preserve">
+    <value>已添加 {0} 个进程</value>
+  </data>
+  <data name="ProcessListImportFolder" xml:space="preserve">
+    <value>导入文件夹</value>
+  </data>
+  <data name="ProcessListImportResult" xml:space="preserve">
+    <value>找到 {0} 个 EXE 文件，已添加 {1} 个新进程</value>
+  </data>
+  <data name="ProcessListImportTooMany" xml:space="preserve">
+    <value>EXE 文件过多（{0}个），仅导入前 {1} 个</value>
   </data>
 </root>

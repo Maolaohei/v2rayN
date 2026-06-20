@@ -147,6 +147,7 @@ public class TunModeItem
     public string IcmpRouting { get; set; }
     public bool EnableLegacyProtect { get; set; }
     public List<string>? RouteExcludeAddress { get; set; }
+    public List<string>? ProtectedProcesses { get; set; }
 }
 
 [Serializable]

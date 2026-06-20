@@ -39,12 +39,40 @@
                 <TextBlock
                     VerticalAlignment="Center"
                     Margin="{StaticResource MarginLr8}"
+                    Text="{x:Static resx:ResUI.TbLegacyProtect}" />
+                <ToggleSwitch
+                    x:Name="togEnableLegacyProtect"
+                    HorizontalAlignment="Center"
+                    Margin="{StaticResource Margin4}"
+                    Theme="{DynamicResource SimpleToggleSwitch}" />
+                <Button
+                    x:Name="btnProcessListSetting"
+                    VerticalAlignment="Center"
+                    Margin="{StaticResource Margin4}"
+                    Padding="6,2"
+                    FontSize="11"
+                    ToolTip.Tip="选择需要劫持流量的进程"
+                    Content="..." />
+                <Separator
+                    Margin="{StaticResource Margin4}"
+                    VerticalAlignment="Center"
+                    Width="1" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Margin="{StaticResource MarginLr8}"
                     Text="{x:Static resx:ResUI.TbEnableTunAs}" />
                 <ToggleSwitch
                     x:Name="togEnableTun"
                     HorizontalAlignment="Center"
                     Margin="{StaticResource Margin4}"
                     Theme="{DynamicResource SimpleToggleSwitch}" />
+                <Button
+                    x:Name="btnTunHealthCheck"
+                    VerticalAlignment="Center"
+                    Margin="{StaticResource Margin4}"
+                    Padding="6,2"
+                    FontSize="11"
+                    Content="{x:Static resx:ResUI.BtnHealthCheck}" />
             </StackPanel>
 
             <StackPanel

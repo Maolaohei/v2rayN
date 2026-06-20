@@ -1,0 +1,204 @@
+<Window
+    x:Class="v2rayN.Desktop.Views.ProcessListSettingDialog"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
+    Width="550"
+    MinWidth="450"
+    MinHeight="530"
+    CanResize="True"
+    ShowInTaskbar="False"
+    Title="{x:Static resx:ResUI.ProcessListSettingTitle}"
+    SystemDecorations="Full"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+        <Border
+            Grid.Row="0"
+            Margin="0,0,0,12"
+            Padding="8"
+            BorderBrush="LightGray"
+            BorderThickness="1"
+            CornerRadius="4"
+            Background="#F5F5F5">
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,4"
+                    FontWeight="Bold"
+                    Text="驱动状态" />
+                <StackPanel Margin="16,0,0,0">
+                    <TextBlock x:Name="txtDriverFile" Text="• 驱动文件: 检查中..." />
+                    <TextBlock x:Name="txtDriverService" Text="• 驱动服务: 检查中..." />
+                    <TextBlock x:Name="txtNetBridgeStatus" Text="• NetBridge: 检查中..." />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <TextBlock
+            Grid.Row="1"
+            Margin="0,0,0,8"
+            FontSize="13"
+            Text="{x:Static resx:ResUI.ProcessListSettingDesc}" />
+
+        <TabControl
+            x:Name="tabControl"
+            Grid.Row="2"
+            Margin="0,0,0,12">
+            <TabItem Header="{x:Static resx:ResUI.ProcessListRunning}">
+                <DockPanel>
+                    <StackPanel
+                        DockPanel.Dock="Top"
+                        Margin="0,0,0,8"
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal">
+                        <Button
+                            x:Name="btnRefresh"
+                            Margin="0,0,8,0"
+                            Padding="8,4"
+                            Content="🔄 刷新" />
+                        <Grid Width="180" Margin="0,0,8,0">
+                            <TextBox
+                                x:Name="txtSearch"
+                                TextChanged="TxtSearch_TextChanged"
+                                KeyDown="TxtSearch_KeyDown" />
+                            <TextBlock
+                                x:Name="txtSearchWatermark"
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                IsHitTestVisible="False"
+                                Foreground="Gray"
+                                FontSize="12"
+                                Text="搜索进程名或应用名" />
+                        </Grid>
+                        <CheckBox
+                            x:Name="chkSelectAll"
+                            Content="全选/取消全选"
+                            VerticalAlignment="Center" />
+                        <Button
+                            x:Name="btnAddSelected"
+                            Margin="8,0,0,0"
+                            Padding="8,4"
+                            Content="{x:Static resx:ResUI.ProcessListAddSelected}" />
+                    </StackPanel>
+                    <ListBox
+                        x:Name="lstProcesses"
+                        BorderThickness="1"
+                        MaxHeight="260"
+                        SelectionMode="Extended"
+                        VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    Margin="4,2"
+                                    Content="{Binding DisplayName}"
+                                    IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="{x:Static resx:ResUI.ProcessListActive}">
+                <DockPanel>
+                    <StackPanel
+                        DockPanel.Dock="Top"
+                        Margin="0,0,0,8"
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal">
+                        <Grid Width="150" Margin="0,0,8,0">
+                            <TextBox
+                                x:Name="txtActiveSearch"
+                                TextChanged="TxtActiveSearch_TextChanged"
+                                KeyDown="TxtActiveSearch_KeyDown" />
+                            <TextBlock
+                                x:Name="txtActiveSearchWatermark"
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                IsHitTestVisible="False"
+                                Foreground="Gray"
+                                FontSize="12"
+                                Text="搜索进程名" />
+                        </Grid>
+                        <Button
+                            x:Name="btnAddManual"
+                            Margin="0,0,8,0"
+                            Padding="8,4"
+                            Content="{x:Static resx:ResUI.ProcessListAdd}" />
+                        <Button
+                            x:Name="btnRemoveSelected"
+                            Margin="0,0,8,0"
+                            Padding="8,4"
+                            Content="{x:Static resx:ResUI.ProcessListRemove}" />
+                        <Separator
+                            Margin="4,0"
+                            VerticalAlignment="Center"
+                            Width="1" />
+                        <Button
+                            x:Name="btnPresetBrowser"
+                            Margin="0,0,4,0"
+                            Padding="8,4"
+                            ToolTip="chrome, firefox, edge, brave, opera, vivaldi, arc"
+                            Content="{x:Static resx:ResUI.ProcessListPresetBrowser}" />
+                        <Button
+                            x:Name="btnPresetDev"
+                            Margin="0,0,4,0"
+                            Padding="8,4"
+                            ToolTip="VS Code, Cursor, git, node, python, dotnet, claude, curl, wget, powershell"
+                            Content="{x:Static resx:ResUI.ProcessListPresetDev}" />
+                        <Button
+                            x:Name="btnPresetAll"
+                            Margin="0,0,4,0"
+                            Padding="8,4"
+                            Content="{x:Static resx:ResUI.ProcessListPresetAll}" />
+                        <Button
+                            x:Name="btnImportFolder"
+                            Padding="8,4"
+                            Content="{x:Static resx:ResUI.ProcessListImportFolder}" />
+                    </StackPanel>
+                    <ListBox
+                        x:Name="lstActiveProcesses"
+                        BorderThickness="1"
+                        MaxHeight="260"
+                        SelectionMode="Extended"
+                        VerticalScrollBarVisibility="Auto" />
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock
+            x:Name="txtStatus"
+            Grid.Row="3"
+            Margin="0,0,0,8"
+            FontSize="12"
+            Foreground="Gray"
+            Text="当前生效: 0 个进程" />
+
+        <CheckBox
+            x:Name="chkDnsViaBridge"
+            Grid.Row="4"
+            Margin="0,0,0,8"
+            Content="{x:Static resx:ResUI.ProcessListDnsViaBridge}" />
+
+        <StackPanel
+            Grid.Row="5"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Spacing="12">
+            <Button
+                x:Name="btnOk"
+                MinWidth="90"
+                HorizontalContentAlignment="Center"
+                Content="{x:Static resx:ResUI.TbConfirm}"
+                IsDefault="True" />
+            <Button
+                x:Name="btnCancel"
+                MinWidth="90"
+                HorizontalContentAlignment="Center"
+                Content="{x:Static resx:ResUI.TbCancel}"
+                IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</Window>

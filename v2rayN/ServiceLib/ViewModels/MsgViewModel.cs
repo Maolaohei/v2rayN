@@ -3,8 +3,9 @@ namespace ServiceLib.ViewModels;
 public class MsgViewModel : MyReactiveObject
 {
     private readonly ConcurrentQueue<string> _queueMsg = new();
+    private readonly List<string> _allMessages = new();
     private volatile bool _lastMsgFilterNotAvailable;
-    private int _showLock = 0; // 0 = unlocked, 1 = locked
+    private int _showLock = 0;
     public int NumMaxMsg { get; } = 500;
 
     [Reactive]
@@ -31,7 +32,6 @@ public class MsgViewModel : MyReactiveObject
 
         AppEvents.SendMsgViewRequested
          .AsObservable()
-         //.ObserveOn(RxSchedulers.MainThreadScheduler)
          .Subscribe(content => _ = AppendQueueMsg(content));
     }
 
@@ -74,7 +74,15 @@ public class MsgViewModel : MyReactiveObject
 
     private void EnqueueQueueMsg(string msg)
     {
-        //filter msg
+        lock (_allMessages)
+        {
+            _allMessages.Add(msg);
+            while (_allMessages.Count > NumMaxMsg)
+            {
+                _allMessages.RemoveAt(0);
+            }
+        }
+
         if (MsgFilter.IsNotEmpty() && !_lastMsgFilterNotAvailable)
         {
             try
@@ -86,36 +94,56 @@ public class MsgViewModel : MyReactiveObject
             }
             catch (Exception ex)
             {
-                EnqueueWithLimit(ex.Message);
+                _queueMsg.Enqueue(ex.Message);
                 _lastMsgFilterNotAvailable = true;
             }
         }
 
-        EnqueueWithLimit(msg);
+        _queueMsg.Enqueue(msg);
         if (!msg.EndsWith(Environment.NewLine))
         {
-            EnqueueWithLimit(Environment.NewLine);
+            _queueMsg.Enqueue(Environment.NewLine);
         }
     }
 
-    private void EnqueueWithLimit(string item)
+    public void RefreshFilteredMessages()
     {
-        _queueMsg.Enqueue(item);
+        _lastMsgFilterNotAvailable = false;
 
-        while (_queueMsg.Count > NumMaxMsg)
+        var filtered = new StringBuilder();
+        lock (_allMessages)
         {
-            _queueMsg.TryDequeue(out _);
+            foreach (var msg in _allMessages)
+            {
+                if (MsgFilter.IsNotEmpty())
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(msg, MsgFilter))
+                        {
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+                filtered.Append(msg);
+                if (!msg.EndsWith(Environment.NewLine))
+                {
+                    filtered.Append(Environment.NewLine);
+                }
+            }
         }
-    }
 
-    //public void ClearMsg()
-    //{
-    //    _queueMsg.Clear();
-    //}
+        _ = _updateView?.Invoke(EViewAction.DispatcherShowMsg, filtered.ToString());
+    }
 
     private void DoMsgFilter()
     {
         _config.MsgUIItem.MainMsgFilter = MsgFilter;
         _lastMsgFilterNotAvailable = false;
+        RefreshFilteredMessages();
     }
 }

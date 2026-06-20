@@ -897,6 +897,9 @@
   <data name="TbEnableTunAs" xml:space="preserve">
     <value>Enable Tun</value>
   </data>
+  <data name="BtnHealthCheck" xml:space="preserve">
+    <value>Diagnosis</value>
+  </data>
   <data name="TbSettingsNewPort4LAN" xml:space="preserve">
     <value>New Port for LAN</value>
   </data>
@@ -1690,7 +1693,31 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>ICMP routing policy</value>
   </data>
   <data name="TbLegacyProtect" xml:space="preserve">
-    <value>Legacy TUN Protect</value>
+    <value>Start Process Hijack</value>
+  </data>
+  <data name="ProcessListSettingTitle" xml:space="preserve">
+    <value>Process Traffic Hijack Settings</value>
+  </data>
+  <data name="ProcessListSettingDesc" xml:space="preserve">
+    <value>Select processes to hijack traffic, or manage active processes</value>
+  </data>
+  <data name="ProcessListRunning" xml:space="preserve">
+    <value>Running Processes</value>
+  </data>
+  <data name="ProcessListActive" xml:space="preserve">
+    <value>Target Processes</value>
+  </data>
+  <data name="ProcessListAddSelected" xml:space="preserve">
+    <value>Add Selected</value>
+  </data>
+  <data name="ProcessListAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="ProcessListRemove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="ProcessListDnsViaBridge" xml:space="preserve">
+    <value>DNS via Bridge</value>
   </data>
   <data name="TbCamouflageDomain" xml:space="preserve">
     <value>Camouflage domain</value>
@@ -1765,18 +1792,48 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>Split the tail of packets into smaller fragments. This may affect throughput and latency.</value>
   </data>
   <data name="TbEnableNetBridge" xml:space="preserve">
-    <value>Enables process traffic hijacking (experimental), similar to Proxifer; can coexist with system proxy; conflicts with TUN mode, please do not enable them simultaneously;please allow v2rayN to use a private network in your firewall.</value>
+    <value>Enables process traffic hijacking, similar to Proxifer; can coexist with system proxy; conflicts with TUN mode, please do not enable them simultaneously; please allow v2rayN to use a private network in your firewall.</value>
   </data>
   <data name="NetBridgeRuleTips" xml:space="preserve">
     <value>The process names that need to be proxied; separate multiple processes with commas. Processes not in the list will also be hijacked, but will connect directly.</value>
   </data>
   <data name="menuNetBridge" xml:space="preserve">
-    <value>Process traffic hijacking (experimental)</value>
+    <value>Process Traffic Hijack</value>
   </data>
   <data name="TbEnabletDnsViaProxy" xml:space="preserve">
     <value>DNS via Bridge</value>
   </data>
+  <data name="MsgNetBridgeConflictWithTun" xml:space="preserve">
+    <value>Process Traffic Hijack conflicts with TUN mode, please disable TUN first</value>
+  </data>
+  <data name="MsgNetBridgeDriverNotFound" xml:space="preserve">
+    <value>WinDivert driver not found, please check if NetBridge files are complete</value>
+  </data>
   <data name="TbSaveNetBridgeRule" xml:space="preserve">
     <value>Save rules</value>
+  </data>
+  <data name="MsgInsecureConfiguration" xml:space="preserve">
+    <value>Insecure configuration detected: AllowInsecure is enabled but no certificate is provided. This may cause MITM attacks.</value>
+  </data>
+  <data name="ProcessListPresetBrowser" xml:space="preserve">
+    <value>Browsers</value>
+  </data>
+  <data name="ProcessListPresetDev" xml:space="preserve">
+    <value>Dev Tools</value>
+  </data>
+  <data name="ProcessListPresetAll" xml:space="preserve">
+    <value>All Common</value>
+  </data>
+  <data name="ProcessListPresetAdded" xml:space="preserve">
+    <value>Added {0} processes</value>
+  </data>
+  <data name="ProcessListImportFolder" xml:space="preserve">
+    <value>Import Folder</value>
+  </data>
+  <data name="ProcessListImportResult" xml:space="preserve">
+    <value>Found {0} EXE files, added {1} new processes</value>
+  </data>
+  <data name="ProcessListImportTooMany" xml:space="preserve">
+    <value>Too many EXE files ({0}), only imported first {1}</value>
   </data>
 </root>

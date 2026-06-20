@@ -192,7 +192,7 @@ public class CoreManager
     {
         if (_processService is { HasExited: false } && preContext != null)
         {
-            var preCoreType = preContext?.Node?.CoreType ?? ECoreType.sing_box;
+            var preCoreType = preContext?.Node?.CoreType ?? ECoreType.Xray;
             var fileName = Utils.GetBinConfigPath(Global.CorePreConfigFileName);
             var result = await CoreConfigHandler.GenerateClientConfig(preContext, fileName);
             if (result.Success)
@@ -230,7 +230,7 @@ public class CoreManager
         {
             if (mayNeedSudo
                 && _config.TunModeItem.EnableTun
-                && (coreInfo.CoreType is ECoreType.sing_box or ECoreType.mihomo)
+                && (coreInfo.CoreType is ECoreType.sing_box or ECoreType.mihomo or ECoreType.Xray)
                 && Utils.IsNonWindows())
             {
                 _linuxSudo = true;

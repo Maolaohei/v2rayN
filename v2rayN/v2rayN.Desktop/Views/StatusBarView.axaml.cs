@@ -1,4 +1,6 @@
 using DialogHostAvalonia;
+using ServiceLib.Handler;
+using ServiceLib.Resx;
 using v2rayN.Desktop.Common;
 
 namespace v2rayN.Desktop.Views;
@@ -18,6 +20,8 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
 
         txtRunningServerDisplay.Tapped += TxtRunningServerDisplay_Tapped;
         txtRunningInfoDisplay.Tapped += TxtRunningServerDisplay_Tapped;
+        btnTunHealthCheck.Tapped += BtnTunHealthCheck_Tapped;
+        btnProcessListSetting.Tapped += BtnProcessListSetting_Tapped;
 
         this.WhenActivated(disposables =>
         {
@@ -29,6 +33,7 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
             this.OneWayBind(ViewModel, vm => vm.SpeedProxyDisplay, v => v.txtSpeedProxyDisplay.Text).DisposeWith(disposables);
             this.OneWayBind(ViewModel, vm => vm.SpeedDirectDisplay, v => v.txtSpeedDirectDisplay.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.EnableTun, v => v.togEnableTun.IsChecked).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.EnableLegacyProtect, v => v.togEnableLegacyProtect.IsChecked).DisposeWith(disposables);
 
             this.Bind(ViewModel, vm => vm.SystemProxySelected, v => v.cmbSystemProxy.SelectedIndex).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedRouting, v => v.cmbRoutings2.SelectedItem).DisposeWith(disposables);
@@ -62,6 +67,38 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
 
             case EViewAction.PasswordInput:
                 return await PasswordInputAsync();
+
+            case EViewAction.TunHealthCheckResult:
+                if (obj is string reportText)
+                {
+                    var box = new MessageBoxDialog(ResUI.TunHealthCheckTitle, reportText);
+                    await box.ShowDialog(VisualRoot as Window);
+                }
+                break;
+
+            case EViewAction.ProcessListSetting:
+                if (obj is (string processText, bool dnsViaBridge))
+                {
+                    var box = new ProcessListSettingDialog(processText, dnsViaBridge);
+                    var result = await box.ShowDialog<string?>(VisualRoot as Window);
+                    if (result != null)
+                    {
+                        var processes = result.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+                        AppManager.Instance.Config.TunModeItem.ProtectedProcesses = processes;
+                        AppManager.Instance.Config.NetBridgeItem ??= new();
+                        AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = box.ResultDnsViaBridge;
+                        AppManager.Instance.Config.NetBridgeItem.RuleProcess = result;
+                        _ = ConfigHandler.SaveConfig(AppManager.Instance.Config);
+
+                        if (NetBridgeManager.Instance.IsRunning)
+                        {
+                            _ = NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                            _ = NetBridgeManager.Instance.UpdateRoutes(result);
+                            _ = NetBridgeManager.Instance.SetDnsViaProxy(box.ResultDnsViaBridge);
+                        }
+                    }
+                }
+                break;
         }
         return await Task.FromResult(true);
     }
@@ -96,5 +133,15 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
     private void TxtRunningServerDisplay_Tapped(object? sender, Avalonia.Input.TappedEventArgs e)
     {
         ViewModel?.TestServerAvailability();
+    }
+
+    private void BtnTunHealthCheck_Tapped(object? sender, Avalonia.Input.TappedEventArgs e)
+    {
+        ViewModel?.RunTunHealthCheck();
+    }
+
+    private void BtnProcessListSetting_Tapped(object? sender, Avalonia.Input.TappedEventArgs e)
+    {
+        ViewModel?.ShowProcessListSetting();
     }
 }

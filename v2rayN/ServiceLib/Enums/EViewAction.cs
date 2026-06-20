@@ -33,4 +33,6 @@ public enum EViewAction
     DispatcherRefreshServersBiz,
     DispatcherRefreshIcon,
     DispatcherShowMsg,
+    TunHealthCheckResult,
+    ProcessListSetting,
 }

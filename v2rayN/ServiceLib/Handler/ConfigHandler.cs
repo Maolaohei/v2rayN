@@ -1458,6 +1458,7 @@ public static class ConfigHandler
                                   || Utils.IsNonWindows();
         if (node.ConfigType != EConfigType.Custom
             && coreType != ECoreType.sing_box
+            && coreType != ECoreType.Xray
             && config.TunModeItem.EnableTun
             && enableLegacyProtect)
         {
@@ -1472,10 +1473,9 @@ public static class ConfigHandler
         else if (node.ConfigType == EConfigType.Custom
             && node.PreSocksPort is > 0 and <= 65535)
         {
-            var preCoreType = config.TunModeItem.EnableTun ? ECoreType.sing_box : ECoreType.Xray;
             itemSocks = new ProfileItem()
             {
-                CoreType = preCoreType,
+                CoreType = ECoreType.Xray,
                 ConfigType = EConfigType.SOCKS,
                 Address = Global.Loopback,
                 Port = node.PreSocksPort.Value,
@@ -2025,11 +2025,11 @@ public static class ConfigHandler
         var customProfile = await SQLiteHelper.Instance.TableAsync<ProfileItem>().Where(t => t.Subid == subid && t.ConfigType == EConfigType.Custom).ToListAsync();
         if (isSub)
         {
-            await SQLiteHelper.Instance.ExecuteAsync($"delete from ProfileItem where isSub = 1 and subid = '{subid}'");
+            await SQLiteHelper.Instance.ExecuteAsync("delete from ProfileItem where isSub = 1 and subid = ?", subid);
         }
         else
         {
-            await SQLiteHelper.Instance.ExecuteAsync($"delete from ProfileItem where subid = '{subid}'");
+            await SQLiteHelper.Instance.ExecuteAsync("delete from ProfileItem where subid = ?", subid);
         }
         foreach (var item in customProfile)
         {

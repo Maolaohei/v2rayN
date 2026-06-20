@@ -56,6 +56,29 @@
                         Margin="{StaticResource MarginLeftRight8}"
                         VerticalAlignment="Center"
                         Style="{StaticResource StatusbarItem}"
+                        Text="{x:Static resx:ResUI.TbLegacyProtect}" />
+                    <ToggleButton
+                        x:Name="togEnableLegacyProtect"
+                        Margin="{StaticResource Margin4}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{x:Static resx:ResUI.TbLegacyProtect}" />
+                    <Button
+                        x:Name="btnProcessListSetting"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Padding="6,2"
+                        FontSize="11"
+                        ToolTip="选择需要劫持流量的进程"
+                        Content="..." />
+                    <Separator
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Width="1" />
+                    <TextBlock
+                        Margin="{StaticResource MarginLeftRight8}"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource StatusbarItem}"
                         Text="{x:Static resx:ResUI.TbEnableTunAs}" />
                     <ToggleButton
                         x:Name="togEnableTun"
@@ -63,6 +86,14 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AutomationProperties.Name="{x:Static resx:ResUI.TbEnableTunAs}" />
+                    <Button
+                        x:Name="btnTunHealthCheck"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Padding="6,2"
+                        FontSize="11"
+                        ToolTip="TUN Health Check"
+                        Content="{x:Static resx:ResUI.BtnHealthCheck}" />
                 </StackPanel>
 
                 <StackPanel

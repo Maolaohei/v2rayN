@@ -115,6 +115,7 @@ public class UpdateService(Config config, Func<bool, string, Task> updateFunc)
     public async Task<List<string>> CheckHasUpdateOnlyAll(bool preRelease)
     {
         var msgs = new List<string>();
+        var tasks = new List<Task<(ECoreType Type, UpdateResult Result)>>();
         foreach (var type in CoreInfoManager.Instance.GetCheckUpdateCoreTypes())
         {
             if (!(_config.CheckUpdateItem.SelectedCoreTypes?.Contains(type.ToString()) ?? true))
@@ -122,7 +123,17 @@ public class UpdateService(Config config, Func<bool, string, Task> updateFunc)
                 continue;
             }
 
-            var result = await CheckHasUpdateOnly(type, preRelease);
+            var t = type;
+            tasks.Add(Task.Run(async () =>
+            {
+                var result = await CheckHasUpdateOnly(t, preRelease);
+                return (t, result);
+            }));
+        }
+
+        var results = await Task.WhenAll(tasks);
+        foreach (var (type, result) in results)
+        {
             if (result.Success && result.Version != null)
             {
                 var msg = string.Format(ResUI.MsgCheckUpdateHasNewVersion, type, result.Version);
@@ -263,12 +274,19 @@ public class UpdateService(Config config, Func<bool, string, Task> updateFunc)
             switch (type)
             {
                 case ECoreType.v2fly:
-                case ECoreType.Xray:
                 case ECoreType.v2fly_v5:
                     {
                         curVersion = await GetCoreVersion(type);
                         message = string.Format(ResUI.IsLatestCore, type, curVersion.ToVersionString("v"));
                         url = string.Format(coreUrl, version.ToVersionString("v"));
+                        break;
+                    }
+                case ECoreType.Xray:
+                    {
+                        curVersion = await GetCoreVersion(type);
+                        var tagStr = version.ToString();
+                        message = string.Format(ResUI.IsLatestCore, type, tagStr);
+                        url = string.Format(coreUrl, tagStr);
                         break;
                     }
                 case ECoreType.mihomo:
@@ -432,15 +450,22 @@ public class UpdateService(Config config, Func<bool, string, Task> updateFunc)
             Directory.CreateDirectory(path);
         }
 
-        foreach (var item in geoipFiles.Distinct())
+        var allSrs = geoipFiles.Distinct().Select(f => ("geoip", f))
+            .Concat(geoSiteFiles.Distinct().Select(f => ("geosite", f)));
+        var semaphore = new SemaphoreSlim(4);
+        var downloadTasks = allSrs.Select(async item =>
         {
-            await UpdateSrsFile("geoip", item);
-        }
-
-        foreach (var item in geoSiteFiles.Distinct())
-        {
-            await UpdateSrsFile("geosite", item);
-        }
+            await semaphore.WaitAsync();
+            try
+            {
+                await UpdateSrsFile(item.Item1, item.Item2);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+        await Task.WhenAll(downloadTasks);
     }
 
     private void AddPrefixedItems(List<string>? items, string prefix, List<string> output)

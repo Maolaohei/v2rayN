@@ -61,6 +61,13 @@ public class NetBridgeViewModel : MyReactiveObject
 
     private async Task ToggleNetBridgeAsync(bool enabled)
     {
+        if (enabled && _config.TunModeItem.EnableTun)
+        {
+            NoticeManager.Instance.Enqueue(ResUI.MsgNetBridgeConflictWithTun);
+            EnableNetBridge = false;
+            return;
+        }
+
         await NetBridgeManager.Instance.Init(UpdateViewHandler);
 
         if (enabled)

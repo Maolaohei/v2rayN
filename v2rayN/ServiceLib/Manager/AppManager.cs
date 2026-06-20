@@ -200,6 +200,7 @@ public sealed class AppManager
 
     public async Task<List<ProfileItemModel>?> ProfileModels(string subid, string filter)
     {
+        var parameters = new List<object?>();
         var sql = @$"select a.IndexId
                            ,a.ConfigType
                            ,a.Remarks
@@ -214,18 +215,17 @@ public sealed class AppManager
                         where 1=1 ";
         if (subid.IsNotEmpty())
         {
-            sql += $" and a.subid = '{subid}'";
+            sql += " and a.subid = ?";
+            parameters.Add(subid);
         }
         if (filter.IsNotEmpty())
         {
-            if (filter.Contains('\''))
-            {
-                filter = filter.Replace("'", "");
-            }
-            sql += string.Format(" and (a.remarks like '%{0}%' or a.address like '%{0}%') ", filter);
+            sql += " and (a.remarks like ? or a.address like ?) ";
+            parameters.Add($"%{filter}%");
+            parameters.Add($"%{filter}%");
         }
 
-        return await SQLiteHelper.Instance.QueryAsync<ProfileItemModel>(sql);
+        return await SQLiteHelper.Instance.QueryAsync<ProfileItemModel>(sql, parameters.ToArray());
     }
 
     public async Task<ProfileItem?> GetProfileItem(string indexId)
