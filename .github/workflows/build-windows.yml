@@ -34,6 +34,7 @@ jobs:
         ${{
           case(
             matrix.arch == 'x64', 'windows-64',
+            matrix.arch == 'arm64', 'windows-arm64-v8a',
             matrix.arch
           )
         }}
