@@ -2,10 +2,6 @@ name: release Windows
 
 on:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        required: false
-        type: string
   push:
     branches:
       - master
@@ -21,9 +17,49 @@ jobs:
       project: ./v2rayN/v2rayN.csproj
 
   release-zip:
-    if: inputs.release_tag != ''
     needs: build
-    uses: ./.github/workflows/package-zip.yml
-    with:
-      target: windows
-      release_tag: ${{ inputs.release_tag }}
+    strategy:
+      matrix:
+        arch: [ x64, arm64 ]
+    runs-on: ubuntu-latest
+    env:
+      Arch: |-
+        ${{
+          case(
+            matrix.arch == 'x64', '64',
+            matrix.arch
+          )
+        }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Generate date tag
+        id: tag
+        run: echo "tag=v$(TZ=Asia/Shanghai date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
+
+      - name: Restore build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ matrix.arch }}
+          path: v2rayN-windows-${{ env.Arch }}
+
+      - name: Get v2rayN-core-bin
+        run: wget -nv -O v2rayN-windows-${{ env.Arch }}.zip "https://github.com/2dust/v2rayN-core-bin/raw/refs/heads/master/v2rayN-windows-${{ env.Arch }}.zip"
+
+      - name: Package zip archive
+        run: 7z a -tZip v2rayN-windows-${{ env.Arch }}.zip v2rayN-windows-${{ env.Arch }} -mx1
+
+      - name: Sleep for race condition between matrix jobs
+        run: sleep "$(od -An -N2 -tu2 /dev/urandom | awk 'NR==1{printf "%.2f", $1/5461}')"
+
+      - name: Upload zip archive to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: ${{ github.workspace }}/v2rayN*.zip
+          tag: ${{ steps.tag.outputs.tag }}
+          file_glob: true
+          prerelease: true
+          body: |
+            Build ${{ github.run_number }}
+            Commit: ${{ github.sha }}

@@ -2,10 +2,6 @@ name: release macOS
 
 on:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        required: false
-        type: string
   push:
     branches:
       - master
@@ -20,16 +16,14 @@ jobs:
       target: macos
 
   release-zip:
-    if: inputs.release_tag != ''
     needs: build
     uses: ./.github/workflows/package-zip.yml
     with:
       target: macos
-      release_tag: ${{ inputs.release_tag }}
-    
+      release_tag: v${{ github.run_id }}
+
   dmg:
     name: package and release macOS dmg
-    if: inputs.release_tag != ''
     needs: build
     strategy:
       matrix:
@@ -41,18 +35,22 @@ jobs:
           case(
             matrix.arch == 'x64', '64',
             matrix.arch
-          ) 
-        }} 
+          )
+        }}
     steps:
     - name: Checkout
       uses: actions/checkout@v7
+
+    - name: Generate date tag
+      id: tag
+      run: echo "tag=v$(TZ=Asia/Shanghai date +'%Y.%m.%d')" >> $GITHUB_OUTPUT
 
     - name: Restore build artifacts
       uses: actions/download-artifact@v8
       with:
         name: ${{ matrix.arch }}
         path: v2rayN-macos-${{ env.Arch }}
-    
+
     - name: Setup create-dmg
       run: brew install create-dmg
 
@@ -60,15 +58,15 @@ jobs:
       run: chmod 755 package-osx.sh
 
     - name: Package dmg
-      run: ./package-osx.sh macos-$Arch v2rayN-macos-$Arch ${{ inputs.release_tag }}
+      run: ./package-osx.sh macos-$Arch v2rayN-macos-$Arch ${{ steps.tag.outputs.tag }}
 
     - name: Sleep for race condition between matrix jobs
       run: sleep "$(od -An -N2 -tu2 /dev/urandom | awk 'NR==1{printf "%.2f", $1/5461}')"
-    
+
     - name: Upload dmg to release
       uses: svenstaro/upload-release-action@v2
       with:
         file: ${{ github.workspace }}/v2rayN*.dmg
-        tag: ${{ inputs.release_tag }}
+        tag: ${{ steps.tag.outputs.tag }}
         file_glob: true
         prerelease: true

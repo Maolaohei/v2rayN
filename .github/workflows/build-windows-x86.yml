@@ -2,10 +2,9 @@ name: release Windows x86
 
 on:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        required: false
-        type: string
+  push:
+    branches:
+      - master
 
 permissions:
   contents: write
@@ -13,7 +12,6 @@ permissions:
 jobs:
   package-x86:
     name: build and release windows x86 WPF & Avalonia
-    if: inputs.release_tag != ''
     runs-on: windows-latest
 
     strategy:
@@ -33,6 +31,11 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+
+      - name: Generate date tag
+        id: tag
+        shell: pwsh
+        run: echo "tag=v$((Get-Date).ToString('yyyy.MM.dd'))" >> $env:GITHUB_OUTPUT
 
       - name: Purge SDKs
         shell: pwsh
@@ -226,6 +229,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           file: ${{ matrix.zip_name }}
-          tag: ${{ inputs.release_tag }}
+          tag: ${{ steps.tag.outputs.tag }}
           prerelease: true
           overwrite: true
