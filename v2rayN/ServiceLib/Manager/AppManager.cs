@@ -124,6 +124,40 @@ public sealed class AppManager
         {
             Logging.SaveLog("AppExitAsync Begin");
 
+            // Phase 1: Stop NetBridge (WinDivert) FIRST — before killing the core.
+            // WinDivert intercepts traffic at kernel level; if not explicitly
+            // stopped the driver retains stale hooks and the network stays dead
+            // after the process exits.
+            // Use StopForShutdown with timeout — if WinDivert hangs, we must
+            // not block the process exit indefinitely.
+            try
+            {
+                var stopped = await NetBridgeManager.Instance.StopForShutdown(3000);
+                Logging.SaveLog(stopped
+                    ? "NetBridge stopped (ForcedShutdown)"
+                    : "NetBridge stop timed out, WinDivert may still be active");
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog($"NetBridge stop failed: {ex.Message}");
+            }
+
+            // Phase 2: Release WindowsJobService — ensures child processes
+            // (xray, sing-box) are killed and the job object handle is freed.
+            if (Utils.IsWindows())
+            {
+                try
+                {
+                    CoreManager.Instance.StopWindowsJob();
+                    Logging.SaveLog("WindowsJobService stopped");
+                }
+                catch (Exception ex)
+                {
+                    Logging.SaveLog($"WindowsJobService stop failed: {ex.Message}");
+                }
+            }
+
+            // Phase 3: Clean up proxy, config, core
             await SysProxyHandler.UpdateSysProxy(_config, true);
             AppEvents.AppExitRequested.Publish();
             await Task.Delay(50); //Wait for AppExitRequested to be processed

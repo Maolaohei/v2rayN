@@ -3,7 +3,6 @@ namespace ServiceLib.Handler;
 public static class ConnectionHandler
 {
     private static readonly string _tag = "ConnectionHandler";
-    private static readonly ConcurrentDictionary<string, HttpClient> _pingClients = new();
 
     /// <summary>
     /// Runs ping and IP checks and returns a formatted result string.
@@ -76,13 +75,11 @@ public static class ConnectionHandler
             using var cts = new CancellationTokenSource();
             cts.CancelAfter(TimeSpan.FromSeconds(downloadTimeout));
 
-            var proxyKey = webProxy?.ToString() ?? "";
-            var client = _pingClients.GetOrAdd(proxyKey, _ =>
-                new HttpClient(new SocketsHttpHandler()
-                {
-                    Proxy = webProxy,
-                    UseProxy = webProxy != null
-                }));
+            using var client = new HttpClient(new SocketsHttpHandler()
+            {
+                Proxy = webProxy,
+                UseProxy = webProxy != null
+            });
 
             List<int> oneTime = [];
             for (var i = 0; i < 2; i++)

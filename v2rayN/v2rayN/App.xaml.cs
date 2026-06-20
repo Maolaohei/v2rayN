@@ -70,6 +70,25 @@ public partial class App : Application
     {
         Logging.SaveLog("OnExit");
         base.OnExit(e);
+
+        // Safety-net: ensure WinDivert is released before killing the process.
+        // AppExitAsync should have already done this, but if the shutdown race
+        // skipped it we must try here — otherwise the kernel driver retains
+        // stale hooks and the network stays dead.
+        // Use StopForShutdown with ForcedShutdown state + timeout.
+        try
+        {
+            var stopTask = NetBridgeManager.Instance.StopForShutdown(2000);
+            if (!stopTask.Wait(2500))
+            {
+                Logging.SaveLog("NetBridge stop timed out in OnExit");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog($"NetBridge stop failed in OnExit: {ex.Message}");
+        }
+
         Process.GetCurrentProcess().Kill();
     }
 }

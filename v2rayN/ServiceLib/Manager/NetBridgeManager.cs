@@ -21,6 +21,7 @@ public sealed class NetBridgeManager
     private const int MaxRestartAttempts = 3;
     private const int RestartCooldownSeconds = 60;
     private System.Threading.Timer? _networkChangeDebounceTimer;
+    private NetBridgeHealthMonitor? _healthMonitor;
 
     // Connection statistics
     private long _totalConnections;
@@ -60,7 +61,13 @@ public sealed class NetBridgeManager
             }
 
             _ruleConfigs = BuildRuleConfigs(_config.NetBridgeItem?.RuleProcess);
-            _isInitialized = true;
+
+            _healthMonitor?.Dispose();
+            _healthMonitor = new NetBridgeHealthMonitor(
+                forceRecover: async () => { _isProxyRunning = false; await RestartAsync(); },
+                isRunning: () => _isProxyRunning,
+                log: msg => SafeInvoke(false, msg));
+
             await SafeInvoke(false, "NetBridge 初始化成功");
         }
         catch (Exception ex)
@@ -77,6 +84,7 @@ public sealed class NetBridgeManager
         {
             Interlocked.Increment(ref _totalConnections);
             _processConnections.AddOrUpdate(processName, 1, (_, count) => count + 1);
+            _healthMonitor?.RecordTraffic(_totalConnections);
 
             // Log at most once per second to avoid flooding
             var now = Environment.TickCount;
@@ -202,11 +210,49 @@ public sealed class NetBridgeManager
         return true;
     }
 
+    public async Task<bool> StopForShutdown(int timeoutMs = 3000)
+    {
+        try
+        {
+            StopWatchdog();
+            StopNetworkMonitor();
+            _healthMonitor?.Dispose();
+
+            if (_netBridgeService != null)
+            {
+                using var cts = new CancellationTokenSource(timeoutMs);
+                await Task.Run(() =>
+                {
+                    try { _netBridgeService.Stop(); }
+                    catch { }
+                }, cts.Token).ConfigureAwait(false);
+            }
+            _isProxyRunning = false;
+            _isInitialized = false;
+        }
+        catch (OperationCanceledException)
+        {
+            _isProxyRunning = false;
+            _isInitialized = false;
+            return false;
+        }
+        catch (Exception ex)
+        {
+            var error = $"Failed to stop NetBridgeService: {ex.Message}";
+            await SafeInvoke(true, error);
+            _isProxyRunning = false;
+            _isInitialized = false;
+            return false;
+        }
+        return true;
+    }
+
     #region Watchdog
 
     private void StartWatchdog()
     {
         StopWatchdog();
+        _healthMonitor?.StartStuckMonitor(TimeSpan.FromMinutes(1));
         _watchdogTimer = new System.Threading.Timer(async _ =>
         {
             if (!_isProxyRunning) return;
@@ -217,6 +263,12 @@ public sealed class NetBridgeManager
                 if (!await CheckHealthAsync())
                 {
                     await SafeInvoke(true, "NetBridge health check failed, attempting restart...");
+                    _isProxyRunning = false;
+                    _ = RestartAsync();
+                }
+                else if (!await NetBridgeHealthMonitor.VerifyConnectivityAsync())
+                {
+                    await SafeInvoke(true, "NetBridge connectivity lost, forcing restart...");
                     _isProxyRunning = false;
                     _ = RestartAsync();
                 }
@@ -248,6 +300,7 @@ public sealed class NetBridgeManager
 
     private void StopWatchdog()
     {
+        _healthMonitor?.StopStuckMonitor();
         _watchdogTimer?.Dispose();
         _watchdogTimer = null;
     }

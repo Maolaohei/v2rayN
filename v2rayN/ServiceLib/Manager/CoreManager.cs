@@ -292,5 +292,24 @@ public class CoreManager
         }
     }
 
+    /// <summary>
+    /// Release the Windows Job Object handle. Called during app exit to
+    /// ensure child processes (xray, sing-box) are killed and the kernel
+    /// job object is freed before the parent process exits.
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    public void StopWindowsJob()
+    {
+        if (_processJob != null)
+        {
+            try
+            {
+                _processJob.Dispose();
+            }
+            catch { }
+            _processJob = null;
+        }
+    }
+
     #endregion Process
 }

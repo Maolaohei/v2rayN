@@ -163,6 +163,8 @@ public class BackupAndRestoreViewModel : MyReactiveObject
             return false;
         }
 
+        await StopNetBridgeForBackup();
+
         var configDir = Utils.GetConfigPath();
         var configDirZipTemp = Utils.GetTempPath($"v2rayN_{DateTime.Now:yyyyMMddHHmmss}");
         var configDirTemp = Path.Combine(configDirZipTemp, _guiConfigs);
@@ -171,5 +173,20 @@ public class BackupAndRestoreViewModel : MyReactiveObject
         var ret = FileUtils.CreateFromDirectory(configDirZipTemp, fileName);
         Directory.Delete(configDirZipTemp, true);
         return await Task.FromResult(ret);
+    }
+
+    private async Task StopNetBridgeForBackup()
+    {
+        try
+        {
+            if (NetBridgeManager.Instance.IsRunning)
+            {
+                await NetBridgeManager.Instance.Stop();
+            }
+        }
+        catch
+        {
+            // Swallow exceptions during backup cleanup
+        }
     }
 }
