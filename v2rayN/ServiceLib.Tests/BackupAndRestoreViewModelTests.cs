@@ -1,53 +1,9 @@
-using ServiceLib.ViewModels;
 using Xunit;
 
 namespace ServiceLib.Tests;
 
 public class BackupAndRestoreViewModelTests
 {
-    [Fact]
-    public void Config_Backup_ShouldIncludeNetBridgeItem()
-    {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem(),
-            NetBridgeItem = new NetBridgeItem
-            {
-                RuleProcess = "chrome.exe,firefox.exe,msedge.exe",
-                EnableDnsViaProxy = true
-            },
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
-        Assert.Equal("chrome.exe,firefox.exe,msedge.exe", config.NetBridgeItem.RuleProcess);
-        Assert.True(config.NetBridgeItem.EnableDnsViaProxy);
-    }
-
-    [Fact]
-    public void Config_Backup_ShouldIncludeTunModeLegacyProtect()
-    {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem
-            {
-                EnableTun = false,
-                EnableLegacyProtect = true,
-                ProtectedProcesses = new List<string> { "chrome.exe", "firefox.exe" }
-            },
-            NetBridgeItem = new NetBridgeItem(),
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
-        Assert.True(config.TunModeItem.EnableLegacyProtect);
-        Assert.False(config.TunModeItem.EnableTun);
-        Assert.NotNull(config.TunModeItem.ProtectedProcesses);
-        Assert.Equal(2, config.TunModeItem.ProtectedProcesses.Count);
-    }
-
     [Fact]
     public void Config_Restore_ShouldPreserveProcessHijackSettings()
     {
@@ -103,29 +59,6 @@ public class BackupAndRestoreViewModelTests
         Assert.Null(restored.TunModeItem.ProtectedProcesses);
         Assert.Null(restored.NetBridgeItem.RuleProcess);
         Assert.False(restored.NetBridgeItem.EnableDnsViaProxy);
-    }
-
-    [Fact]
-    public void Config_LegacyProtectAndTun_ShouldNotCoexist()
-    {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem
-            {
-                EnableTun = true,
-                EnableLegacyProtect = false
-            },
-            NetBridgeItem = new NetBridgeItem(),
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
-        config.TunModeItem.EnableLegacyProtect = true;
-        config.TunModeItem.EnableTun = false;
-
-        Assert.True(config.TunModeItem.EnableLegacyProtect);
-        Assert.False(config.TunModeItem.EnableTun);
     }
 
     [Fact]

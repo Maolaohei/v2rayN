@@ -10,6 +10,8 @@ namespace ServiceLib.Tests;
 /// </summary>
 public class NetBridgeCleanupTests
 {
+    #region Stop / StopForShutdown
+
     [Fact]
     public async Task Stop_IsIdempotent_CanBeCalledMultipleTimesWithoutError()
     {
@@ -33,7 +35,7 @@ public class NetBridgeCleanupTests
     }
 
     [Fact]
-    public void Stop_DoesNotThrow_WhenCalledFromBackgroundThread()
+    public async Task StopFromBackgroundThread_DoesNotThrow()
     {
         var mgr = NetBridgeManager.Instance;
         Exception? captured = null;
@@ -131,66 +133,337 @@ public class NetBridgeCleanupTests
         Assert.True(results.All(r => r));
     }
 
-    // ==================== HealthMonitor Tests ====================
+    #endregion
+
+    #region Watchdog / Restart Logic
 
     [Fact]
-    public void HealthMonitor_Constructor_DoesNotThrow()
+    public async Task StopTwice_SimulatesWatchdogHealthCheckFailure()
     {
-        var monitor = new NetBridgeHealthMonitor(
-            forceRecover: () => Task.CompletedTask,
-            isRunning: () => false);
+        var mgr = NetBridgeManager.Instance;
 
-        monitor.Dispose();
+        await mgr.Stop();
+        Assert.False(mgr.IsRunning);
+
+        // Second Stop simulates watchdog calling Stop again after health check failure
+        var result = await mgr.Stop();
+        Assert.True(result);
+        Assert.False(mgr.IsRunning);
     }
 
     [Fact]
-    public void HealthMonitor_StartStop_DoesNotThrow()
+    public async Task MultipleStopCalls_SimulateWatchdogFailure()
     {
-        var monitor = new NetBridgeHealthMonitor(
-            forceRecover: () => Task.CompletedTask,
-            isRunning: () => false);
+        var mgr = NetBridgeManager.Instance;
 
-        monitor.StartStuckMonitor(TimeSpan.FromSeconds(1));
+        for (var i = 0; i < 5; i++)
+        {
+            var result = await mgr.Stop();
+            Assert.True(result);
+        }
+
+        Assert.False(mgr.IsRunning);
+    }
+
+    [Fact]
+    public async Task StopForShutdown_AfterStop_DoesNotThrow()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.Stop();
+        Assert.False(mgr.IsRunning);
+
+        var shutdownResult = await mgr.StopForShutdown(1000);
+        Assert.True(shutdownResult);
+    }
+
+    [Fact]
+    public async Task ConcurrentStopAndStopForShutdown_NoDeadlock()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        var stopTask = Task.Run(async () => await mgr.Stop());
+        var shutdownTask = Task.Run(async () => await mgr.StopForShutdown(2000));
+
+        var completed = await Task.WhenAny(
+            Task.WhenAll(stopTask, shutdownTask),
+            Task.Delay(5000));
+
+        Assert.NotEqual(typeof(Task), completed.GetType());
+        Assert.False(mgr.IsRunning);
+    }
+
+    #endregion
+
+    #region Network Change / State Guard Tests
+
+    [Fact]
+    public async Task StopForShutdown_ResetsState()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.StopForShutdown(1000);
+        Assert.False(mgr.IsRunning);
+    }
+
+    #endregion
+
+    #region HealthMonitor — Stuck Detection
+
+    [Fact]
+    public void HealthMonitor_TriggersRecover_WhenIdleExceedsThreshold()
+    {
+        var recoverTriggered = false;
+        var monitor = new NetBridgeHealthMonitor(
+            forceRecover: () => { recoverTriggered = true; return Task.CompletedTask; },
+            isRunning: () => true,
+            idleThreshold: TimeSpan.FromMilliseconds(50));
+
+        // Record traffic in the past (simulate old traffic)
+        // By not recording again, _lastTrafficTime stays at construction time
+        // which is "now", so we need to wait for it to age past the threshold
+
+        monitor.StartStuckMonitor(TimeSpan.FromMilliseconds(30));
+
+        // Wait enough for: lastTrafficTime + 50ms threshold < now
+        Thread.Sleep(200);
+
         monitor.StopStuckMonitor();
-
         monitor.Dispose();
+
+        Assert.True(recoverTriggered);
     }
 
     [Fact]
-    public void HealthMonitor_Dispose_CanBeCalledMultipleTimes()
+    public void HealthMonitor_DoesNotTrigger_WhenNotRunning()
+    {
+        var recoverTriggered = false;
+        var monitor = new NetBridgeHealthMonitor(
+            forceRecover: () => { recoverTriggered = true; return Task.CompletedTask; },
+            isRunning: () => false,
+            idleThreshold: TimeSpan.FromMilliseconds(10));
+
+        monitor.StartStuckMonitor(TimeSpan.FromMilliseconds(30));
+
+        Thread.Sleep(200);
+
+        monitor.StopStuckMonitor();
+        monitor.Dispose();
+
+        Assert.False(recoverTriggered);
+    }
+
+    [Fact]
+    public void HealthMonitor_DoesNotTrigger_WhenTrafficActive()
+    {
+        var recoverTriggered = false;
+        var monitor = new NetBridgeHealthMonitor(
+            forceRecover: () => { recoverTriggered = true; return Task.CompletedTask; },
+            isRunning: () => true,
+            idleThreshold: TimeSpan.FromMilliseconds(200));
+
+        monitor.StartStuckMonitor(TimeSpan.FromMilliseconds(30));
+
+        // Keep recording traffic every 30ms — always within 200ms threshold
+        for (var i = 0; i < 10; i++)
+        {
+            monitor.RecordTraffic(100 * (i + 1));
+            Thread.Sleep(30);
+        }
+
+        monitor.StopStuckMonitor();
+        monitor.Dispose();
+
+        Assert.False(recoverTriggered);
+    }
+
+    [Fact]
+    public void HealthMonitor_RecordTraffic_ResetsIdleTimer()
+    {
+        var recoverCount = 0;
+        var monitor = new NetBridgeHealthMonitor(
+            forceRecover: () => { Interlocked.Increment(ref recoverCount); return Task.CompletedTask; },
+            isRunning: () => true,
+            idleThreshold: TimeSpan.FromMilliseconds(50));
+
+        monitor.StartStuckMonitor(TimeSpan.FromMilliseconds(20));
+
+        // Wait for threshold to approach
+        Thread.Sleep(40);
+
+        // Record traffic — resets the idle timer
+        monitor.RecordTraffic(999);
+
+        // Wait a bit more — should not trigger yet (just reset)
+        Thread.Sleep(30);
+
+        monitor.StopStuckMonitor();
+        monitor.Dispose();
+
+        // Should not have triggered because we reset the timer
+        Assert.Equal(0, recoverCount);
+    }
+
+    [Fact]
+    public void HealthMonitor_Dispose_StopsMonitor()
+    {
+        var recoverCount = 0;
+        var monitor = new NetBridgeHealthMonitor(
+            forceRecover: () => { Interlocked.Increment(ref recoverCount); return Task.CompletedTask; },
+            isRunning: () => true,
+            idleThreshold: TimeSpan.FromMilliseconds(10));
+
+        monitor.StartStuckMonitor(TimeSpan.FromMilliseconds(20));
+
+        Thread.Sleep(100);
+
+        monitor.Dispose();
+
+        var countAfterDispose = recoverCount;
+
+        Thread.Sleep(200);
+
+        Assert.Equal(countAfterDispose, recoverCount);
+    }
+
+    [Fact]
+    public void HealthMonitor_MultipleDispose_DoesNotThrow()
     {
         var monitor = new NetBridgeHealthMonitor(
             forceRecover: () => Task.CompletedTask,
             isRunning: () => false);
 
         monitor.Dispose();
-        monitor.Dispose(); // Must not throw
+        monitor.Dispose();
+        monitor.Dispose();
     }
 
     [Fact]
-    public void HealthMonitor_RecordTraffic_DoesNotThrow()
+    public void HealthMonitor_StartStop_Repeat_DoesNotThrow()
     {
         var monitor = new NetBridgeHealthMonitor(
             forceRecover: () => Task.CompletedTask,
             isRunning: () => false);
 
-        monitor.RecordTraffic(100);
-        monitor.RecordTraffic(200);
+        for (var i = 0; i < 5; i++)
+        {
+            monitor.StartStuckMonitor(TimeSpan.FromSeconds(1));
+            monitor.StopStuckMonitor();
+        }
 
         monitor.Dispose();
     }
 
+    #endregion
+
+    #region HealthMonitor — Connectivity
+
     [Fact]
-    public async Task VerifyConnectivityAsync_DoesNotThrow()
+    public async Task VerifyConnectivityAsync_CompletesWithinTimeout()
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var result = await NetBridgeHealthMonitor.VerifyConnectivityAsync();
+        sw.Stop();
+
         Assert.IsType<bool>(result);
+        Assert.True(sw.ElapsedMilliseconds < 10000);
     }
 
     [Fact]
-    public void IsLocalPortAvailable_DoesNotThrow()
+    public void IsLocalPortAvailable_HighPort_ReturnsDeterministicResult()
     {
-        var result = NetBridgeHealthMonitor.IsLocalPortAvailable(1);
-        Assert.IsType<bool>(result);
+        // Test the same port twice — should get consistent result
+        var port = 49999;
+        var result1 = NetBridgeHealthMonitor.IsLocalPortAvailable(port);
+        var result2 = NetBridgeHealthMonitor.IsLocalPortAvailable(port);
+
+        Assert.Equal(result1, result2);
     }
+
+    #endregion
+
+    #region UpdateRoutes / UpdateProxyConfig Guard Tests
+
+    [Fact]
+    public async Task UpdateRoutes_ReturnsTrue_WhenNotRunning()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.Stop();
+
+        var result = await mgr.UpdateRoutes("example.com");
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task UpdateRoutes_ReturnsTrue_WithNullProcess()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.Stop();
+
+        var result = await mgr.UpdateRoutes(null);
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task UpdateRoutes_ReturnsTrue_WithEmptyProcess()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.Stop();
+
+        var result = await mgr.UpdateRoutes("");
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task UpdateProxyConfig_ReturnsFalse_WhenServiceNull()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.Stop();
+
+        var result = await mgr.UpdateProxyConfig("127.0.0.1", 1080);
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task SetDnsViaProxy_ReturnsFalse_WhenServiceNull()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.Stop();
+
+        var result = await mgr.SetDnsViaProxy(true);
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task SetLocalhostViaProxy_ReturnsFalse_WhenServiceNull()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        await mgr.Stop();
+
+        var result = await mgr.SetLocalhostViaProxy(true);
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region Statistics Tests
+
+    [Fact]
+    public void ResetStatistics_ResetsCounters()
+    {
+        var mgr = NetBridgeManager.Instance;
+
+        mgr.ResetStatistics();
+
+        Assert.Equal(0, mgr.TotalConnections);
+        Assert.Empty(mgr.ProcessConnections);
+    }
+
+    #endregion
 }

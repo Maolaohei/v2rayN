@@ -12,15 +12,17 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     private readonly Func<Task> _forceRecover;
     private readonly Func<bool> _isRunning;
     private readonly Func<string, Task>? _log;
+    private readonly TimeSpan _idleThreshold;
     private System.Threading.Timer? _stuckTimer;
     private long _lastTrafficBytes;
     private DateTime _lastTrafficTime = DateTime.UtcNow;
 
-    public NetBridgeHealthMonitor(Func<Task> forceRecover, Func<bool> isRunning, Func<string, Task>? log = null)
+    public NetBridgeHealthMonitor(Func<Task> forceRecover, Func<bool> isRunning, Func<string, Task>? log = null, TimeSpan? idleThreshold = null)
     {
         _forceRecover = forceRecover;
         _isRunning = isRunning;
         _log = log;
+        _idleThreshold = idleThreshold ?? TimeSpan.FromMinutes(2);
     }
 
     public void StartStuckMonitor(TimeSpan interval)
@@ -46,9 +48,9 @@ public sealed class NetBridgeHealthMonitor : IDisposable
         if (!_isRunning()) return;
 
         var idle = DateTime.UtcNow - _lastTrafficTime;
-        if (idle < TimeSpan.FromMinutes(2)) return;
+        if (idle < _idleThreshold) return;
 
-        await _log?.Invoke($"NetBridge stuck: no traffic for {(int)idle.TotalSeconds}s, triggering recovery");
+        if (_log != null) await _log.Invoke($"NetBridge stuck: no traffic for {(int)idle.TotalSeconds}s, triggering recovery");
         await _forceRecover();
     }
 

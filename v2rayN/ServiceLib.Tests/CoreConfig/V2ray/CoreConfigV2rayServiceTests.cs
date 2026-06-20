@@ -558,5 +558,6 @@ public class CoreConfigV2rayServiceTests
         tunInbound!.settings.autoSystemRoutingTable.Should().NotContain("0.0.0.0/0");
         tunInbound!.settings.autoSystemRoutingTable.Should().Contain("10.0.0.0/32");
         tunInbound!.settings.autoSystemRoutingTable.Should().Contain("10.0.0.2/31");
+        tunInbound!.settings.autoSystemRoutingTable.Should().NotContain("192.168.1.0/24");
     }
 }

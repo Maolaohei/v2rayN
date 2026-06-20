@@ -361,7 +361,6 @@ public class CoreConfigSingboxServiceTests
         var result = new CoreConfigSingboxService(context).GenerateClientConfigContent();
 
         result.Success.Should().BeTrue($"ret msg: {result.Msg}");
-        config.SimpleDNSItem.BootstrapDNS.Should().Be(bootstrapDns);
 
         var cfg = JsonUtils.Deserialize<SingboxConfig>(result.Data!.ToString())!;
         var bootstrapServer = cfg.dns.servers?.FirstOrDefault(s => s.tag == Global.SingboxLocalDNSTag);

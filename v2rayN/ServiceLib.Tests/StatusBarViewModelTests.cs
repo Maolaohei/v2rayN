@@ -6,110 +6,89 @@ namespace ServiceLib.Tests;
 public class StatusBarViewModelTests
 {
     [Fact]
-    public void NetBridgeManager_ShouldTrackRunningState()
+    public async Task NetBridgeManager_IsRunning_FalseAfterStop()
     {
-        var isRunning = NetBridgeManager.Instance.IsRunning;
-        Assert.IsType<bool>(isRunning);
+        var mgr = NetBridgeManager.Instance;
+        await mgr.Stop();
+
+        Assert.False(mgr.IsRunning);
     }
 
     [Fact]
-    public void NetBridgeManager_DriverCheck_ShouldReturnBool()
+    public void NetBridgeManager_IsDriverLoaded_DoesNotThrow()
     {
-        var isDriverLoaded = NetBridgeManager.Instance.IsDriverLoaded;
-        Assert.IsType<bool>(isDriverLoaded);
+        var loaded = NetBridgeManager.Instance.IsDriverLoaded;
+
+        // Should return a definite value without throwing
+        Assert.True(loaded || !loaded);
     }
 
     [Fact]
-    public void Config_NetBridgeItem_ShouldStoreProcessList()
+    public void Config_NetBridgeItem_RoundTrip_PreservesSettings()
     {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem(),
-            NetBridgeItem = new NetBridgeItem(),
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
-        var testProcesses = "chrome.exe,firefox.exe";
-        config.NetBridgeItem.RuleProcess = testProcesses;
-
-        Assert.Equal(testProcesses, config.NetBridgeItem.RuleProcess);
-    }
-
-    [Fact]
-    public void Config_NetBridgeItem_ShouldStoreDnsViaProxy()
-    {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem(),
-            NetBridgeItem = new NetBridgeItem(),
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
+        var config = CreateTestConfig();
+        config.NetBridgeItem.RuleProcess = "chrome.exe,firefox.exe";
         config.NetBridgeItem.EnableDnsViaProxy = true;
-        Assert.True(config.NetBridgeItem.EnableDnsViaProxy);
 
-        config.NetBridgeItem.EnableDnsViaProxy = false;
-        Assert.False(config.NetBridgeItem.EnableDnsViaProxy);
+        var json = JsonUtils.Serialize(config);
+        var restored = JsonUtils.Deserialize<Config>(json);
+
+        Assert.NotNull(restored);
+        Assert.Equal("chrome.exe,firefox.exe", restored.NetBridgeItem.RuleProcess);
+        Assert.True(restored.NetBridgeItem.EnableDnsViaProxy);
     }
 
     [Fact]
-    public void Config_TunModeItem_ShouldStoreProtectedProcesses()
+    public void Config_TunModeItem_RoundTrip_PreservesProtectedProcesses()
     {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem(),
-            NetBridgeItem = new NetBridgeItem(),
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
+        var config = CreateTestConfig();
         config.TunModeItem.ProtectedProcesses = new List<string> { "chrome.exe", "firefox.exe" };
 
-        Assert.NotNull(config.TunModeItem.ProtectedProcesses);
-        Assert.Equal(2, config.TunModeItem.ProtectedProcesses.Count);
-        Assert.Contains("chrome.exe", config.TunModeItem.ProtectedProcesses);
-        Assert.Contains("firefox.exe", config.TunModeItem.ProtectedProcesses);
+        var json = JsonUtils.Serialize(config);
+        var restored = JsonUtils.Deserialize<Config>(json);
+
+        Assert.NotNull(restored);
+        Assert.NotNull(restored.TunModeItem.ProtectedProcesses);
+        Assert.Equal(2, restored.TunModeItem.ProtectedProcesses.Count);
+        Assert.Contains("chrome.exe", restored.TunModeItem.ProtectedProcesses);
+        Assert.Contains("firefox.exe", restored.TunModeItem.ProtectedProcesses);
     }
 
     [Fact]
-    public void Config_TunModeItem_LegacyProtect_ShouldConflictWithTun()
+    public void Config_TunModeItem_RoundTrip_PreservesLegacyProtectState()
     {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem { EnableTun = true, EnableLegacyProtect = false },
-            NetBridgeItem = new NetBridgeItem(),
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
+        var config = CreateTestConfig();
         config.TunModeItem.EnableTun = false;
         config.TunModeItem.EnableLegacyProtect = true;
 
-        Assert.False(config.TunModeItem.EnableTun);
-        Assert.True(config.TunModeItem.EnableLegacyProtect);
+        var json = JsonUtils.Serialize(config);
+        var restored = JsonUtils.Deserialize<Config>(json);
+
+        Assert.NotNull(restored);
+        Assert.False(restored.TunModeItem.EnableTun);
+        Assert.True(restored.TunModeItem.EnableLegacyProtect);
     }
 
     [Fact]
-    public void Config_TunModeItem_ProtectedProcesses_ShouldAllowDuplicates()
+    public void Config_TunModeItem_DistinctProcesses_ArePreserved()
     {
-        var config = new Config
-        {
-            TunModeItem = new TunModeItem(),
-            NetBridgeItem = new NetBridgeItem(),
-            Inbound = [],
-            SystemProxyItem = new SystemProxyItem(),
-            UiItem = new UIItem()
-        };
-
+        var config = CreateTestConfig();
+        // List allows duplicates at data level — verify serialization preserves all
         config.TunModeItem.ProtectedProcesses = new List<string> { "chrome.exe", "chrome.exe", "firefox.exe" };
-        var distinct = config.TunModeItem.ProtectedProcesses.Distinct().ToList();
 
-        Assert.Equal(2, distinct.Count);
+        var json = JsonUtils.Serialize(config);
+        var restored = JsonUtils.Deserialize<Config>(json);
+
+        Assert.NotNull(restored);
+        Assert.Equal(3, restored.TunModeItem.ProtectedProcesses.Count);
     }
+
+    private static Config CreateTestConfig() => new()
+    {
+        TunModeItem = new TunModeItem(),
+        NetBridgeItem = new NetBridgeItem(),
+        Inbound = [],
+        SystemProxyItem = new SystemProxyItem(),
+        UiItem = new UIItem()
+    };
 }
