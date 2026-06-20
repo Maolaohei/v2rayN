@@ -30,6 +30,13 @@ jobs:
             matrix.arch
           )
         }}
+      XrayArch: |-
+        ${{
+          case(
+            matrix.arch == 'x64', 'windows-64',
+            matrix.arch
+          )
+        }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -44,8 +51,22 @@ jobs:
           name: ${{ matrix.arch }}
           path: v2rayN-windows-${{ env.Arch }}
 
-      - name: Get v2rayN-core-bin
+      - name: Get v2rayN-core-bin (sing-box + geo files)
         run: wget -nv -O v2rayN-windows-${{ env.Arch }}.zip "https://github.com/2dust/v2rayN-core-bin/raw/refs/heads/master/v2rayN-windows-${{ env.Arch }}.zip"
+
+      - name: Download Bray-Core xray (latest release)
+        run: |
+          XRAY_URL=$(gh api repos/Maolaohei/Bray-Core/releases/latest --jq ".assets[] | select(.name == \"Xray-${{ env.XrayArch }}.zip\") | .browser_download_url")
+          wget -nv -O xray.zip "$XRAY_URL"
+
+      - name: Replace xray with Bray-Core
+        run: |
+          cd v2rayN-windows-${{ env.Arch }}
+          rm -rf bin/xray
+          mkdir -p bin/xray
+          unzip -o ../xray.zip -d bin/xray
+          chmod +x bin/xray/xray.exe
+          cd ..
 
       - name: Package zip archive
         run: 7z a -tZip v2rayN-windows-${{ env.Arch }}.zip v2rayN-windows-${{ env.Arch }} -mx1
