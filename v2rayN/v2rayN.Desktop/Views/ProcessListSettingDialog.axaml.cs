@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Collections;
+using Avalonia.Platform.Storage;
 using ServiceLib.Manager;
 using ServiceLib.Resx;
 
@@ -67,7 +68,7 @@ public partial class ProcessListSettingDialog : Window
             }
         };
         btnAddSelected.Click += BtnAddSelected_Click;
-        btnAddManual.Click += (_, _) => AddPresetProcesses(PresetBrowsers.Concat(PresetDevTools).ToList());
+        btnAddManual.Click += BtnAddManual_Click;
         btnRemoveSelected.Click += BtnRemoveSelected_Click;
         btnPresetBrowser.Click += (_, _) => AddPresetProcesses(PresetBrowsers);
         btnPresetDev.Click += (_, _) => AddPresetProcesses(PresetDevTools);
@@ -238,6 +239,36 @@ public partial class ProcessListSettingDialog : Window
     {
         _activeView.Refresh();
         UpdateStatus();
+    }
+
+    private void BtnAddManual_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var searchText = txtActiveSearch.Text?.Trim();
+        if (string.IsNullOrEmpty(searchText)) return;
+
+        var processNames = searchText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var addedCount = 0;
+        foreach (var proc in processNames)
+        {
+            var name = proc.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? proc : proc + ".exe";
+            if (!_activeProcesses.Any(a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase)))
+            {
+                _activeProcesses.Add(name);
+                addedCount++;
+            }
+        }
+
+        _sessionAddedCount += addedCount;
+        _activeView.Refresh();
+        _processView.Refresh();
+        UpdateStatus();
+
+        txtActiveSearch.Text = string.Empty;
+
+        if (addedCount > 0)
+        {
+            NoticeManager.Instance.Enqueue(string.Format(ResUI.ProcessListPresetAdded, addedCount));
+        }
     }
 
     private void BtnAddSelected_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

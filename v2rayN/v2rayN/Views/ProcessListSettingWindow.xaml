@@ -75,24 +75,25 @@
             Margin="0,4,0,0">
             <TabItem Header="{x:Static resx:ResUI.ProcessListRunning}">
                 <DockPanel>
-                    <StackPanel
-                        DockPanel.Dock="Top"
-                        Margin="0,0,0,4"
-                        HorizontalAlignment="Center"
-                        Orientation="Horizontal">
-                        <Button
-                            x:Name="btnRefresh"
-                            Margin="0,0,8,0"
-                            Padding="8,4"
-                            Content="🔄 刷新" />
-                        <Grid Width="180" Margin="0,0,8,0">
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <TextBox
                                 x:Name="txtSearch"
+                                Grid.Column="0"
                                 VerticalContentAlignment="Center"
                                 TextChanged="TxtSearch_TextChanged"
                                 KeyDown="TxtSearch_KeyDown" />
                             <TextBlock
                                 x:Name="txtSearchWatermark"
+                                Grid.Column="0"
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
                                 IsHitTestVisible="False"
@@ -100,13 +101,24 @@
                                 FontSize="12"
                                 Text="搜索进程名或应用名" />
                         </Grid>
+                        <Button
+                            x:Name="btnRefresh"
+                            Grid.Column="1"
+                            Margin="8,0,0,0"
+                            Padding="8,4"
+                            Content="🔄 刷新" />
+                    </Grid>
+                    <StackPanel
+                        DockPanel.Dock="Top"
+                        Margin="0,0,0,4"
+                        Orientation="Horizontal">
                         <CheckBox
                             x:Name="chkSelectAll"
+                            Margin="0,0,8,0"
                             Content="全选/取消全选"
                             VerticalAlignment="Center" />
                         <Button
                             x:Name="btnAddSelected"
-                            Margin="8,0,0,0"
                             Padding="8,4"
                             Content="{x:Static resx:ResUI.ProcessListAddSelected}" />
                     </StackPanel>
@@ -129,29 +141,28 @@
 
             <TabItem Header="{x:Static resx:ResUI.ProcessListActive}">
                 <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,4">
+                        <TextBox
+                            x:Name="txtActiveSearch"
+                            VerticalContentAlignment="Center"
+                            TextChanged="TxtActiveSearch_TextChanged"
+                            KeyDown="TxtActiveSearch_KeyDown" />
+                        <TextBlock
+                            x:Name="txtActiveSearchWatermark"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            IsHitTestVisible="False"
+                            Foreground="Gray"
+                            FontSize="12"
+                            Text="输入进程名或搜索..." />
+                    </Grid>
                     <StackPanel
                         DockPanel.Dock="Top"
                         Margin="0,0,0,4"
-                        HorizontalAlignment="Center"
                         Orientation="Horizontal">
-                        <Grid Width="150" Margin="0,0,8,0">
-                            <TextBox
-                                x:Name="txtActiveSearch"
-                                VerticalContentAlignment="Center"
-                                TextChanged="TxtActiveSearch_TextChanged"
-                                KeyDown="TxtActiveSearch_KeyDown" />
-                            <TextBlock
-                                x:Name="txtActiveSearchWatermark"
-                                Margin="6,0,0,0"
-                                VerticalAlignment="Center"
-                                IsHitTestVisible="False"
-                                Foreground="Gray"
-                                FontSize="12"
-                                Text="搜索进程名" />
-                        </Grid>
                         <Button
                             x:Name="btnAddManual"
-                            Margin="0,0,8,0"
+                            Margin="0,0,4,0"
                             Padding="8,4"
                             Content="{x:Static resx:ResUI.ProcessListAdd}" />
                         <Button

@@ -49,17 +49,16 @@
             Margin="0,0,0,12">
             <TabItem Header="{x:Static resx:ResUI.ProcessListRunning}">
                 <DockPanel>
-                    <StackPanel
+                    <WrapPanel
                         DockPanel.Dock="Top"
                         Margin="0,0,0,8"
-                        HorizontalAlignment="Center"
-                        Orientation="Horizontal">
+                        HorizontalAlignment="Center">
                         <Button
                             x:Name="btnRefresh"
-                            Margin="0,0,8,0"
+                            Margin="0,2,8,2"
                             Padding="8,4"
                             Content="🔄 刷新" />
-                        <Grid Width="180" Margin="0,0,8,0">
+                        <Grid Width="180" Margin="0,2,8,2">
                             <TextBox
                                 x:Name="txtSearch"
                                 TextChanged="TxtSearch_TextChanged"
@@ -75,14 +74,15 @@
                         </Grid>
                         <CheckBox
                             x:Name="chkSelectAll"
+                            Margin="0,2,8,2"
                             Content="全选/取消全选"
                             VerticalAlignment="Center" />
                         <Button
                             x:Name="btnAddSelected"
-                            Margin="8,0,0,0"
+                            Margin="0,2,8,2"
                             Padding="8,4"
                             Content="{x:Static resx:ResUI.ProcessListAddSelected}" />
-                    </StackPanel>
+                    </WrapPanel>
                     <ListBox
                         x:Name="lstProcesses"
                         BorderThickness="1"
@@ -103,12 +103,11 @@
 
             <TabItem Header="{x:Static resx:ResUI.ProcessListActive}">
                 <DockPanel>
-                    <StackPanel
+                    <WrapPanel
                         DockPanel.Dock="Top"
                         Margin="0,0,0,8"
-                        HorizontalAlignment="Center"
-                        Orientation="Horizontal">
-                        <Grid Width="150" Margin="0,0,8,0">
+                        HorizontalAlignment="Center">
+                        <Grid Width="150" Margin="0,2,8,2">
                             <TextBox
                                 x:Name="txtActiveSearch"
                                 TextChanged="TxtActiveSearch_TextChanged"
@@ -124,40 +123,37 @@
                         </Grid>
                         <Button
                             x:Name="btnAddManual"
-                            Margin="0,0,8,0"
+                            Margin="0,2,8,2"
                             Padding="8,4"
                             Content="{x:Static resx:ResUI.ProcessListAdd}" />
                         <Button
                             x:Name="btnRemoveSelected"
-                            Margin="0,0,8,0"
+                            Margin="0,2,8,2"
                             Padding="8,4"
                             Content="{x:Static resx:ResUI.ProcessListRemove}" />
-                        <Separator
-                            Margin="4,0"
-                            VerticalAlignment="Center"
-                            Width="1" />
                         <Button
                             x:Name="btnPresetBrowser"
-                            Margin="0,0,4,0"
+                            Margin="0,2,4,2"
                             Padding="8,4"
                             ToolTip="chrome, firefox, edge, brave, opera, vivaldi, arc"
                             Content="{x:Static resx:ResUI.ProcessListPresetBrowser}" />
                         <Button
                             x:Name="btnPresetDev"
-                            Margin="0,0,4,0"
+                            Margin="0,2,4,2"
                             Padding="8,4"
                             ToolTip="VS Code, Cursor, git, node, python, dotnet, claude, curl, wget, powershell"
                             Content="{x:Static resx:ResUI.ProcessListPresetDev}" />
                         <Button
                             x:Name="btnPresetAll"
-                            Margin="0,0,4,0"
+                            Margin="0,2,4,2"
                             Padding="8,4"
                             Content="{x:Static resx:ResUI.ProcessListPresetAll}" />
                         <Button
                             x:Name="btnImportFolder"
+                            Margin="0,2,0,2"
                             Padding="8,4"
                             Content="{x:Static resx:ResUI.ProcessListImportFolder}" />
-                    </StackPanel>
+                    </WrapPanel>
                     <ListBox
                         x:Name="lstActiveProcesses"
                         BorderThickness="1"
