@@ -100,24 +100,35 @@ public partial class MsgView
     {
         var lower = line.ToLowerInvariant();
 
-        if (lower.Contains("error") || lower.Contains("failed") || lower.Contains("exception")
+        // Error / Failure
+        if (lower.Contains("[error]") || lower.Contains("failed") || lower.Contains("exception")
             || lower.Contains("fail") || lower.Contains("✗") || lower.Contains("失败")
-            || lower.Contains("错误") || lower.Contains("异常"))
+            || lower.Contains("错误") || lower.Contains("异常") || lower.Contains("connectivity lost")
+            || lower.Contains("not found") || lower.Contains("denied"))
         {
             return System.Windows.Media.Brushes.Red;
         }
 
-        if (lower.Contains("warning") || lower.Contains("warn") || lower.Contains("⚠")
-            || lower.Contains("警告"))
+        // Warning
+        if (lower.Contains("[warning]") || lower.Contains("warn") || lower.Contains("⚠")
+            || lower.Contains("警告") || lower.Contains("forcing restart"))
         {
             return System.Windows.Media.Brushes.Orange;
         }
 
+        // Success
         if (lower.Contains("success") || lower.Contains("started") || lower.Contains("connected")
             || lower.Contains("✓") || lower.Contains("通过") || lower.Contains("成功")
-            || lower.Contains("完成") || lower.Contains("已停止"))
+            || lower.Contains("完成") || lower.Contains("已停止") || lower.Contains("启动服务")
+            || lower.Contains("初始化成功") || lower.Contains("reading config"))
         {
             return System.Windows.Media.Brushes.LimeGreen;
+        }
+
+        // Info prefix - keep default
+        if (lower.Contains("[info]"))
+        {
+            return System.Windows.Media.Brushes.DodgerBlue;
         }
 
         return System.Windows.SystemColors.ControlTextBrush;
