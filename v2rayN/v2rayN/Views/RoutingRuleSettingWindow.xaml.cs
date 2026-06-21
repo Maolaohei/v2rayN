@@ -235,22 +235,14 @@ public partial class RoutingRuleSettingWindow
             return;
         }
 
-        if (ViewModel?.RulesItems == null || ViewModel.RulesItems.Count == 0)
+        if (ViewModel?.CurrentRules == null || ViewModel.CurrentRules.Count == 0)
         {
             txtTestSummary.Text = "没有规则可测试";
             txtTestSummary.Foreground = Brushes.Gray;
             return;
         }
 
-        // Re-deserialize directly from raw RuleSet JSON to get Domain/Ip/Protocol values.
-        // The database JSON uses "Domains"/"Protocols"/"inboundTags" (plural) but RulesItem
-        // properties are "Domain"/"Protocol"/"InboundTag" (singular). Normalize before parsing.
-        var ruleSetJson = ViewModel.SelectedRouting.RuleSet ?? "";
-        ruleSetJson = ruleSetJson
-            .Replace("\"Domains\"", "\"Domain\"")
-            .Replace("\"Protocols\"", "\"Protocol\"")
-            .Replace("\"inboundTags\"", "\"InboundTag\"");
-        var rules = JsonUtils.Deserialize<List<RulesItem>>(ruleSetJson) ?? [];
+        var rules = ViewModel.CurrentRules;
 
         var results = RuleTestMatcher.TestAllRules(input, rules);
         var firstMatch = results.FirstOrDefault(r => r.IsFirstMatch);
@@ -402,12 +394,19 @@ public partial class RoutingRuleSettingWindow
     private static string FormatRuleFields(RulesItem rule)
     {
         var parts = new List<string>();
-        if (rule.Domain?.Count > 0) parts.Add($"domain:{rule.Domain.Count}");
-        if (rule.Ip?.Count > 0) parts.Add($"ip:{rule.Ip.Count}");
+        if (rule.Domain?.Count > 0) parts.Add($"domain:{FormatFieldValues(rule.Domain)}");
+        if (rule.Ip?.Count > 0) parts.Add($"ip:{FormatFieldValues(rule.Ip)}");
         if (rule.Port.IsNotEmpty()) parts.Add($"port:{rule.Port}");
         if (rule.Protocol?.Count > 0) parts.Add($"proto:{string.Join(",", rule.Protocol)}");
-        if (rule.Process?.Count > 0) parts.Add($"proc:{rule.Process.Count}");
+        if (rule.Process?.Count > 0) parts.Add($"proc:{FormatFieldValues(rule.Process)}");
         return parts.Count > 0 ? string.Join(" ", parts) : "(空规则)";
+    }
+
+    private static string FormatFieldValues(List<string> values)
+    {
+        if (values.Count <= 3)
+            return string.Join(", ", values);
+        return $"{values[0]}, {values[1]}, +{values.Count - 2}项";
     }
 
     #endregion

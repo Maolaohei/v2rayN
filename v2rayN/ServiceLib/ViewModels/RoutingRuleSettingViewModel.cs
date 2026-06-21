@@ -9,6 +9,8 @@ public class RoutingRuleSettingViewModel : MyReactiveObject
 
     public IObservableCollection<RulesItemModel> RulesItems { get; } = new ObservableCollectionExtended<RulesItemModel>();
 
+    public List<RulesItem> CurrentRules => _rules;
+
     [Reactive]
     public RulesItemModel SelectedSource { get; set; }
 

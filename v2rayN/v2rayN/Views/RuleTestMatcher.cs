@@ -454,6 +454,31 @@ public static class RuleTestMatcher
                 continue;
             }
 
+            if (r.StartsWith("domain:"))
+            {
+                var domain = r["domain:".Length..];
+                if (inputLower == domain || inputLower.EndsWith("." + domain)) return true;
+                continue;
+            }
+
+            if (r.StartsWith("plain:"))
+            {
+                var domain = r["plain:".Length..];
+                if (inputLower == domain || inputLower.EndsWith("." + domain)) return true;
+                continue;
+            }
+
+            if (r.StartsWith("regex:"))
+            {
+                try
+                {
+                    if (Regex.IsMatch(inputLower, r["regex:".Length..], RegexOptions.IgnoreCase))
+                        return true;
+                }
+                catch { }
+                continue;
+            }
+
             if (r.StartsWith("keyword:"))
             {
                 if (inputLower.Contains(r["keyword:".Length..])) return true;
@@ -463,6 +488,12 @@ public static class RuleTestMatcher
             if (r.StartsWith("full:"))
             {
                 if (inputLower == r["full:".Length..]) return true;
+                continue;
+            }
+
+            if (r.StartsWith("dotless:"))
+            {
+                if (!inputLower.Contains('.')) return true;
                 continue;
             }
 
