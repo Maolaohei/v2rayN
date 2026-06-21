@@ -78,19 +78,21 @@
                 AutomationProperties.Name="{x:Static resx:ResUI.TbAutoScrollToEnd}"
                 IsChecked="True" />
         </WrapPanel>
-        <RichTextBox
+        <TextBox
             Name="txtMsg"
             VerticalAlignment="Stretch"
+            AcceptsReturn="True"
             BorderThickness="0"
-            Foreground="{DynamicResource MaterialDesignBody}"
             FontSize="{DynamicResource StdFontSize-1}"
             HorizontalScrollBarVisibility="Auto"
             IsReadOnly="True"
             IsReadOnlyCaretVisible="True"
             IsUndoEnabled="False"
+            TextAlignment="Left"
+            TextWrapping="Wrap"
             UndoLimit="0"
             VerticalScrollBarVisibility="Visible">
-            <RichTextBox.ContextMenu>
+            <TextBox.ContextMenu>
                 <ContextMenu Style="{StaticResource DefContextMenu}">
                     <MenuItem
                         x:Name="menuMsgViewSelectAll"
@@ -111,7 +113,7 @@
                         Height="{StaticResource MenuItemHeight}"
                         Header="{x:Static resx:ResUI.menuMsgViewClear}" />
                 </ContextMenu>
-            </RichTextBox.ContextMenu>
-        </RichTextBox>
+            </TextBox.ContextMenu>
+        </TextBox>
     </DockPanel>
 </reactiveui:ReactiveUserControl>
