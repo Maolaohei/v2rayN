@@ -284,4 +284,5 @@ public class NetBridgeItem
 {
     public string? RuleProcess { get; set; }
     public bool EnableDnsViaProxy { get; set; }
+    public string ProtocolMode { get; set; } = "TCP";
 }

@@ -15,6 +15,7 @@ public partial class ProcessListSettingWindow
     private readonly ListCollectionView _processView;
     private readonly ListCollectionView _activeView;
     private bool _dnsViaBridge;
+    private string _protocolMode = "TCP";
     private int _sessionAddedCount;
     private readonly Action _onNetBridgeStateChanged;
 
@@ -27,13 +28,30 @@ public partial class ProcessListSettingWindow
 
     public string ResultProcessList { get; private set; } = "";
     public bool ResultDnsViaBridge { get; private set; }
+    public string ResultProtocolMode => _protocolMode;
 
-    public ProcessListSettingWindow(string processList, bool dnsViaBridge)
+    public ProcessListSettingWindow(string processList, bool dnsViaBridge, string protocolMode = "TCP")
     {
         InitializeComponent();
 
         _dnsViaBridge = dnsViaBridge;
+        _protocolMode = protocolMode;
         chkDnsViaBridge.IsChecked = dnsViaBridge;
+
+        // Initialize protocol radio buttons
+        switch (protocolMode.ToUpperInvariant())
+        {
+            case "UDP":
+                rbProtocolUdp.IsChecked = true;
+                break;
+            case "BOTH":
+            case "TCP+UDP":
+                rbProtocolBoth.IsChecked = true;
+                break;
+            default:
+                rbProtocolTcp.IsChecked = true;
+                break;
+        }
 
         var existingProcesses = processList
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -67,6 +85,9 @@ public partial class ProcessListSettingWindow
         btnPresetDev.Click += (_, _) => AddPresetProcesses(PresetDevTools);
         btnPresetAll.Click += (_, _) => AddPresetProcesses(PresetBrowsers.Concat(PresetDevTools).ToList());
         btnImportFolder.Click += BtnImportFolder_Click;
+        rbProtocolTcp.Checked += (_, _) => _protocolMode = "TCP";
+        rbProtocolUdp.Checked += (_, _) => _protocolMode = "UDP";
+        rbProtocolBoth.Checked += (_, _) => _protocolMode = "BOTH";
     }
 
     private bool FilterRunningProcess(object obj)

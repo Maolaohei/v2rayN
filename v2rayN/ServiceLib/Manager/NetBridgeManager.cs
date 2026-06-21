@@ -47,6 +47,13 @@ public sealed class NetBridgeManager : IDisposable
 
         try
         {
+            if (_netBridgeService != null)
+            {
+                try { _netBridgeService.Dispose(); }
+                catch { }
+                _netBridgeService = null;
+            }
+
             _netBridgeService = new NetBridgeService();
             _netBridgeService.LogReceived += msg =>
             {
@@ -64,7 +71,7 @@ public sealed class NetBridgeManager : IDisposable
                 return;
             }
 
-            _ruleConfigs = BuildRuleConfigs(_config.NetBridgeItem?.RuleProcess);
+            _ruleConfigs = BuildRuleConfigs(_config?.NetBridgeItem?.RuleProcess, _config?.NetBridgeItem?.ProtocolMode ?? "TCP");
 
             _healthMonitor?.Dispose();
             _healthMonitor = new NetBridgeHealthMonitor(
@@ -89,6 +96,7 @@ public sealed class NetBridgeManager : IDisposable
         {
             Interlocked.Increment(ref _totalConnections);
             _processConnections.AddOrUpdate(processName, 1, (_, count) => count + 1);
+            TcpConnectionResetter.TrackConnection(pid);
 
             if (_processConnections.Count > MaxProcessEntries)
             {
@@ -170,10 +178,22 @@ public sealed class NetBridgeManager : IDisposable
         {
             if (_netBridgeService == null)
             {
+                await Init(_updateFunc);
+            }
+
+            if (_netBridgeService == null)
+            {
                 return false;
             }
 
+            _netBridgeService.Stop();
+
             var started = _netBridgeService.Start();
+            if (!started)
+            {
+                await Task.Delay(500);
+                started = _netBridgeService.Start();
+            }
             if (!started)
             {
                 await SafeInvoke(true, "NetBridge native Start() returned false");
@@ -198,33 +218,23 @@ public sealed class NetBridgeManager : IDisposable
 
     public async Task<bool> Stop()
     {
-        if (!_isProxyRunning)
-        {
-            return true;
-        }
-
         try
         {
             StopWatchdog();
             StopNetworkMonitor();
 
-            if (_netBridgeService == null)
+            var resetCount = TcpConnectionResetter.ResetTrackedConnections();
+            if (resetCount > 0)
             {
-                _isProxyRunning = false;
-                _isInitialized = false;
-                return false;
+                await SafeInvoke(false, $"NetBridge: Reset {resetCount} TCP connections to force app reconnection");
             }
 
-            var stopped = _netBridgeService.Stop();
-            if (!stopped)
+            if (_netBridgeService != null)
             {
-                // Even if native stop fails, reset state so next Init() re-initializes
-                _isProxyRunning = false;
-                _isInitialized = false;
-                RaiseStateChanged();
-                return false;
+                _netBridgeService.Dispose();
             }
 
+            _netBridgeService = null;
             _isProxyRunning = false;
             _isInitialized = false;
             RaiseStateChanged();
@@ -233,6 +243,7 @@ public sealed class NetBridgeManager : IDisposable
         {
             var error = $"Failed to stop NetBridgeService: {ex.Message}";
             await SafeInvoke(true, error);
+            _netBridgeService = null;
             _isProxyRunning = false;
             _isInitialized = false;
             RaiseStateChanged();
@@ -249,31 +260,44 @@ public sealed class NetBridgeManager : IDisposable
             StopWatchdog();
             StopNetworkMonitor();
             _healthMonitor?.Dispose();
+            _healthMonitor = null;
+
+            var resetCount = TcpConnectionResetter.ResetTrackedConnections();
+            if (resetCount > 0)
+            {
+                await SafeInvoke(false, $"NetBridge: Reset {resetCount} TCP connections on shutdown");
+            }
 
             if (_netBridgeService != null)
             {
-                using var cts = new CancellationTokenSource(timeoutMs);
-                await Task.Run(() =>
+                try
                 {
-                    try { _netBridgeService.Stop(); }
+                    using var cts = new CancellationTokenSource(timeoutMs);
+                    await Task.Run(() =>
+                    {
+                        try { _netBridgeService.Stop(); }
+                        catch { }
+                    }, cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                finally
+                {
+                    try { _netBridgeService.Dispose(); }
                     catch { }
-                }, cts.Token).ConfigureAwait(false);
+                }
             }
+            _netBridgeService = null;
             _isProxyRunning = false;
             _isInitialized = false;
             RaiseStateChanged();
-        }
-        catch (OperationCanceledException)
-        {
-            _isProxyRunning = false;
-            _isInitialized = false;
-            RaiseStateChanged();
-            return false;
         }
         catch (Exception ex)
         {
             var error = $"Failed to stop NetBridgeService: {ex.Message}";
             await SafeInvoke(true, error);
+            _netBridgeService = null;
             _isProxyRunning = false;
             _isInitialized = false;
             RaiseStateChanged();
@@ -376,8 +400,8 @@ public sealed class NetBridgeManager : IDisposable
                 if (_isProxyRunning)
                 {
                     await UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                    await UpdateRoutes(_config.NetBridgeItem?.RuleProcess);
-                    await SetDnsViaProxy(_config.NetBridgeItem?.EnableDnsViaProxy ?? false);
+                    await UpdateRoutes(_config?.NetBridgeItem?.RuleProcess);
+                    await SetDnsViaProxy(_config?.NetBridgeItem?.EnableDnsViaProxy ?? false);
                     await SafeInvoke(false, "NetBridge restarted successfully");
                     _restartCount = 0; // Reset on success
                 }
@@ -434,7 +458,8 @@ public sealed class NetBridgeManager : IDisposable
 
     public async Task<bool> UpdateRoutes(string? ruleProcess)
     {
-        var newRuleConfigs = BuildRuleConfigs(ruleProcess);
+        var protocolMode = _config?.NetBridgeItem?.ProtocolMode ?? "TCP";
+        var newRuleConfigs = BuildRuleConfigs(ruleProcess, protocolMode);
 
         _ruleConfigs = newRuleConfigs;
 
@@ -533,7 +558,8 @@ public sealed class NetBridgeManager : IDisposable
 
         foreach (var rule in newRules)
         {
-            rule.RuleId = _netBridgeService.AddRule(rule.ProcessName, rule.TargetHosts, rule.TargetPorts, rule.Protocol, rule.Action, rule.ProxyConfigId);
+            rule.ProxyConfigId = _proxyConfigId;
+            rule.RuleId = _netBridgeService.AddRule(rule.ProcessName, rule.TargetHosts, rule.TargetPorts, rule.Protocol, rule.Action, _proxyConfigId);
         }
 
         if (newRules.Any(rule => rule.RuleId == 0))
@@ -545,7 +571,7 @@ public sealed class NetBridgeManager : IDisposable
         return await Task.FromResult(true);
     }
 
-    private static List<NetBridgeRuleConfig> BuildRuleConfigs(string? ruleProcess)
+    private static List<NetBridgeRuleConfig> BuildRuleConfigs(string? ruleProcess, string protocolMode = "TCP")
     {
         if (ruleProcess.IsNullOrEmpty())
         {
@@ -558,7 +584,7 @@ public sealed class NetBridgeManager : IDisposable
             ProcessName = processName,
             TargetHosts = "*",
             TargetPorts = "*",
-            Protocol = "BOTH",
+            Protocol = protocolMode,
             Action = "PROXY",
             ProxyConfigId = 0
         }).ToList();
@@ -570,5 +596,12 @@ public sealed class NetBridgeManager : IDisposable
         StopNetworkMonitor();
         _healthMonitor?.Dispose();
         _healthMonitor = null;
+
+        try { _netBridgeService?.Dispose(); }
+        catch { }
+
+        _netBridgeService = null;
+        _isProxyRunning = false;
+        _isInitialized = false;
     }
 }

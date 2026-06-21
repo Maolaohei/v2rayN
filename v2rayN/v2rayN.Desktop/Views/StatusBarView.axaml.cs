@@ -77,9 +77,9 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
                 break;
 
             case EViewAction.ProcessListSetting:
-                if (obj is (string processText, bool dnsViaBridge))
+                if (obj is (string processText, bool dnsViaBridge, string protocolMode))
                 {
-                    var box = new ProcessListSettingDialog(processText, dnsViaBridge);
+                    var box = new ProcessListSettingDialog(processText, dnsViaBridge, protocolMode);
                     var result = await box.ShowDialog<string?>(VisualRoot as Window);
                     if (result != null)
                     {
@@ -88,6 +88,7 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
                         AppManager.Instance.Config.NetBridgeItem ??= new();
                         AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = box.ResultDnsViaBridge;
                         AppManager.Instance.Config.NetBridgeItem.RuleProcess = result;
+                        AppManager.Instance.Config.NetBridgeItem.ProtocolMode = box.ResultProtocolMode;
                         await ConfigHandler.SaveConfig(AppManager.Instance.Config);
 
                         if (NetBridgeManager.Instance.IsRunning)

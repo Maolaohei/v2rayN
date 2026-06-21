@@ -102,9 +102,9 @@ public partial class StatusBarView
                 break;
 
             case EViewAction.ProcessListSetting:
-                if (obj is (string processText, bool dnsViaBridge))
+                if (obj is (string processText, bool dnsViaBridge, string protocolMode))
                 {
-                    var window = new ProcessListSettingWindow(processText, dnsViaBridge);
+                    var window = new ProcessListSettingWindow(processText, dnsViaBridge, protocolMode);
                     if (window.ShowDialog() == true)
                     {
                         var processes = window.ResultProcessList
@@ -114,6 +114,7 @@ public partial class StatusBarView
                         AppManager.Instance.Config.NetBridgeItem ??= new();
                         AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = window.ResultDnsViaBridge;
                         AppManager.Instance.Config.NetBridgeItem.RuleProcess = window.ResultProcessList;
+                        AppManager.Instance.Config.NetBridgeItem.ProtocolMode = window.ResultProtocolMode;
                         await ConfigHandler.SaveConfig(AppManager.Instance.Config);
 
                         if (NetBridgeManager.Instance.IsRunning)

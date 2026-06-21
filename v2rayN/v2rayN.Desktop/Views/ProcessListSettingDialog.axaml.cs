@@ -13,6 +13,7 @@ public partial class ProcessListSettingDialog : Window
     private readonly DataGridCollectionView _processView;
     private readonly DataGridCollectionView _activeView;
     private bool _dnsViaBridge;
+    private string _protocolMode = "TCP";
     private int _sessionAddedCount;
     private readonly Action _onNetBridgeStateChanged;
 
@@ -25,17 +26,19 @@ public partial class ProcessListSettingDialog : Window
 
     public string ResultProcessList { get; private set; } = "";
     public bool ResultDnsViaBridge { get; private set; }
+    public string ResultProtocolMode => _protocolMode;
 
     public ProcessListSettingDialog()
-        : this(string.Empty, false)
+        : this(string.Empty, false, "TCP")
     {
     }
 
-    public ProcessListSettingDialog(string processList, bool dnsViaBridge)
+    public ProcessListSettingDialog(string processList, bool dnsViaBridge, string protocolMode = "TCP")
     {
         InitializeComponent();
 
         _dnsViaBridge = dnsViaBridge;
+        _protocolMode = protocolMode;
         chkDnsViaBridge.IsChecked = dnsViaBridge;
 
         var existingProcesses = processList

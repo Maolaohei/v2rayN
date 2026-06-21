@@ -452,7 +452,8 @@ public class StatusBarViewModel : MyReactiveObject
         var currentProcesses = _config.TunModeItem.ProtectedProcesses ?? new List<string>();
         var processText = string.Join(",", currentProcesses);
         var dnsViaBridge = _config.NetBridgeItem?.EnableDnsViaProxy ?? false;
-        _updateView?.Invoke(EViewAction.ProcessListSetting, (processText, dnsViaBridge));
+        var protocolMode = _config.NetBridgeItem?.ProtocolMode ?? "TCP";
+        _updateView?.Invoke(EViewAction.ProcessListSetting, (processText, dnsViaBridge, protocolMode));
         await Task.CompletedTask;
     }
 

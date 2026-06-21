@@ -144,6 +144,22 @@ public sealed class AppManager
                 Logging.SaveLog($"NetBridge stop failed: {ex.Message}");
             }
 
+            // Phase 1.5: Force-unload WinDivert kernel driver via SCM.
+            // Even after ProxyBridge_Stop() the driver service may linger;
+            // `sc stop` tells the SCM to tear down the kernel module handle.
+            if (Utils.IsWindows())
+            {
+                try
+                {
+                    var scResult = await RunScStop("WinDivert");
+                    Logging.SaveLog($"sc stop WinDivert: {scResult}");
+                }
+                catch (Exception ex)
+                {
+                    Logging.SaveLog($"sc stop WinDivert failed: {ex.Message}");
+                }
+            }
+
             // Phase 2: Release WindowsJobService — ensures child processes
             // (xray, sing-box) are killed and the job object handle is freed.
             if (Utils.IsWindows())
@@ -188,6 +204,25 @@ public sealed class AppManager
     public void Shutdown(bool byUser)
     {
         AppEvents.ShutdownRequested.Publish(byUser);
+    }
+
+    private static async Task<string> RunScStop(string serviceName)
+    {
+        using var process = new System.Diagnostics.Process();
+        process.StartInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "sc",
+            Arguments = $"stop {serviceName}",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        process.Start();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        return string.IsNullOrEmpty(error) ? output.Trim() : $"stdout={output.Trim()} stderr={error.Trim()}";
     }
 
     public async Task RebootAsAdmin()

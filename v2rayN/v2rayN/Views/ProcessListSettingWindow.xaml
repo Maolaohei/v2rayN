@@ -66,6 +66,33 @@
                     <TextBlock x:Name="txtDriverFile" Text="• 驱动文件: 检查中..." />
                     <TextBlock x:Name="txtDriverService" Text="• 驱动服务: 检查中..." />
                     <TextBlock x:Name="txtNetBridgeStatus" Text="• NetBridge: 检查中..." />
+                    <StackPanel
+                        Margin="0,4,0,0"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Text="• 协议模式:" />
+                        <RadioButton
+                            x:Name="rbProtocolTcp"
+                            Margin="0,0,4,0"
+                            Content="TCP"
+                            GroupName="ProtocolMode"
+                            IsChecked="True"
+                            VerticalAlignment="Center" />
+                        <RadioButton
+                            x:Name="rbProtocolUdp"
+                            Margin="0,0,4,0"
+                            Content="UDP"
+                            GroupName="ProtocolMode"
+                            VerticalAlignment="Center" />
+                        <RadioButton
+                            x:Name="rbProtocolBoth"
+                            Margin="0,0,0,0"
+                            Content="TCP+UDP"
+                            GroupName="ProtocolMode"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
         </Border>
