@@ -80,7 +80,9 @@ public partial class MsgView
             }
 
             var color = GetLineColor(line);
-            var paragraph = new Paragraph(new Run(line) { Foreground = color })
+            var run = new Run(line);
+            run.SetValue(TextElement.ForegroundProperty, color);
+            var paragraph = new Paragraph(run)
             {
                 Margin = new Thickness(0),
                 LineHeight = 16
@@ -99,18 +101,21 @@ public partial class MsgView
         var lower = line.ToLowerInvariant();
 
         if (lower.Contains("error") || lower.Contains("failed") || lower.Contains("exception")
-            || lower.Contains("fail") || lower.Contains("✗"))
+            || lower.Contains("fail") || lower.Contains("✗") || lower.Contains("失败")
+            || lower.Contains("错误") || lower.Contains("异常"))
         {
             return System.Windows.Media.Brushes.Red;
         }
 
-        if (lower.Contains("warning") || lower.Contains("warn") || lower.Contains("⚠"))
+        if (lower.Contains("warning") || lower.Contains("warn") || lower.Contains("⚠")
+            || lower.Contains("警告"))
         {
             return System.Windows.Media.Brushes.Orange;
         }
 
         if (lower.Contains("success") || lower.Contains("started") || lower.Contains("connected")
-            || lower.Contains("✓") || lower.Contains("通过") || lower.Contains("成功"))
+            || lower.Contains("✓") || lower.Contains("通过") || lower.Contains("成功")
+            || lower.Contains("完成") || lower.Contains("已停止"))
         {
             return System.Windows.Media.Brushes.LimeGreen;
         }

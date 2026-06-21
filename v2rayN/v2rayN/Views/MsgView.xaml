@@ -82,6 +82,7 @@
             Name="txtMsg"
             VerticalAlignment="Stretch"
             BorderThickness="0"
+            Foreground="{DynamicResource MaterialDesignBody}"
             FontSize="{DynamicResource StdFontSize-1}"
             HorizontalScrollBarVisibility="Auto"
             IsReadOnly="True"
