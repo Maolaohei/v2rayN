@@ -115,11 +115,18 @@ public class GroupProfileManager
         }
         var childProfiles = await AppManager.Instance.ProfileItems(extra.SubChildItems ?? string.Empty);
 
+        Regex? filterRegex = null;
+        if (extra.Filter.IsNotEmpty())
+        {
+            try { filterRegex = new Regex(extra.Filter, RegexOptions.Compiled); }
+            catch { }
+        }
+
         return childProfiles?.Where(p =>
                 p != null &&
                 p.IsValid() &&
                 !p.ConfigType.IsComplexType() &&
-                (extra.Filter.IsNullOrEmpty() || Regex.IsMatch(p.Remarks, extra.Filter))
+                (filterRegex == null || filterRegex.IsMatch(p.Remarks))
             )
             .ToList() ?? [];
     }

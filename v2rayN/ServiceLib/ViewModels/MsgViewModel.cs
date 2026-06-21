@@ -3,8 +3,9 @@ namespace ServiceLib.ViewModels;
 public class MsgViewModel : MyReactiveObject
 {
     private readonly ConcurrentQueue<string> _queueMsg = new();
-    private readonly List<string> _allMessages = new();
+    private readonly LinkedList<string> _allMessages = new();
     private volatile bool _lastMsgFilterNotAvailable;
+    private Regex? _compiledFilter;
     private int _showLock = 0;
     public int NumMaxMsg { get; } = 500;
 
@@ -76,26 +77,18 @@ public class MsgViewModel : MyReactiveObject
     {
         lock (_allMessages)
         {
-            _allMessages.Add(msg);
+            _allMessages.AddLast(msg);
             while (_allMessages.Count > NumMaxMsg)
             {
-                _allMessages.RemoveAt(0);
+                _allMessages.RemoveFirst();
             }
         }
 
-        if (MsgFilter.IsNotEmpty() && !_lastMsgFilterNotAvailable)
+        if (_compiledFilter != null && !_lastMsgFilterNotAvailable)
         {
-            try
+            if (!_compiledFilter.IsMatch(msg))
             {
-                if (!Regex.IsMatch(msg, MsgFilter))
-                {
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                _queueMsg.Enqueue(ex.Message);
-                _lastMsgFilterNotAvailable = true;
+                return;
             }
         }
 
@@ -115,19 +108,9 @@ public class MsgViewModel : MyReactiveObject
         {
             foreach (var msg in _allMessages)
             {
-                if (MsgFilter.IsNotEmpty())
+                if (_compiledFilter != null && !_compiledFilter.IsMatch(msg))
                 {
-                    try
-                    {
-                        if (!Regex.IsMatch(msg, MsgFilter))
-                        {
-                            continue;
-                        }
-                    }
-                    catch
-                    {
-                        continue;
-                    }
+                    continue;
                 }
                 filtered.Append(msg);
                 if (!msg.EndsWith(Environment.NewLine))
@@ -144,6 +127,18 @@ public class MsgViewModel : MyReactiveObject
     {
         _config.MsgUIItem.MainMsgFilter = MsgFilter;
         _lastMsgFilterNotAvailable = false;
+        _compiledFilter = null;
+        if (MsgFilter.IsNotEmpty())
+        {
+            try
+            {
+                _compiledFilter = new Regex(MsgFilter, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            }
+            catch
+            {
+                _lastMsgFilterNotAvailable = true;
+            }
+        }
         RefreshFilteredMessages();
     }
 }

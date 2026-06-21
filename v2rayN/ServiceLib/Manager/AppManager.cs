@@ -106,7 +106,7 @@ public sealed class AppManager
         Task.Run(async () =>
         {
             await MigrateProfileExtra();
-        }).Wait();
+        }).GetAwaiter().GetResult();
 
         return true;
     }
@@ -170,7 +170,10 @@ public sealed class AppManager
 
             Logging.SaveLog("AppExitAsync End");
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logging.SaveLog($"AppExitAsync error: {ex.Message}");
+        }
         finally
         {
             if (needShutdown)

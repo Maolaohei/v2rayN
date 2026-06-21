@@ -4,6 +4,8 @@ public class ProcessService : IDisposable
 {
     private readonly Process _process;
     private readonly Func<bool, string, Task>? _updateFunc;
+    private DataReceivedEventHandler? _outputHandler;
+    private DataReceivedEventHandler? _errorHandler;
     private bool _isDisposed;
 
     public int Id => _process.Id;
@@ -118,28 +120,41 @@ public class ProcessService : IDisposable
 
     private void RegisterEventHandlers()
     {
-        void dataHandler(object sender, DataReceivedEventArgs e)
+        _outputHandler = (sender, e) =>
         {
             if (e.Data.IsNotEmpty())
             {
                 _ = _updateFunc?.Invoke(false, e.Data + Environment.NewLine);
             }
-        }
-
-        _process.OutputDataReceived += dataHandler;
-        _process.ErrorDataReceived += dataHandler;
-
-        _process.Exited += (s, e) =>
+        };
+        _errorHandler = (sender, e) =>
         {
-            try
+            if (e.Data.IsNotEmpty())
             {
-                _process.OutputDataReceived -= dataHandler;
-                _process.ErrorDataReceived -= dataHandler;
-            }
-            catch
-            {
+                _ = _updateFunc?.Invoke(false, e.Data + Environment.NewLine);
             }
         };
+
+        _process.OutputDataReceived += _outputHandler;
+        _process.ErrorDataReceived += _errorHandler;
+    }
+
+    private void UnregisterEventHandlers()
+    {
+        try
+        {
+            if (_outputHandler != null)
+            {
+                _process.OutputDataReceived -= _outputHandler;
+                _outputHandler = null;
+            }
+            if (_errorHandler != null)
+            {
+                _process.ErrorDataReceived -= _errorHandler;
+                _errorHandler = null;
+            }
+        }
+        catch { }
     }
 
     public void Dispose()
@@ -148,6 +163,8 @@ public class ProcessService : IDisposable
         {
             return;
         }
+
+        UnregisterEventHandlers();
 
         try
         {

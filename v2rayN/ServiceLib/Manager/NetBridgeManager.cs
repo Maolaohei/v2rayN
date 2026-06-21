@@ -10,9 +10,9 @@ public sealed class NetBridgeManager
     public static NetBridgeManager Instance => _instance.Value;
     private readonly Config _config = AppManager.Instance.Config;
     private NetBridgeService? _netBridgeService;
-    private bool _isProxyRunning;
-    private bool _isInitialized;
-    private bool _driverLoaded;
+    private volatile bool _isProxyRunning;
+    private volatile bool _isInitialized;
+    private volatile bool _driverLoaded;
     private List<NetBridgeRuleConfig> _ruleConfigs = [];
     private Func<bool, string, Task>? _updateFunc;
     private uint _proxyConfigId;
@@ -324,6 +324,7 @@ public sealed class NetBridgeManager
                 await SafeInvoke(true, $"NetBridge restart failed after {MaxRestartAttempts} attempts, giving up");
                 await Task.Delay(RestartCooldownSeconds * 1000);
                 _restartCount = 0;
+                return;
             }
 
             await Init(_updateFunc);

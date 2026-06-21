@@ -75,7 +75,13 @@ public class PacManager
                     }
 
                     var client = await _tcpListener.AcceptTcpClientAsync();
-                    await Task.Run(() => WriteContent(client));
+                    await Task.Run(() =>
+                    {
+                        using (client)
+                        {
+                            WriteContent(client);
+                        }
+                    });
                 }
                 catch
                 {

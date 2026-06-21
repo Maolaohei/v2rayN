@@ -1420,11 +1420,18 @@ public static class ConfigHandler
             };
             profile.SetProtocolExtra(extraItem);
 
+            Regex? filterRegex = null;
+            if (extraItem.Filter.IsNotEmpty())
+            {
+                try { filterRegex = new Regex(extraItem.Filter, RegexOptions.Compiled); }
+                catch { }
+            }
+
             var matchedChildProfiles = childProfiles?.Where(p =>
                     p != null &&
                     p.IsValid() &&
                     !p.ConfigType.IsComplexType() &&
-                    (extraItem.Filter.IsNullOrEmpty() || Regex.IsMatch(p.Remarks, extraItem.Filter))
+                    (filterRegex == null || filterRegex.IsMatch(p.Remarks))
                 )
                 .ToList() ?? [];
             if (matchedChildProfiles.Count == 0)
@@ -1538,6 +1545,12 @@ public static class ConfigHandler
 
         var countServers = 0;
         List<ProfileItem> lstAdd = [];
+        Regex? subFilterRegex = null;
+        if (isSub && subid.IsNotEmpty() && subFilter.IsNotEmpty())
+        {
+            try { subFilterRegex = new Regex(subFilter, RegexOptions.Compiled); }
+            catch { }
+        }
         var arrData = strData.Split(Environment.NewLine.ToCharArray()).Where(t => !t.IsNullOrEmpty());
         if (isSub)
         {
@@ -1561,12 +1574,9 @@ public static class ConfigHandler
             }
 
             //exist sub items //filter
-            if (isSub && subid.IsNotEmpty() && subFilter.IsNotEmpty())
+            if (subFilterRegex != null && !subFilterRegex.IsMatch(profileItem.Remarks))
             {
-                if (!Regex.IsMatch(profileItem.Remarks, subFilter))
-                {
-                    continue;
-                }
+                continue;
             }
             profileItem.Subid = subid;
             profileItem.IsSub = isSub;

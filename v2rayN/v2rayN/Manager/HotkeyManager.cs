@@ -3,7 +3,7 @@ namespace v2rayN.Manager;
 public sealed partial class HotkeyManager
 {
     private static readonly Lazy<HotkeyManager> _instance = new(() => new());
-    public static HotkeyManager Instance = _instance.Value;
+    public static HotkeyManager Instance => _instance.Value;
     private const int WmHotkey = 0x0312;
     private readonly Dictionary<int, List<EGlobalHotkey>> _hotkeyTriggerDic = new();
 

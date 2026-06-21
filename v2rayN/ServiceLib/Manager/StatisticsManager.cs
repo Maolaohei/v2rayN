@@ -92,7 +92,7 @@ public class StatisticsManager
         await SQLiteHelper.Instance.ExecuteAsync($"delete from ServerStatItem where indexId not in ( select indexId from ProfileItem )");
 
         var ticks = DateTime.Now.Date.Ticks;
-        await SQLiteHelper.Instance.ExecuteAsync($"update ServerStatItem set todayUp = 0,todayDown=0,dateNow={ticks} where dateNow<>{ticks}");
+        await SQLiteHelper.Instance.ExecuteAsync("update ServerStatItem set todayUp = 0,todayDown=0,dateNow=? where dateNow<>?", ticks, ticks);
 
         _lstServerStat = await SQLiteHelper.Instance.TableAsync<ServerStatItem>().ToListAsync();
     }

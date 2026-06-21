@@ -8,6 +8,7 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
     private readonly Config? _config = config;
     private readonly Func<SpeedTestResult, Task>? _updateFunc = updateFunc;
     private static readonly ConcurrentBag<string> _lstExitLoop = [];
+    private static readonly ConcurrentDictionary<string, IPAddress> _dnsCache = new();
     private readonly int _speedTestPageSize = config.SpeedTestItem.SpeedTestPageSize ?? Global.SpeedTestPageSize;
     private readonly TimeSpan _delayInterval = TimeSpan.FromSeconds(config.SpeedTestItem.SpeedTestDelayInterval ?? 1);
 
@@ -463,8 +464,19 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
 
         if (!IPAddress.TryParse(url, out var ipAddress))
         {
-            var ipHostInfo = await Dns.GetHostEntryAsync(url);
-            ipAddress = ipHostInfo.AddressList.First();
+            if (!_dnsCache.TryGetValue(url, out ipAddress))
+            {
+                try
+                {
+                    var ipHostInfo = await Dns.GetHostEntryAsync(url);
+                    ipAddress = ipHostInfo.AddressList.First();
+                    _dnsCache.TryAdd(url, ipAddress);
+                }
+                catch
+                {
+                    return -1;
+                }
+            }
         }
 
         IPEndPoint endPoint = new(ipAddress, port);

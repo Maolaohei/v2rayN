@@ -10,7 +10,8 @@ public class HttpClientHelper
     private static readonly Lazy<HttpClientHelper> _instance = new(() =>
     {
         SocketsHttpHandler handler = new() { UseCookies = false };
-        HttpClientHelper helper = new(new HttpClient(handler));
+        HttpClient client = new(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        HttpClientHelper helper = new(client);
         return helper;
     });
 

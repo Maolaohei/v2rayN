@@ -8,6 +8,7 @@ namespace v2rayN.ViewModels;
 public class ThemeSettingViewModel : MyReactiveObject
 {
     private readonly PaletteHelper _paletteHelper = new();
+    private UserPreferenceChangedEventHandler? _systemColorHandler;
 
     private IObservableCollection<Swatch> _swatches = new ObservableCollectionExtended<Swatch>();
     public IObservableCollection<Swatch> Swatches => _swatches;
@@ -157,9 +158,9 @@ public class ThemeSettingViewModel : MyReactiveObject
         _paletteHelper.SetTheme(theme);
     }
 
-    public static void RegisterSystemColorSet(Config config, Action updateFunc)
+    public void RegisterSystemColorSet(Config config, Action updateFunc)
     {
-        SystemEvents.UserPreferenceChanged += (s, e) =>
+        _systemColorHandler = (s, e) =>
         {
             if ((e.Category == UserPreferenceCategory.Color || e.Category == UserPreferenceCategory.General)
                 && config.UiItem.CurrentTheme == nameof(ETheme.FollowSystem))
@@ -167,5 +168,15 @@ public class ThemeSettingViewModel : MyReactiveObject
                 updateFunc?.Invoke();
             }
         };
+        SystemEvents.UserPreferenceChanged += _systemColorHandler;
+    }
+
+    public void UnregisterSystemColorSet()
+    {
+        if (_systemColorHandler != null)
+        {
+            SystemEvents.UserPreferenceChanged -= _systemColorHandler;
+            _systemColorHandler = null;
+        }
     }
 }
