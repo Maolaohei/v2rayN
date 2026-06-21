@@ -49,12 +49,8 @@ public class NetBridgeViewModel : MyReactiveObject
             RuleProcess = string.Empty
         };
 
-        EnableNetBridge = false;
-        if (_config.NetBridgeItem.RuleProcess.IsNullOrEmpty())
-        {
-            _config.NetBridgeItem.RuleProcess = "Chrome.exe";
-        }
-        RuleProcess = _config.NetBridgeItem.RuleProcess;
+        EnableNetBridge = NetBridgeManager.Instance.IsRunning;
+        RuleProcess = _config.NetBridgeItem.RuleProcess ?? "";
 
         await Task.CompletedTask;
     }
@@ -110,9 +106,9 @@ public class NetBridgeViewModel : MyReactiveObject
             return;
         }
 
-        await NetBridgeManager.Instance.Init(UpdateViewHandler);
         if (EnableNetBridge)
         {
+            await NetBridgeManager.Instance.Init(UpdateViewHandler);
             var routesUpdated = await NetBridgeManager.Instance.UpdateRoutes(normalizedRuleProcess);
             NoticeManager.Instance.Enqueue(routesUpdated ? ResUI.OperationSuccess : ResUI.OperationFailed);
         }

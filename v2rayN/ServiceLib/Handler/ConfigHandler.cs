@@ -1461,6 +1461,8 @@ public static class ConfigHandler
     public static ProfileItem? GetPreSocksItem(Config config, ProfileItem node, ECoreType coreType)
     {
         ProfileItem? itemSocks = null;
+        // Pre-socks is needed only for cores that lack native TUN support (v2fly/v2fly_v5).
+        // sing_box and Xray handle TUN natively; Custom configs use PreSocksPort directly.
         var enableLegacyProtect = config.TunModeItem.EnableLegacyProtect
                                   || Utils.IsNonWindows();
         if (node.ConfigType != EConfigType.Custom

@@ -114,13 +114,13 @@ public partial class StatusBarView
                         AppManager.Instance.Config.NetBridgeItem ??= new();
                         AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = window.ResultDnsViaBridge;
                         AppManager.Instance.Config.NetBridgeItem.RuleProcess = window.ResultProcessList;
-                        _ = ConfigHandler.SaveConfig(AppManager.Instance.Config);
+                        await ConfigHandler.SaveConfig(AppManager.Instance.Config);
 
                         if (NetBridgeManager.Instance.IsRunning)
                         {
-                            _ = NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                            _ = NetBridgeManager.Instance.UpdateRoutes(window.ResultProcessList);
-                            _ = NetBridgeManager.Instance.SetDnsViaProxy(window.ResultDnsViaBridge);
+                            await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                            await NetBridgeManager.Instance.UpdateRoutes(window.ResultProcessList);
+                            await NetBridgeManager.Instance.SetDnsViaProxy(window.ResultDnsViaBridge);
                         }
                     }
                 }

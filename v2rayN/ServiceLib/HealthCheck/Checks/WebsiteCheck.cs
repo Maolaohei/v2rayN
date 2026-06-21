@@ -114,7 +114,11 @@ public class WebsiteCheck
     {
         try
         {
-            if (!OperatingSystem.IsWindows()) return true;
+            if (!OperatingSystem.IsWindows())
+            {
+                details["tun_verification"] = "Skipped (non-Windows)";
+                return true;
+            }
 
             using var client = new TcpClient();
             await client.ConnectAsync("1.1.1.1", 443);

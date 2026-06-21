@@ -4,7 +4,7 @@ using NetBridgeLib.Services;
 
 namespace ServiceLib.Manager;
 
-public sealed class NetBridgeManager
+public sealed class NetBridgeManager : IDisposable
 {
     private static readonly Lazy<NetBridgeManager> _instance = new(() => new());
     public static NetBridgeManager Instance => _instance.Value;
@@ -22,10 +22,14 @@ public sealed class NetBridgeManager
     private const int RestartCooldownSeconds = 60;
     private System.Threading.Timer? _networkChangeDebounceTimer;
     private NetBridgeHealthMonitor? _healthMonitor;
+    private int _restartRunning;
 
     // Connection statistics
     private long _totalConnections;
     private readonly ConcurrentDictionary<string, long> _processConnections = new();
+    private const int MaxProcessEntries = 500;
+
+    public event Action? StateChanged;
 
     public bool IsDriverLoaded => _driverLoaded;
     public bool IsRunning => _isProxyRunning;
@@ -68,6 +72,7 @@ public sealed class NetBridgeManager
                 isRunning: () => _isProxyRunning,
                 log: msg => SafeInvoke(false, msg));
 
+            _isInitialized = true;
             await SafeInvoke(false, "NetBridge 初始化成功");
         }
         catch (Exception ex)
@@ -84,6 +89,16 @@ public sealed class NetBridgeManager
         {
             Interlocked.Increment(ref _totalConnections);
             _processConnections.AddOrUpdate(processName, 1, (_, count) => count + 1);
+
+            if (_processConnections.Count > MaxProcessEntries)
+            {
+                var oldest = _processConnections.OrderBy(kvp => kvp.Value).Take(_processConnections.Count / 2).Select(kvp => kvp.Key).ToList();
+                foreach (var key in oldest)
+                {
+                    _processConnections.TryRemove(key, out _);
+                }
+            }
+
             _healthMonitor?.RecordTraffic(Interlocked.Read(ref _totalConnections));
 
             // Log at most once per second to avoid flooding
@@ -112,12 +127,25 @@ public sealed class NetBridgeManager
         }
     }
 
+    private void RaiseStateChanged()
+    {
+        try
+        {
+            StateChanged?.Invoke();
+        }
+        catch
+        {
+            // Swallow subscriber exceptions to prevent state machine interruption
+        }
+    }
+
     private static bool CheckDriverAvailability()
     {
         try
         {
-            var driverPath = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge", "WinDivert.dll");
-            return File.Exists(driverPath);
+            var baseDir = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge");
+            return File.Exists(Path.Combine(baseDir, "WinDivert.dll"))
+                && File.Exists(Path.Combine(baseDir, "WinDivert64.sys"));
         }
         catch
         {
@@ -156,6 +184,7 @@ public sealed class NetBridgeManager
             _restartCount = 0;
             StartWatchdog();
             StartNetworkMonitor();
+            RaiseStateChanged();
         }
         catch (Exception ex)
         {
@@ -192,11 +221,13 @@ public sealed class NetBridgeManager
                 // Even if native stop fails, reset state so next Init() re-initializes
                 _isProxyRunning = false;
                 _isInitialized = false;
+                RaiseStateChanged();
                 return false;
             }
 
             _isProxyRunning = false;
             _isInitialized = false;
+            RaiseStateChanged();
         }
         catch (Exception ex)
         {
@@ -204,6 +235,7 @@ public sealed class NetBridgeManager
             await SafeInvoke(true, error);
             _isProxyRunning = false;
             _isInitialized = false;
+            RaiseStateChanged();
             return false;
         }
 
@@ -229,11 +261,13 @@ public sealed class NetBridgeManager
             }
             _isProxyRunning = false;
             _isInitialized = false;
+            RaiseStateChanged();
         }
         catch (OperationCanceledException)
         {
             _isProxyRunning = false;
             _isInitialized = false;
+            RaiseStateChanged();
             return false;
         }
         catch (Exception ex)
@@ -242,6 +276,7 @@ public sealed class NetBridgeManager
             await SafeInvoke(true, error);
             _isProxyRunning = false;
             _isInitialized = false;
+            RaiseStateChanged();
             return false;
         }
         return true;
@@ -254,37 +289,41 @@ public sealed class NetBridgeManager
     {
         StopWatchdog();
         _healthMonitor?.StartStuckMonitor(TimeSpan.FromMinutes(1));
-        _watchdogTimer = new System.Threading.Timer(async _ =>
-        {
-            if (!_isProxyRunning) return;
-            if (Interlocked.CompareExchange(ref _watchdogRunning, 1, 0) != 0) return;
+        _watchdogTimer = new System.Threading.Timer(_ => _ = WatchdogTickAsync(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
+    }
 
-            try
+    private async Task WatchdogTickAsync()
+    {
+        if (!_isProxyRunning) return;
+        if (Interlocked.CompareExchange(ref _watchdogRunning, 1, 0) != 0) return;
+
+        try
+        {
+            if (!await CheckHealthAsync())
             {
-                // Check if service is actually healthy by testing connectivity
-                if (!await CheckHealthAsync())
-                {
-                    await SafeInvoke(true, "NetBridge health check failed, attempting restart...");
-                    _isProxyRunning = false;
-                    await RestartAsync();
-                }
-                else if (!await NetBridgeHealthMonitor.VerifyConnectivityAsync())
-                {
-                    await SafeInvoke(true, "NetBridge connectivity lost, forcing restart...");
-                    _isProxyRunning = false;
-                    await RestartAsync();
-                }
-            }
-            catch
-            {
+                await SafeInvoke(true, "NetBridge health check failed, attempting restart...");
                 _isProxyRunning = false;
+                RaiseStateChanged();
                 await RestartAsync();
             }
-            finally
+            else if (!await NetBridgeHealthMonitor.VerifyConnectivityAsync())
             {
-                Interlocked.Exchange(ref _watchdogRunning, 0);
+                await SafeInvoke(true, "NetBridge connectivity lost, forcing restart...");
+                _isProxyRunning = false;
+                RaiseStateChanged();
+                await RestartAsync();
             }
-        }, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
+        }
+        catch
+        {
+            _isProxyRunning = false;
+            RaiseStateChanged();
+            await RestartAsync();
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _watchdogRunning, 0);
+        }
     }
 
     private async Task<bool> CheckHealthAsync()
@@ -313,11 +352,14 @@ public sealed class NetBridgeManager
 
     private async Task RestartAsync()
     {
+        if (Interlocked.CompareExchange(ref _restartRunning, 1, 0) != 0) return;
+
         try
         {
             _isProxyRunning = false;
             _isInitialized = false;
             _restartCount++;
+            RaiseStateChanged();
 
             if (_restartCount > MaxRestartAttempts)
             {
@@ -344,6 +386,10 @@ public sealed class NetBridgeManager
         catch (Exception ex)
         {
             await SafeInvoke(true, $"NetBridge restart failed: {ex.Message}");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _restartRunning, 0);
         }
     }
 
@@ -437,28 +483,26 @@ public sealed class NetBridgeManager
         }
     }
 
-    public async Task<bool> SetDnsViaProxy(bool enable)
+    public Task<bool> SetDnsViaProxy(bool enable)
     {
         if (_netBridgeService == null)
         {
-            return false;
+            return Task.FromResult(false);
         }
 
         _netBridgeService.SetDnsViaProxy(enable);
-
-        return await Task.FromResult(true);
+        return Task.FromResult(true);
     }
 
-    public async Task<bool> SetLocalhostViaProxy(bool enable)
+    public Task<bool> SetLocalhostViaProxy(bool enable)
     {
         if (_netBridgeService == null)
         {
-            return false;
+            return Task.FromResult(false);
         }
 
         _netBridgeService.SetLocalhostViaProxy(enable);
-
-        return await Task.FromResult(true);
+        return Task.FromResult(true);
     }
 
     public static void SetTrafficLoggingEnabled(bool enable)
@@ -481,32 +525,24 @@ public sealed class NetBridgeManager
 
         var newRules = _ruleConfigs.Select(JsonUtils.DeepCopy).ToList();
 
-        // Batch delete old rules
-        var deleteTasks = newRules.Where(x => x.RuleId > 0)
-            .Select(rule =>
-            {
-                try { _netBridgeService.DeleteRule(rule.RuleId); }
-                catch { }
-                return Task.CompletedTask;
-            });
-        await Task.WhenAll(deleteTasks);
-
-        // Batch add new rules
-        var addTasks = newRules.Select(rule =>
+        foreach (var rule in newRules.Where(x => x.RuleId > 0))
         {
-            var newRuleId = _netBridgeService.AddRule(rule.ProcessName, rule.TargetHosts, rule.TargetPorts, rule.Protocol, rule.Action, rule.ProxyConfigId);
-            rule.RuleId = newRuleId;
-            return Task.FromResult(newRuleId);
-        });
-        var results = await Task.WhenAll(addTasks);
+            try { _netBridgeService.DeleteRule(rule.RuleId); }
+            catch { }
+        }
 
-        if (results.Any(id => id == 0))
+        foreach (var rule in newRules)
+        {
+            rule.RuleId = _netBridgeService.AddRule(rule.ProcessName, rule.TargetHosts, rule.TargetPorts, rule.Protocol, rule.Action, rule.ProxyConfigId);
+        }
+
+        if (newRules.Any(rule => rule.RuleId == 0))
         {
             return false;
         }
 
         _ruleConfigs = newRules;
-        return true;
+        return await Task.FromResult(true);
     }
 
     private static List<NetBridgeRuleConfig> BuildRuleConfigs(string? ruleProcess)
@@ -526,5 +562,13 @@ public sealed class NetBridgeManager
             Action = "PROXY",
             ProxyConfigId = 0
         }).ToList();
+    }
+
+    public void Dispose()
+    {
+        StopWatchdog();
+        StopNetworkMonitor();
+        _healthMonitor?.Dispose();
+        _healthMonitor = null;
     }
 }

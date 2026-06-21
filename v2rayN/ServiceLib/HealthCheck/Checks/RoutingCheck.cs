@@ -76,6 +76,13 @@ public class RoutingCheck
         }
     }
 
+    private static readonly string[] ExitIpServices =
+    [
+        "https://api.ipify.org?format=json",
+        "https://ipinfo.io/json",
+        "https://ifconfig.me/all.json",
+    ];
+
     private static async Task<Dictionary<string, object>> CheckRoutingLoopAsync(int socksPort)
     {
         var result = new Dictionary<string, object>();
@@ -85,19 +92,39 @@ public class RoutingCheck
             {
                 Proxy = new WebProxy($"socks5://{Global.Loopback}:{socksPort}"),
                 UseProxy = true,
-                ConnectTimeout = TimeSpan.FromSeconds(5)
+                ConnectTimeout = TimeSpan.FromSeconds(5),
+                AllowAutoRedirect = false,
             };
             using var http = new System.Net.Http.HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
 
-            var response = await http.GetAsync("https://httpbin.org/ip");
-            var json = await response.Content.ReadAsStringAsync();
-            var doc = System.Text.Json.JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("origin", out var origin))
+            string? exitIp = null;
+            foreach (var service in ExitIpServices)
             {
-                var exitIp = origin.GetString();
-                result["exit_ip"] = exitIp ?? "";
+                try
+                {
+                    var response = await http.GetStringAsync(service);
+                    var doc = System.Text.Json.JsonDocument.Parse(response);
+                    exitIp = doc.RootElement.TryGetProperty("ip", out var ipProp) ? ipProp.GetString()
+                        : doc.RootElement.TryGetProperty("origin", out var originProp) ? originProp.GetString()
+                        : null;
+                    if (!string.IsNullOrEmpty(exitIp)) break;
+                }
+                catch
+                {
+                    // Try next service
+                }
+            }
+
+            if (!string.IsNullOrEmpty(exitIp))
+            {
+                result["exit_ip"] = exitIp;
                 result["loop_detected"] = false;
                 result["loop_note"] = $"Exit IP: {exitIp}";
+            }
+            else
+            {
+                result["loop_detected"] = false;
+                result["loop_note"] = "Could not reach any exit IP service";
             }
         }
         catch
@@ -116,15 +143,20 @@ public class RoutingCheck
         {
             Proxy = new WebProxy($"socks5://{Global.Loopback}:{port}"),
             UseProxy = true,
-            ConnectTimeout = TimeSpan.FromSeconds(5)
+            ConnectTimeout = TimeSpan.FromSeconds(5),
+            AllowAutoRedirect = false,
         };
-        using var http = new System.Net.Http.HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
+        using var http = new System.Net.Http.HttpClient(handler)
+        {
+            Timeout = TimeSpan.FromSeconds(10),
+            DefaultRequestHeaders = { { "User-Agent", "Mozilla/5.0" } }
+        };
 
         foreach (var domain in domains)
         {
             try
             {
-                var url = $"http://{domain}";
+                var url = $"https://{domain}";
                 var response = await http.GetAsync(url);
                 var statusCode = (int)response.StatusCode;
 

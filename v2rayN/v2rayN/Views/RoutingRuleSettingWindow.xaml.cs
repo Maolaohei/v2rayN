@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using ServiceLib.Services;
 
 namespace v2rayN.Views;
 
@@ -256,18 +257,41 @@ public partial class RoutingRuleSettingWindow
 
             try
             {
-                var addresses = await System.Net.Dns.GetHostAddressesAsync(input);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var addresses = await System.Net.Dns.GetHostAddressesAsync(input, cts.Token);
                 if (addresses.Length > 0)
                 {
-                    var ip = addresses[0].ToString();
-                    var ipResults = RuleTestMatcher.TestAllRules(ip, rules);
-                    var ipFirstMatch = ipResults.FirstOrDefault(r => r.IsFirstMatch);
+                    var allIpResults = new List<(string ip, List<RuleTestResult> results, RuleTestResult? firstMatch)>();
+                    foreach (var addr in addresses)
+                    {
+                        var ip = addr.ToString();
+                        var ipResults = RuleTestMatcher.TestAllRules(ip, rules);
+                        var ipFirstMatch = ipResults.FirstOrDefault(r => r.IsFirstMatch);
+                        allIpResults.Add((ip, ipResults, ipFirstMatch));
+                    }
 
-                    ShowTestResults(input, results, firstMatch, $" (DNS → {ip})", ipResults, ipFirstMatch);
+                    var best = allIpResults.FirstOrDefault(r => r.firstMatch != null);
+                    if (best.ip != null)
+                    {
+                        ShowTestResults(input, results, firstMatch, $" (DNS → {best.ip})", best.results, best.firstMatch);
+                    }
+                    else
+                    {
+                        ShowTestResults(input, results, firstMatch, $" (DNS → {allIpResults[0].ip})", allIpResults[0].results, allIpResults[0].firstMatch);
+                    }
                     return;
                 }
             }
-            catch { }
+            catch (OperationCanceledException)
+            {
+                txtTestSummary.Text = "DNS 解析超时（5秒）";
+                txtTestSummary.Foreground = Brushes.OrangeRed;
+            }
+            catch (Exception ex)
+            {
+                txtTestSummary.Text = $"DNS 解析失败: {ex.Message}";
+                txtTestSummary.Foreground = Brushes.OrangeRed;
+            }
         }
 
         ShowTestResults(input, results, firstMatch, "", null, null);

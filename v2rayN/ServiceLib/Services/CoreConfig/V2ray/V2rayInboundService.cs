@@ -54,15 +54,12 @@ public partial class CoreConfigV2rayService
 
             if (context.IsTunEnabled)
             {
-                if (_config.TunModeItem.Mtu <= 0)
-                {
-                    _config.TunModeItem.Mtu = Global.TunMtus.First();
-                }
+                var tunMtu = _config.TunModeItem.Mtu > 0 ? _config.TunModeItem.Mtu : Global.TunMtus.First();
                 var tunInbound =
                     JsonUtils.Deserialize<Inbounds4Ray>(EmbedUtils.GetEmbedText(Global.V2raySampleTunInbound)) ??
                     new Inbounds4Ray();
-                tunInbound.settings.name = context.IsMacOS ? $"utun{new Random().Next(99)}" : "xray_tun";
-                tunInbound.settings.MTU = _config.TunModeItem.Mtu;
+                tunInbound.settings.name = context.IsMacOS ? $"utun{Random.Shared.Next(0, 999)}" : Global.V2rayTunName;
+                tunInbound.settings.MTU = tunMtu;
                 if (!_config.TunModeItem.EnableIPv6Address)
                 {
                     tunInbound.settings.gateway = ["172.18.0.1/30"];
@@ -86,6 +83,7 @@ public partial class CoreConfigV2rayService
                     var includeList = new List<IPNetwork2> { wholeInternet };
                     var includeListV6 = new List<IPNetwork2> { wholeInternetV6 };
 
+                    const int maxSubnets = 256;
                     foreach (var exclude in excludeList)
                     {
                         var temp = new List<IPNetwork2>();
@@ -105,10 +103,21 @@ public partial class CoreConfigV2rayService
                             }
                             includeListV6 = temp;
                         }
+
+                        if (includeList.Count + includeListV6.Count > maxSubnets)
+                        {
+                            Logging.SaveLog($"RouteExcludeAddress produced {includeList.Count + includeListV6.Count} subnets, exceeding limit {maxSubnets}. Falling back to exclude list only.");
+                            includeList = [wholeInternet];
+                            includeListV6 = [wholeInternetV6];
+                            break;
+                        }
                     }
 
-                    includeList = IPNetwork2.Supernet(includeList.ToArray()).ToList();
-                    includeListV6 = IPNetwork2.Supernet(includeListV6.ToArray()).ToList();
+                    if (includeList.Count + includeListV6.Count <= maxSubnets)
+                    {
+                        includeList = IPNetwork2.Supernet(includeList.ToArray()).ToList();
+                        includeListV6 = IPNetwork2.Supernet(includeListV6.ToArray()).ToList();
+                    }
 
                     if (_config.TunModeItem.EnableIPv6Address)
                     {
@@ -127,6 +136,7 @@ public partial class CoreConfigV2rayService
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
+            throw;
         }
     }
 

@@ -12,12 +12,6 @@ public class TunInterfaceCheck
         var details = new Dictionary<string, object>();
         try
         {
-            if (!OperatingSystem.IsWindows())
-            {
-                sw.Stop();
-                return new HealthCheckResult("TUN Interface", HealthCheckStatus.Error, "Only supported on Windows", sw.Elapsed);
-            }
-
             var tunAdapter = await FindTunAdapterAsync();
             if (tunAdapter == null)
             {
@@ -35,6 +29,13 @@ public class TunInterfaceCheck
                 sw.Stop();
                 return new HealthCheckResult("TUN Interface", HealthCheckStatus.Fail,
                     $"TUN adapter is {tunAdapter.OperationalStatus}", sw.Elapsed, details);
+            }
+
+            if (!OperatingSystem.IsWindows())
+            {
+                sw.Stop();
+                return new HealthCheckResult("TUN Interface", HealthCheckStatus.Pass,
+                    $"TUN adapter: {tunAdapter.Name} ({tunAdapter.OperationalStatus})", sw.Elapsed, details);
             }
 
             var hasIpv4 = false;
@@ -91,8 +92,9 @@ public class TunInterfaceCheck
                 .FirstOrDefault(ni =>
                     ni.Name.Contains("wintun", StringComparison.OrdinalIgnoreCase) ||
                     ni.Description.Contains("wintun", StringComparison.OrdinalIgnoreCase) ||
-                    ni.Name.Contains("TUN", StringComparison.OrdinalIgnoreCase) ||
-                    ni.Description.Contains("TUN", StringComparison.OrdinalIgnoreCase)));
+                    ni.Name.Contains(Global.V2rayTunName, StringComparison.OrdinalIgnoreCase) ||
+                    ni.Name.Contains(Global.SingboxTunName, StringComparison.OrdinalIgnoreCase) ||
+                    ni.Name.StartsWith("utun", StringComparison.OrdinalIgnoreCase)));
     }
 
     private static async Task<List<RouteEntry>> GetRoutesAsync()

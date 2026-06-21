@@ -52,21 +52,15 @@ public partial class CoreConfigSingboxService
 
             if (context.IsTunEnabled)
             {
-                if (_config.TunModeItem.Mtu <= 0)
-                {
-                    _config.TunModeItem.Mtu = Global.TunMtus.First();
-                }
-                if (_config.TunModeItem.Stack.IsNullOrEmpty())
-                {
-                    _config.TunModeItem.Stack = Global.TunStacks.First();
-                }
+                var tunMtu = _config.TunModeItem.Mtu > 0 ? _config.TunModeItem.Mtu : Global.TunMtus.First();
+                var tunStack = _config.TunModeItem.Stack.IsNullOrEmpty() ? Global.TunStacks.First() : _config.TunModeItem.Stack;
 
                 var tunInbound = JsonUtils.Deserialize<Inbound4Sbox>(EmbedUtils.GetEmbedText(Global.TunSingboxInboundFileName)) ?? new Inbound4Sbox { };
-                tunInbound.interface_name = context.IsMacOS ? $"utun{new Random().Next(99)}" : "singbox_tun";
-                tunInbound.mtu = _config.TunModeItem.Mtu;
+                tunInbound.interface_name = context.IsMacOS ? $"utun{Random.Shared.Next(0, 999)}" : Global.SingboxTunName;
+                tunInbound.mtu = tunMtu;
                 tunInbound.auto_route = _config.TunModeItem.AutoRoute;
                 tunInbound.strict_route = _config.TunModeItem.StrictRoute;
-                tunInbound.stack = _config.TunModeItem.Stack;
+                tunInbound.stack = tunStack;
                 if (_config.TunModeItem.EnableIPv6Address == false)
                 {
                     tunInbound.address = ["172.18.0.1/30"];
@@ -79,6 +73,7 @@ public partial class CoreConfigSingboxService
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
+            throw;
         }
     }
 

@@ -24,6 +24,8 @@ public sealed class AppManager
     {
         get
         {
+            // Base port is cached; TUN offset is applied dynamically so that
+            // enabling/disabling TUN at runtime reflects immediately.
             _statePort2 ??= Utils.GetFreePort(GetLocalPort(EInboundProtocol.api2));
             return _statePort2.Value + (_config.TunModeItem.EnableTun ? 1 : 0);
         }

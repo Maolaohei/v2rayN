@@ -14,6 +14,7 @@ public partial class ProcessListSettingDialog : Window
     private readonly DataGridCollectionView _activeView;
     private bool _dnsViaBridge;
     private int _sessionAddedCount;
+    private readonly Action _onNetBridgeStateChanged;
 
     private static readonly List<string> PresetBrowsers =
         ["chrome.exe", "firefox.exe", "msedge.exe", "brave.exe", "opera.exe", "vivaldi.exe", "arc.exe"];
@@ -54,6 +55,10 @@ public partial class ProcessListSettingDialog : Window
         LoadProcesses();
         RefreshActiveList();
         CheckDriverStatus();
+
+        _onNetBridgeStateChanged = () => Dispatcher.UIThread.Post(CheckDriverStatus);
+        NetBridgeManager.Instance.StateChanged += _onNetBridgeStateChanged;
+        Closed += (_, _) => NetBridgeManager.Instance.StateChanged -= _onNetBridgeStateChanged;
 
         btnRefresh.Click += (_, _) => LoadProcesses();
         chkSelectAll.PropertyChanged += (_, e) =>

@@ -85,8 +85,14 @@ public class CoreManager
 
         if (Utils.IsWindows() && _config.TunModeItem.EnableTun)
         {
-            await Task.Delay(100);
-            await WindowsUtils.RemoveTunDevice();
+            try
+            {
+                await WindowsUtils.RemoveTunDevice();
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog($"RemoveTunDevice failed: {ex.Message}");
+            }
         }
 
         await CoreStart(mainContext);

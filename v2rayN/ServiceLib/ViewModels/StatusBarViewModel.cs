@@ -253,8 +253,15 @@ public class StatusBarViewModel : MyReactiveObject
         {
             _ = Task.Run(async () =>
             {
-                await Task.Delay(1000);
-                await StartNetBridgeAsync();
+                try
+                {
+                    await Task.Delay(1000);
+                    await StartNetBridgeAsync();
+                }
+                catch (Exception ex)
+                {
+                    Logging.SaveLog($"NetBridge startup failed: {ex.Message}");
+                }
             });
         }
 
@@ -568,6 +575,11 @@ public class StatusBarViewModel : MyReactiveObject
         {
             EnableLegacyProtect = false;
             _config.TunModeItem.EnableLegacyProtect = false;
+
+            if (NetBridgeManager.Instance.IsRunning)
+            {
+                await StopNetBridgeAsync();
+            }
         }
 
         await ConfigHandler.SaveConfig(_config);
@@ -634,16 +646,16 @@ public class StatusBarViewModel : MyReactiveObject
 
     private async Task<bool> WaitForTunStop()
     {
-        // Give core a moment to begin shutdown
-        await Task.Delay(300);
-        // Poll every 50ms, max 3 seconds
-        for (var i = 0; i < 60; i++)
+        // Give core time to process ReloadRequested and begin TUN teardown
+        await Task.Delay(1000);
+        // Poll every 100ms, max 5 seconds
+        for (var i = 0; i < 50; i++)
         {
             if (!IsTunAdapterActive())
             {
                 return true;
             }
-            await Task.Delay(50);
+            await Task.Delay(100);
         }
         return false;
     }
@@ -654,7 +666,9 @@ public class StatusBarViewModel : MyReactiveObject
         {
             return System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
                 .Any(ni => ni.Name.Contains("wintun", StringComparison.OrdinalIgnoreCase)
-                        || ni.Name.Contains("sing", StringComparison.OrdinalIgnoreCase));
+                        || ni.Name.Contains(Global.V2rayTunName, StringComparison.OrdinalIgnoreCase)
+                        || ni.Name.Contains(Global.SingboxTunName, StringComparison.OrdinalIgnoreCase)
+                        || ni.Name.StartsWith("utun", StringComparison.OrdinalIgnoreCase));
         }
         catch
         {

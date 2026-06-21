@@ -88,13 +88,13 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
                         AppManager.Instance.Config.NetBridgeItem ??= new();
                         AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = box.ResultDnsViaBridge;
                         AppManager.Instance.Config.NetBridgeItem.RuleProcess = result;
-                        _ = ConfigHandler.SaveConfig(AppManager.Instance.Config);
+                        await ConfigHandler.SaveConfig(AppManager.Instance.Config);
 
                         if (NetBridgeManager.Instance.IsRunning)
                         {
-                            _ = NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                            _ = NetBridgeManager.Instance.UpdateRoutes(result);
-                            _ = NetBridgeManager.Instance.SetDnsViaProxy(box.ResultDnsViaBridge);
+                            await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                            await NetBridgeManager.Instance.UpdateRoutes(result);
+                            await NetBridgeManager.Instance.SetDnsViaProxy(box.ResultDnsViaBridge);
                         }
                     }
                 }

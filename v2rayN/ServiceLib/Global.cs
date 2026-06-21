@@ -550,6 +550,9 @@ public class Global
         65535
     ];
 
+    public const string V2rayTunName = "xray_tun";
+    public const string SingboxTunName = "singbox_tun";
+
     public static readonly List<string> TunStacks =
     [
         "gvisor",

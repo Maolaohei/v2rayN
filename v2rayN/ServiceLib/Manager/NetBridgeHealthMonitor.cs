@@ -16,7 +16,7 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     private System.Threading.Timer? _stuckTimer;
     private int _checkRunning;
     private long _lastTrafficBytes;
-    private DateTime _lastTrafficTime = DateTime.UtcNow;
+    private long _lastTrafficTimeUtc;
 
     public NetBridgeHealthMonitor(Func<Task> forceRecover, Func<bool> isRunning, Func<string, Task>? log = null, TimeSpan? idleThreshold = null)
     {
@@ -24,6 +24,7 @@ public sealed class NetBridgeHealthMonitor : IDisposable
         _isRunning = isRunning;
         _log = log;
         _idleThreshold = idleThreshold ?? TimeSpan.FromMinutes(2);
+        _lastTrafficTimeUtc = DateTime.UtcNow.Ticks;
     }
 
     public void StartStuckMonitor(TimeSpan interval)
@@ -41,7 +42,7 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     public void RecordTraffic(long totalBytes)
     {
         Interlocked.Exchange(ref _lastTrafficBytes, totalBytes);
-        _lastTrafficTime = DateTime.UtcNow;
+        Interlocked.Exchange(ref _lastTrafficTimeUtc, DateTime.UtcNow.Ticks);
     }
 
     private async Task CheckStuckState()
@@ -51,7 +52,8 @@ public sealed class NetBridgeHealthMonitor : IDisposable
 
         try
         {
-            var idle = DateTime.UtcNow - _lastTrafficTime;
+            var lastTicks = Interlocked.Read(ref _lastTrafficTimeUtc);
+            var idle = new TimeSpan(DateTime.UtcNow.Ticks - lastTicks);
             if (idle < _idleThreshold) return;
 
             if (_log != null) await _log.Invoke($"NetBridge stuck: no traffic for {(int)idle.TotalSeconds}s, triggering recovery");
@@ -63,18 +65,27 @@ public sealed class NetBridgeHealthMonitor : IDisposable
         }
     }
 
+    private static readonly string[] ConnectivityHosts = ["8.8.8.8", "1.1.1.1", "223.5.5.5"];
+
     public static async Task<bool> VerifyConnectivityAsync()
     {
-        try
+        foreach (var host in ConnectivityHosts)
         {
-            using var ping = new Ping();
-            var reply = await ping.SendPingAsync("8.8.8.8", 3000);
-            return reply.Status == IPStatus.Success;
+            try
+            {
+                using var ping = new Ping();
+                var reply = await ping.SendPingAsync(host, 3000);
+                if (reply.Status == IPStatus.Success)
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                // Try next host
+            }
         }
-        catch
-        {
-            return false;
-        }
+        return false;
     }
 
     public static bool IsLocalPortAvailable(int port)
