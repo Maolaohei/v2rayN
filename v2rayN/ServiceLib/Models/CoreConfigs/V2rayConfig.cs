@@ -78,6 +78,12 @@ public class Inboundsettings4Ray
 
     public string? name { get; set; }
 
+    public uint? listenPort { get; set; }
+
+    public uint? token { get; set; }
+
+    public uint? userLevel { get; set; }
+
     public int? MTU { get; set; }
 
     public List<string>? gateway { get; set; }

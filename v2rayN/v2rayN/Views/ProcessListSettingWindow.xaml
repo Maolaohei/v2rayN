@@ -7,9 +7,9 @@
     xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
     Title="{x:Static resx:ResUI.ProcessListSettingTitle}"
     Width="550"
-    Height="580"
+    Height="640"
     MinWidth="450"
-    MinHeight="480"
+    MinHeight="540"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
@@ -66,6 +66,23 @@
                     <TextBlock x:Name="txtDriverFile" Text="• 驱动文件: 检查中..." />
                     <TextBlock x:Name="txtDriverService" Text="• 驱动服务: 检查中..." />
                     <TextBlock x:Name="txtNetBridgeStatus" Text="• NetBridge: 检查中..." />
+                    <StackPanel
+                        Margin="0,4,0,0"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Text="转发模式:" />
+                        <ComboBox
+                            x:Name="cmbForwardMode"
+                            Width="160"
+                            VerticalAlignment="Center"
+                            SelectionChanged="CmbForwardMode_SelectionChanged">
+                            <ComboBoxItem Content="中转模式 (Bridge)" Tag="Bridge" IsSelected="True" />
+                            <ComboBoxItem Content="协议直连 (CoreDirect)" Tag="CoreDirect" />
+                            <ComboBoxItem Content="兼容模式 (Legacy)" Tag="Legacy" />
+                        </ComboBox>
+                    </StackPanel>
                     <StackPanel
                         Margin="0,4,0,0"
                         Orientation="Horizontal">

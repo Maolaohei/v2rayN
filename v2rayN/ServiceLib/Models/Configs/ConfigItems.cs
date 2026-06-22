@@ -29,7 +29,7 @@ public class InItem
     public string Protocol { get; set; }
     public bool UdpEnabled { get; set; }
     public bool SniffingEnabled { get; set; } = true;
-    public List<string>? DestOverride { get; set; } = ["http", "tls"];
+    public List<string>? DestOverride { get; set; } = ["http", "tls", "quic"];
     public bool RouteOnly { get; set; }
     public bool AllowLANConn { get; set; }
     public bool NewPort4LAN { get; set; }
@@ -283,6 +283,24 @@ public class SimpleDNSItem
 public class NetBridgeItem
 {
     public string? RuleProcess { get; set; }
-    public bool EnableDnsViaProxy { get; set; }
+    public bool EnableDnsViaProxy { get; set; } = true;
     public string ProtocolMode { get; set; } = "TCP";
+
+    /// <summary>
+    /// Forward mode for NetBridge traffic.
+    /// "Bridge" (default) — ProxyBridgeCore → Bridge Go → Core mixed inbound
+    /// "CoreDirect" — ProxyBridgeCore → Core netbridge inbound (no Bridge process)
+    /// "Legacy" — ProxyBridgeCore SOCKS5 → Core mixed inbound (old mode, TCP only)
+    /// </summary>
+    public string ForwardMode { get; set; } = "Bridge";
+
+    /// <summary>
+    /// TCP port for Core Direct mode (netbridge inbound on Core).
+    /// </summary>
+    public int CoreDirectTcpPort { get; set; } = 35000;
+
+    /// <summary>
+    /// UDP port for Core Direct mode (netbridge inbound on Core).
+    /// </summary>
+    public int CoreDirectUdpPort { get; set; } = 35001;
 }

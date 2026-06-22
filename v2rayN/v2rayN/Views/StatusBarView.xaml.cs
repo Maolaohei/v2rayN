@@ -102,26 +102,50 @@ public partial class StatusBarView
                 break;
 
             case EViewAction.ProcessListSetting:
-                if (obj is (string processText, bool dnsViaBridge, string protocolMode))
+                if (obj is (string processText, bool dnsViaBridge, string protocolMode, string forwardMode))
                 {
-                    var window = new ProcessListSettingWindow(processText, dnsViaBridge, protocolMode);
-                    if (window.ShowDialog() == true)
+                    ProcessListSettingWindow? window = null;
+                    Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        window = new ProcessListSettingWindow(processText, dnsViaBridge, protocolMode, forwardMode);
+                    });
+                    if (window != null && window.ShowDialog() == true)
                     {
                         var processes = window.ResultProcessList
                             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                             .ToList();
+                        var oldForwardMode = AppManager.Instance.Config.NetBridgeItem?.ForwardMode ?? "Bridge";
+                        var newForwardMode = window.ResultForwardMode;
+                        var newProtocolMode = window.ResultProtocolMode;
+
                         AppManager.Instance.Config.TunModeItem.ProtectedProcesses = processes;
                         AppManager.Instance.Config.NetBridgeItem ??= new();
                         AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = window.ResultDnsViaBridge;
                         AppManager.Instance.Config.NetBridgeItem.RuleProcess = window.ResultProcessList;
                         AppManager.Instance.Config.NetBridgeItem.ProtocolMode = window.ResultProtocolMode;
+                        AppManager.Instance.Config.NetBridgeItem.ForwardMode = window.ResultForwardMode;
                         await ConfigHandler.SaveConfig(AppManager.Instance.Config);
 
                         if (NetBridgeManager.Instance.IsRunning)
                         {
-                            await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                            await NetBridgeManager.Instance.UpdateRoutes(window.ResultProcessList);
-                            await NetBridgeManager.Instance.SetDnsViaProxy(window.ResultDnsViaBridge);
+                            var modeChanged = oldForwardMode != newForwardMode;
+                            if (modeChanged)
+                            {
+                                NoticeManager.Instance.SendMessageEx($"转发模式已切换: {oldForwardMode} → {newForwardMode}，正在重启 NetBridge...");
+                                AppEvents.ReloadRequested.Publish();
+                                AppEvents.NetBridgeRestartRequested.Publish();
+                            }
+                            else
+                            {
+                                await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                                await NetBridgeManager.Instance.UpdateRoutes(window.ResultProcessList);
+                                await NetBridgeManager.Instance.SetDnsViaProxy(window.ResultDnsViaBridge);
+                                NoticeManager.Instance.SendMessageEx($"进程列表和协议模式已更新 (进程: {processes.Count}, 协议: {newProtocolMode})");
+                            }
+                        }
+                        else
+                        {
+                            NoticeManager.Instance.SendMessageEx($"设置已保存 (转发模式: {newForwardMode}, 协议: {newProtocolMode})，开启进程劫持后生效");
                         }
                     }
                 }

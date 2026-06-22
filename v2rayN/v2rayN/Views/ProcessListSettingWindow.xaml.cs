@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -16,6 +17,7 @@ public partial class ProcessListSettingWindow
     private readonly ListCollectionView _activeView;
     private bool _dnsViaBridge;
     private string _protocolMode = "TCP";
+    private string _forwardMode = "Bridge";
     private int _sessionAddedCount;
     private readonly Action _onNetBridgeStateChanged;
 
@@ -29,14 +31,26 @@ public partial class ProcessListSettingWindow
     public string ResultProcessList { get; private set; } = "";
     public bool ResultDnsViaBridge { get; private set; }
     public string ResultProtocolMode => _protocolMode;
+    public string ResultForwardMode => _forwardMode;
 
-    public ProcessListSettingWindow(string processList, bool dnsViaBridge, string protocolMode = "TCP")
+    public ProcessListSettingWindow(string processList, bool dnsViaBridge, string protocolMode = "TCP", string forwardMode = "Bridge")
     {
         InitializeComponent();
 
         _dnsViaBridge = dnsViaBridge;
         _protocolMode = protocolMode;
+        _forwardMode = forwardMode;
         chkDnsViaBridge.IsChecked = dnsViaBridge;
+
+        // Initialize forward mode combo box
+        foreach (var item in cmbForwardMode.Items)
+        {
+            if (item is ComboBoxItem cbItem && cbItem.Tag?.ToString() == forwardMode)
+            {
+                cmbForwardMode.SelectedItem = cbItem;
+                break;
+            }
+        }
 
         // Initialize protocol radio buttons
         switch (protocolMode.ToUpperInvariant())
@@ -88,6 +102,35 @@ public partial class ProcessListSettingWindow
         rbProtocolTcp.Checked += (_, _) => _protocolMode = "TCP";
         rbProtocolUdp.Checked += (_, _) => _protocolMode = "UDP";
         rbProtocolBoth.Checked += (_, _) => _protocolMode = "BOTH";
+
+        // Initialize protocol mode availability based on forward mode
+        UpdateProtocolModeAvailability();
+    }
+
+    private void CmbForwardMode_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (cmbForwardMode.SelectedItem is ComboBoxItem item)
+        {
+            _forwardMode = item.Tag?.ToString() ?? "Bridge";
+            UpdateProtocolModeAvailability();
+        }
+    }
+
+    private void UpdateProtocolModeAvailability()
+    {
+        if (rbProtocolUdp == null || rbProtocolBoth == null || rbProtocolTcp == null)
+        {
+            return;
+        }
+        var isLegacy = _forwardMode == "Legacy";
+        rbProtocolUdp.IsEnabled = !isLegacy;
+        rbProtocolBoth.IsEnabled = !isLegacy;
+
+        if (isLegacy && _protocolMode != "TCP")
+        {
+            _protocolMode = "TCP";
+            rbProtocolTcp.IsChecked = true;
+        }
     }
 
     private bool FilterRunningProcess(object obj)

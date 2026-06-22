@@ -1,4 +1,4 @@
-﻿{
+{
 	"tag": "tag1",
 	"port": 10808,
 	"protocol": "socks",
@@ -12,7 +12,8 @@
 		"enabled": true,
 		"destOverride": [
 			"http",
-			"tls"
+			"tls",
+			"quic"
 		]
 	}
 } 

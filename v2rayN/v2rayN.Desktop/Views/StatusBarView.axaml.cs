@@ -77,9 +77,9 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
                 break;
 
             case EViewAction.ProcessListSetting:
-                if (obj is (string processText, bool dnsViaBridge, string protocolMode))
+                if (obj is (string processText, bool dnsViaBridge, string protocolMode, string forwardMode))
                 {
-                    var box = new ProcessListSettingDialog(processText, dnsViaBridge, protocolMode);
+                    var box = new ProcessListSettingDialog(processText, dnsViaBridge, protocolMode, forwardMode);
                     var result = await box.ShowDialog<string?>(VisualRoot as Window);
                     if (result != null)
                     {
@@ -89,13 +89,23 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
                         AppManager.Instance.Config.NetBridgeItem.EnableDnsViaProxy = box.ResultDnsViaBridge;
                         AppManager.Instance.Config.NetBridgeItem.RuleProcess = result;
                         AppManager.Instance.Config.NetBridgeItem.ProtocolMode = box.ResultProtocolMode;
+                        AppManager.Instance.Config.NetBridgeItem.ForwardMode = box.ResultForwardMode;
                         await ConfigHandler.SaveConfig(AppManager.Instance.Config);
 
                         if (NetBridgeManager.Instance.IsRunning)
                         {
-                            await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                            await NetBridgeManager.Instance.UpdateRoutes(result);
-                            await NetBridgeManager.Instance.SetDnsViaProxy(box.ResultDnsViaBridge);
+                            var modeChanged = NetBridgeManager.Instance.ForwardMode != box.ResultForwardMode;
+                            if (modeChanged)
+                            {
+                                await NetBridgeManager.Instance.Stop();
+                                await StartNetBridgeAsync();
+                            }
+                            else
+                            {
+                                await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                                await NetBridgeManager.Instance.UpdateRoutes(result);
+                                await NetBridgeManager.Instance.SetDnsViaProxy(box.ResultDnsViaBridge);
+                            }
                         }
                     }
                 }

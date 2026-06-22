@@ -4,3 +4,9 @@
 [submodule "v2rayN/NetBridge"]
 	path = v2rayN/NetBridge
 	url = https://github.com/Maolaohei/NetBridge.git
+[submodule "v2rayN/NetBridgeBridge"]
+	path = v2rayN/NetBridgeBridge
+	url = https://github.com/Maolaohei/NetBridgeBridge.git
+[submodule "v2rayN/ProxyBridge"]
+	path = v2rayN/ProxyBridge
+	url = https://github.com/Maolaohei/ProxyBridge.git

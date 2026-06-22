@@ -14,6 +14,7 @@ public partial class ProcessListSettingDialog : Window
     private readonly DataGridCollectionView _activeView;
     private bool _dnsViaBridge;
     private string _protocolMode = "TCP";
+    private string _forwardMode = "Bridge";
     private int _sessionAddedCount;
     private readonly Action _onNetBridgeStateChanged;
 
@@ -27,18 +28,20 @@ public partial class ProcessListSettingDialog : Window
     public string ResultProcessList { get; private set; } = "";
     public bool ResultDnsViaBridge { get; private set; }
     public string ResultProtocolMode => _protocolMode;
+    public string ResultForwardMode => _forwardMode;
 
     public ProcessListSettingDialog()
-        : this(string.Empty, false, "TCP")
+        : this(string.Empty, false, "TCP", "Bridge")
     {
     }
 
-    public ProcessListSettingDialog(string processList, bool dnsViaBridge, string protocolMode = "TCP")
+    public ProcessListSettingDialog(string processList, bool dnsViaBridge, string protocolMode = "TCP", string forwardMode = "Bridge")
     {
         InitializeComponent();
 
         _dnsViaBridge = dnsViaBridge;
         _protocolMode = protocolMode;
+        _forwardMode = forwardMode;
         chkDnsViaBridge.IsChecked = dnsViaBridge;
 
         var existingProcesses = processList
@@ -85,7 +88,55 @@ public partial class ProcessListSettingDialog : Window
         btnOk.Click += BtnOk_Click;
         btnCancel.Click += BtnCancel_Click;
 
+        // Wire up protocol mode radio buttons
+        rbProtocolTcp.PropertyChanged += (_, e) =>
+        {
+            if (e.Property.Name == "IsChecked" && rbProtocolTcp.IsChecked == true)
+                _protocolMode = "TCP";
+        };
+        rbProtocolUdp.PropertyChanged += (_, e) =>
+        {
+            if (e.Property.Name == "IsChecked" && rbProtocolUdp.IsChecked == true)
+                _protocolMode = "UDP";
+        };
+        rbProtocolBoth.PropertyChanged += (_, e) =>
+        {
+            if (e.Property.Name == "IsChecked" && rbProtocolBoth.IsChecked == true)
+                _protocolMode = "BOTH";
+        };
+
+        // Wire up forward mode combo box
+        cmbForwardMode.SelectedIndex = forwardMode switch
+        {
+            "CoreDirect" => 1,
+            "Legacy" => 2,
+            _ => 0
+        };
+        UpdateProtocolModeAvailability();
+
         CanMinimize = false;
+    }
+
+    private void CmbForwardMode_SelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (cmbForwardMode.SelectedItem is Avalonia.Controls.ComboBoxItem item)
+        {
+            _forwardMode = item.Tag?.ToString() ?? "Bridge";
+            UpdateProtocolModeAvailability();
+        }
+    }
+
+    private void UpdateProtocolModeAvailability()
+    {
+        var isLegacy = _forwardMode == "Legacy";
+        rbProtocolUdp.IsEnabled = !isLegacy;
+        rbProtocolBoth.IsEnabled = !isLegacy;
+
+        if (isLegacy && _protocolMode != "TCP")
+        {
+            _protocolMode = "TCP";
+            rbProtocolTcp.IsChecked = true;
+        }
     }
 
     private bool FilterRunningProcess(object obj)

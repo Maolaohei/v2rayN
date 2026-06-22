@@ -33,6 +33,38 @@
                     <TextBlock x:Name="txtDriverFile" Text="• 驱动文件: 检查中..." />
                     <TextBlock x:Name="txtDriverService" Text="• 驱动服务: 检查中..." />
                     <TextBlock x:Name="txtNetBridgeStatus" Text="• NetBridge: 检查中..." />
+                    <StackPanel Margin="0,4,0,0" Orientation="Horizontal" Spacing="8">
+                        <TextBlock VerticalAlignment="Center" Text="转发模式:" />
+                        <ComboBox
+                            x:Name="cmbForwardMode"
+                            Width="160"
+                            VerticalAlignment="Center"
+                            SelectedIndex="0"
+                            SelectionChanged="CmbForwardMode_SelectionChanged">
+                            <ComboBoxItem Content="中转模式 (Bridge)" Tag="Bridge" />
+                            <ComboBoxItem Content="协议直连 (CoreDirect)" Tag="CoreDirect" />
+                            <ComboBoxItem Content="兼容模式 (Legacy)" Tag="Legacy" />
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Margin="0,4,0,0" Orientation="Horizontal" Spacing="8">
+                        <TextBlock VerticalAlignment="Center" Text="协议模式:" />
+                        <RadioButton
+                            x:Name="rbProtocolTcp"
+                            Content="TCP"
+                            GroupName="ProtocolMode"
+                            IsChecked="True"
+                            VerticalAlignment="Center" />
+                        <RadioButton
+                            x:Name="rbProtocolUdp"
+                            Content="UDP"
+                            GroupName="ProtocolMode"
+                            VerticalAlignment="Center" />
+                        <RadioButton
+                            x:Name="rbProtocolBoth"
+                            Content="TCP+UDP"
+                            GroupName="ProtocolMode"
+                            VerticalAlignment="Center" />
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
         </Border>

@@ -247,6 +247,13 @@ public class StatusBarViewModel : MyReactiveObject
             .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Subscribe(async result => await SetListenerType(result));
 
+        AppEvents.NetBridgeRestartRequested
+            .AsObservable()
+            .Subscribe(async _ =>
+            {
+                await Task.Run(async () => await RestartNetBridgeAsync());
+            });
+
         #endregion AppEvents
 
         if (EnableLegacyProtect)
@@ -453,7 +460,8 @@ public class StatusBarViewModel : MyReactiveObject
         var processText = string.Join(",", currentProcesses);
         var dnsViaBridge = _config.NetBridgeItem?.EnableDnsViaProxy ?? false;
         var protocolMode = _config.NetBridgeItem?.ProtocolMode ?? "TCP";
-        _updateView?.Invoke(EViewAction.ProcessListSetting, (processText, dnsViaBridge, protocolMode));
+        var forwardMode = _config.NetBridgeItem?.ForwardMode ?? "Bridge";
+        _updateView?.Invoke(EViewAction.ProcessListSetting, (processText, dnsViaBridge, protocolMode, forwardMode));
         await Task.CompletedTask;
     }
 
@@ -617,29 +625,44 @@ public class StatusBarViewModel : MyReactiveObject
 
         if (EnableLegacyProtect)
         {
+            var cachedForwardMode = _config.NetBridgeItem?.ForwardMode ?? "Bridge";
+            var wasTunEnabled = EnableTun;
             EnableTun = false;
             _config.TunModeItem.EnableTun = false;
-        }
 
-        await ConfigHandler.SaveConfig(_config);
+            await ConfigHandler.SaveConfig(_config);
 
-        if (EnableLegacyProtect)
-        {
-            // Stop TUN first: publish reload to restart core without TUN,
-            // then wait for TUN adapter to fully release before starting WinDivert
-            AppEvents.ReloadRequested.Publish();
-            var tunStopped = await WaitForTunStop();
-
-            if (!tunStopped)
+            if (wasTunEnabled)
             {
-                NoticeManager.Instance.SendMessageEx(ResUI.OperationFailed);
-                return;
+                AppEvents.ReloadRequested.Publish();
+                var tunStopped = await WaitForTunStop();
+
+                if (!tunStopped)
+                {
+                    NoticeManager.Instance.SendMessageEx(ResUI.OperationFailed);
+                    return;
+                }
+            }
+            else if (cachedForwardMode == "CoreDirect")
+            {
+                var nbPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
+                AppEvents.ReloadRequested.Publish();
+
+                for (var i = 0; i < 50; i++)
+                {
+                    await Task.Delay(100);
+                    if (!NetBridgeHealthMonitor.IsLocalPortAvailable(nbPort))
+                    {
+                        break;
+                    }
+                }
             }
 
-            await StartNetBridgeAsync();
+            await StartNetBridgeAsync(cachedForwardMode);
         }
         else
         {
+            await ConfigHandler.SaveConfig(_config);
             await StopNetBridgeAsync();
             AppEvents.ReloadRequested.Publish();
         }
@@ -677,26 +700,70 @@ public class StatusBarViewModel : MyReactiveObject
         }
     }
 
-    private async Task StartNetBridgeAsync()
+    private async Task StartNetBridgeAsync(string? cachedForwardMode = null)
     {
+        var ruleProcess = _config.NetBridgeItem?.RuleProcess ?? "";
+        var forwardMode = cachedForwardMode ?? _config.NetBridgeItem?.ForwardMode ?? "Bridge";
+        var protocolMode = _config.NetBridgeItem?.ProtocolMode ?? "TCP";
+        var dnsViaProxy = _config.NetBridgeItem?.EnableDnsViaProxy ?? true;
+
         await NetBridgeManager.Instance.Init(async (isError, msg) =>
         {
             NoticeManager.Instance.SendMessageEx(msg);
         });
 
         var succeed = await NetBridgeManager.Instance.Start();
+
         if (succeed)
         {
-            var ruleProcess = _config.NetBridgeItem?.RuleProcess ?? "";
-            await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+            switch (forwardMode)
+            {
+                case "CoreDirect":
+                    var preferredTcpPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
+                    var nbTcpPort = NetBridgeManager.FindFreePort(preferredTcpPort);
+                    if (nbTcpPort < 0)
+                    {
+                        NoticeManager.Instance.SendMessageEx("NetBridge 协议直连: 所有端口均被占用，无法启动");
+                        return;
+                    }
+                    if (nbTcpPort != preferredTcpPort)
+                    {
+                        _config.NetBridgeItem ??= new();
+                        _config.NetBridgeItem.CoreDirectTcpPort = nbTcpPort;
+                        await ConfigHandler.SaveConfig(_config);
+                    }
+                    NoticeManager.Instance.SendMessageEx($"NetBridge 协议直连: ProxyBridgeCore → Core:{nbTcpPort}");
+                    break;
+
+                case "Legacy":
+                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                    NoticeManager.Instance.SendMessageEx("NetBridge 兼容模式: ProxyBridgeCore → Core (SOCKS5, 仅TCP)");
+                    break;
+
+                default: // "Bridge"
+                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                    NoticeManager.Instance.SendMessageEx("NetBridge 中转模式: ProxyBridgeCore → Core (SOCKS5)");
+                    break;
+            }
+
             await NetBridgeManager.Instance.UpdateRoutes(ruleProcess);
-            await NetBridgeManager.Instance.SetDnsViaProxy(_config.NetBridgeItem?.EnableDnsViaProxy ?? false);
+
+            _config.NetBridgeItem ??= new();
+            _config.NetBridgeItem.EnableDnsViaProxy = dnsViaProxy;
+            await NetBridgeManager.Instance.SetDnsViaProxy(dnsViaProxy);
         }
     }
 
     private async Task StopNetBridgeAsync()
     {
         await NetBridgeManager.Instance.Stop();
+    }
+
+    private async Task RestartNetBridgeAsync()
+    {
+        await StopNetBridgeAsync();
+        await Task.Delay(500);
+        await StartNetBridgeAsync();
     }
 
     private bool AllowEnableTun()

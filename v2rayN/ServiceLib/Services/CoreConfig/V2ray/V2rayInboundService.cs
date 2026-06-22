@@ -12,6 +12,35 @@ public partial class CoreConfigV2rayService
             var inbound = BuildInbound(_config.Inbound.First(), EInboundProtocol.socks, true);
             var isUsingLocalMixedPort = _node.Address == Global.Loopback && _node.Port == listenPort;
 
+            // When NetBridge is active, ensure mixed inbound accepts UDP if protocol mode requires it
+            if (_config.TunModeItem.EnableLegacyProtect)
+            {
+                var nbProtocolMode = _config.NetBridgeItem?.ProtocolMode ?? "TCP";
+                if (nbProtocolMode is "UDP" or "BOTH" or "TCP+UDP")
+                {
+                    inbound.settings.udp = true;
+                }
+            }
+
+            // v2.1.0: CoreDirect mode adds netbridge inbound for direct ProxyBridgeCore connection
+            var forwardMode = _config.NetBridgeItem?.ForwardMode ?? "Bridge";
+            if (forwardMode == "CoreDirect" && _config.TunModeItem.EnableLegacyProtect)
+            {
+                var nbTcpPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
+                var nbInbound = new Inbounds4Ray
+                {
+                    tag = "netbridge",
+                    protocol = "netbridge",
+                    listen = Global.Loopback,
+                    port = nbTcpPort,
+                    settings = new()
+                    {
+                        listenPort = (uint)nbTcpPort
+                    }
+                };
+                _coreConfig.inbounds.Add(nbInbound);
+            }
+
             if (!context.IsTunEnabled || !isUsingLocalMixedPort)
             {
                 _coreConfig.inbounds.Add(inbound);
