@@ -14,6 +14,7 @@ public class CoreManager
     private ProcessService? _processPreService;
     private bool _linuxSudo = false;
     private Func<bool, string, Task>? _updateFunc;
+    private readonly object _stopLock = new();
     private const string _tag = "CoreHandler";
 
     public async Task Init(Config config, Func<bool, string, Task> updateFunc)
@@ -149,8 +150,17 @@ public class CoreManager
 
     public async Task CoreStop()
     {
+        // Use TryEnter to prevent deadlock if called concurrently
+        bool lockTaken = false;
         try
         {
+            Monitor.TryEnter(_stopLock, 3000, ref lockTaken);
+            if (!lockTaken)
+            {
+                Logging.SaveLog($"{_tag}: CoreStop another stop already in progress, skipping");
+                return;
+            }
+
             if (_linuxSudo)
             {
                 await CoreAdminManager.Instance.KillProcessAsLinuxSudo();
@@ -174,6 +184,10 @@ public class CoreManager
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
+        }
+        finally
+        {
+            if (lockTaken) Monitor.Exit(_stopLock);
         }
     }
 

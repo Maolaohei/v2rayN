@@ -71,17 +71,20 @@ public partial class App : Application
         Logging.SaveLog("OnExit");
         base.OnExit(e);
 
-        // Safety-net: ensure WinDivert is released before killing the process.
+        // Safety-net: ensure WinDivert handle is released before exiting.
         // AppExitAsync should have already done this, but if the shutdown race
         // skipped it we must try here — otherwise the kernel driver retains
-        // stale hooks and the network stays dead.
-        // Use StopForShutdown with ForcedShutdown state + timeout.
+        // stale hooks and the network stays dead after process exit.
+        // v2.1.0: Driver itself stays resident (no sc stop), only the handle is released.
         try
         {
             var stopTask = NetBridgeManager.Instance.StopForShutdown(2000);
             if (!stopTask.Wait(2500))
             {
-                Logging.SaveLog("NetBridge stop timed out in OnExit");
+                Logging.SaveLog("NetBridge stop timed out in OnExit — forcing handle release");
+                // Force native handle release even if Stop() hung
+                try { NetBridgeManager.Instance.ForceReleaseHandle(); }
+                catch (Exception ex2) { Logging.SaveLog($"ForceReleaseHandle failed: {ex2.Message}"); }
             }
         }
         catch (Exception ex)
@@ -89,6 +92,7 @@ public partial class App : Application
             Logging.SaveLog($"NetBridge stop failed in OnExit: {ex.Message}");
         }
 
-        Process.GetCurrentProcess().Kill();
+        // Give 500ms for native cleanup to complete before exit
+        Thread.Sleep(500);
     }
 }

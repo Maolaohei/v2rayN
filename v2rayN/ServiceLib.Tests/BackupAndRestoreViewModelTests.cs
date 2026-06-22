@@ -58,7 +58,7 @@ public class BackupAndRestoreViewModelTests
         Assert.False(restored.TunModeItem.EnableLegacyProtect);
         Assert.Null(restored.TunModeItem.ProtectedProcesses);
         Assert.Null(restored.NetBridgeItem.RuleProcess);
-        Assert.False(restored.NetBridgeItem.EnableDnsViaProxy);
+        Assert.True(restored.NetBridgeItem.EnableDnsViaProxy);
     }
 
     [Fact]

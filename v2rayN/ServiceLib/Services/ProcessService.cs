@@ -83,34 +83,45 @@ public class ProcessService : IDisposable
         {
             if (_process.StartInfo.RedirectStandardOutput)
             {
-                try
-                {
-                    _process.CancelOutputRead();
-                }
-                catch { }
-                try
-                {
-                    _process.CancelErrorRead();
-                }
-                catch { }
+                try { _process.CancelOutputRead(); }
+                catch (Exception ex) { Logging.SaveLog($"CancelOutputRead: {ex.Message}"); }
+                try { _process.CancelErrorRead(); }
+                catch (Exception ex) { Logging.SaveLog($"CancelErrorRead: {ex.Message}"); }
             }
 
+            // Try graceful kill with tree termination on non-Windows
             try
             {
                 if (Utils.IsNonWindows())
                 {
                     _process.Kill(true);
                 }
+                else
+                {
+                    _process.Kill();
+                }
             }
-            catch { }
-
-            try
+            catch (InvalidOperationException)
             {
-                _process.Kill();
+                // Process already exited — fine
+                return;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logging.SaveLog($"Kill process failed: {ex.Message}");
+                await _updateFunc?.Invoke(true, $"Kill process failed: {ex.Message}");
+            }
 
-            await Task.Delay(100);
+            // Wait up to 3s for process to exit after Kill
+            for (var i = 0; i < 30 && !_process.HasExited; i++)
+            {
+                await Task.Delay(100);
+            }
+
+            if (!_process.HasExited)
+            {
+                await _updateFunc?.Invoke(true, "Process did not exit after Kill, force proceeding");
+            }
         }
         catch (Exception ex)
         {
@@ -170,16 +181,10 @@ public class ProcessService : IDisposable
         {
             if (!_process.HasExited)
             {
-                try
-                {
-                    _process.CancelOutputRead();
-                }
-                catch { }
-                try
-                {
-                    _process.CancelErrorRead();
-                }
-                catch { }
+                try { _process.CancelOutputRead(); }
+                catch { /* Already shutting down, ignore */ }
+                try { _process.CancelErrorRead(); }
+                catch { /* Already shutting down, ignore */ }
 
                 _process.Kill();
             }

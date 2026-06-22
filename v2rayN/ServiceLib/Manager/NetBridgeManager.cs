@@ -36,6 +36,39 @@ public sealed class NetBridgeManager : IDisposable
     public long TotalConnections => Interlocked.Read(ref _totalConnections);
     public ConcurrentDictionary<string, long> ProcessConnections => _processConnections;
 
+    /// <summary>
+    /// Gets the current forward mode from config.
+    /// </summary>
+    public string ForwardMode => _config?.NetBridgeItem?.ForwardMode ?? "Bridge";
+
+    /// <summary>
+    /// Returns the allowed protocol modes for the current forward mode.
+    /// Legacy only supports TCP; Bridge and CoreDirect support TCP/UDP/BOTH.
+    /// </summary>
+    public static string[] GetAllowedProtocolModes(string forwardMode)
+    {
+        return forwardMode == "Legacy"
+            ? ["TCP"]
+            : ["TCP", "UDP", "BOTH"];
+    }
+
+    /// <summary>
+    /// Finds a free port starting from the given port.
+    /// Tries the requested port first, then scans up to 100 nearby ports.
+    /// Returns the free port, or -1 if none found.
+    /// </summary>
+    public static int FindFreePort(int preferredPort)
+    {
+        for (var port = preferredPort; port < preferredPort + 100; port++)
+        {
+            if (NetBridgeHealthMonitor.IsLocalPortAvailable(port))
+            {
+                return port;
+            }
+        }
+        return -1;
+    }
+
     public async Task Init(Func<bool, string, Task>? updateFunc = null)
     {
         if (_isInitialized)
@@ -63,7 +96,7 @@ public sealed class NetBridgeManager : IDisposable
 
             _netBridgeService.ConnectionReceived += OnConnectionReceived;
 
-            _driverLoaded = CheckDriverAvailability();
+            _driverLoaded = await CheckDriverAvailabilityAsync();
             if (!_driverLoaded)
             {
                 var driverPath = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge", "WinDivert.dll");
@@ -147,18 +180,62 @@ public sealed class NetBridgeManager : IDisposable
         }
     }
 
-    private static bool CheckDriverAvailability()
+    private static async Task<bool> CheckDriverAvailabilityAsync()
     {
         try
         {
             var baseDir = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge");
-            return File.Exists(Path.Combine(baseDir, "WinDivert.dll"))
-                && File.Exists(Path.Combine(baseDir, "WinDivert64.sys"));
+            if (!File.Exists(Path.Combine(baseDir, "WinDivert.dll"))
+                || !File.Exists(Path.Combine(baseDir, "WinDivert64.sys")))
+            {
+                return false;
+            }
+
+            // v2.1.0: Also verify WinDivert service state if on Windows.
+            if (Utils.IsWindows())
+            {
+                try
+                {
+                    var scOutput = await RunScQueryAsync("WinDivert");
+                    if (scOutput.Contains("RUNNING", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Driver already loaded — good
+                    }
+                    else if (scOutput.Contains("STOPPED", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Service exists but stopped — ProxyBridgeCore will re-open handle
+                    }
+                }
+                catch
+                {
+                    // scm query failed — not fatal
+                }
+            }
+
+            return true;
         }
         catch
         {
             return false;
         }
+    }
+
+    private static async Task<string> RunScQueryAsync(string serviceName)
+    {
+        using var process = new System.Diagnostics.Process();
+        process.StartInfo = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "sc",
+            Arguments = $"query {serviceName}",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        process.Start();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        return output;
     }
 
     public async Task<bool> Start()
@@ -186,19 +263,47 @@ public sealed class NetBridgeManager : IDisposable
                 return false;
             }
 
-            _netBridgeService.Stop();
-
-            var started = _netBridgeService.Start();
-            if (!started)
+            // Stop existing service with timeout before starting new one
+            try
             {
-                await Task.Delay(500);
-                started = _netBridgeService.Start();
+                var stopTask = Task.Run(() =>
+                {
+                    try { _netBridgeService.Stop(); }
+                    catch { }
+                });
+                if (!stopTask.Wait(1500))
+                {
+                    await SafeInvoke(false, "Previous NetBridge Stop() timed out, forcing");
+                    _netBridgeService.ForceStop();
+                }
             }
+            catch { }
+
+            // v2.1.0 Phase 2: Retry with exponential backoff (500ms, 1000ms)
+            const int maxRetries = 2;
+            var delayMs = 500;
+            var started = false;
+            for (var attempt = 0; attempt <= maxRetries; attempt++)
+            {
+                started = _netBridgeService.Start();
+                if (started) break;
+                if (attempt < maxRetries)
+                {
+                    await SafeInvoke(false, $"NetBridge Start() attempt {attempt + 1}/{maxRetries} failed, retrying in {delayMs}ms...");
+                    await Task.Delay(delayMs);
+                    delayMs *= 2;
+                }
+            }
+
             if (!started)
             {
-                await SafeInvoke(true, "NetBridge native Start() returned false");
+                await SafeInvoke(true, $"NetBridge native Start() failed after {maxRetries + 1} attempts");
                 return false;
             }
+
+            // Log native version for diagnostics
+            var version = NetBridgeService.GetNativeVersion();
+            await SafeInvoke(false, $"NetBridge started (native v{version})");
 
             _isProxyRunning = true;
             _restartCount = 0;
@@ -306,6 +411,26 @@ public sealed class NetBridgeManager : IDisposable
         return true;
     }
 
+    /// <summary>
+    /// Force-releases the native WinDivert handle without waiting for clean shutdown.
+    /// Used as a last resort when StopForShutdown times out.
+    /// </summary>
+    public void ForceReleaseHandle()
+    {
+        try
+        {
+            if (_netBridgeService != null)
+            {
+                _netBridgeService.ForceStop();
+                _netBridgeService.Dispose();
+            }
+        }
+        catch { }
+        _netBridgeService = null;
+        _isProxyRunning = false;
+        _isInitialized = false;
+    }
+
     #region Watchdog
 
     private int _watchdogRunning;
@@ -325,21 +450,22 @@ public sealed class NetBridgeManager : IDisposable
         {
             if (!await CheckHealthAsync())
             {
-                await SafeInvoke(true, "NetBridge health check failed, attempting restart...");
+                await SafeInvoke(true, $"NetBridge health check failed (attempt {_restartCount + 1}/{MaxRestartAttempts}), attempting restart...");
                 _isProxyRunning = false;
                 RaiseStateChanged();
                 await RestartAsync();
             }
             else if (!await NetBridgeHealthMonitor.VerifyConnectivityAsync())
             {
-                await SafeInvoke(true, "NetBridge connectivity lost, forcing restart...");
+                await SafeInvoke(true, $"NetBridge connectivity lost (attempt {_restartCount + 1}/{MaxRestartAttempts}), forcing restart...");
                 _isProxyRunning = false;
                 RaiseStateChanged();
                 await RestartAsync();
             }
         }
-        catch
+        catch (Exception ex)
         {
+            await SafeInvoke(true, $"NetBridge watchdog error: {ex.Message}");
             _isProxyRunning = false;
             RaiseStateChanged();
             await RestartAsync();

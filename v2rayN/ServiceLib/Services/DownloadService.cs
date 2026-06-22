@@ -14,7 +14,6 @@ public class DownloadService
     private static readonly string _tag = "DownloadService";
     private static readonly HttpClient _noRedirectClient = new(new SocketsHttpHandler { AllowAutoRedirect = false });
     private static readonly ConcurrentDictionary<string, HttpClient> _proxyClients = new();
-    private static int _proxyClientCount;
 
     /// <summary>
     /// Downloads data with the specified proxy and reports progress messages.
@@ -156,17 +155,6 @@ public class DownloadService
         try
         {
             var proxyKey = webProxy?.ToString() ?? "";
-            if (Interlocked.Increment(ref _proxyClientCount) > 20)
-            {
-                foreach (var kv in _proxyClients)
-                {
-                    if (_proxyClients.TryRemove(kv.Key, out var old))
-                    {
-                        old.Dispose();
-                    }
-                }
-                Interlocked.Exchange(ref _proxyClientCount, 0);
-            }
             var client = _proxyClients.GetOrAdd(proxyKey, _ =>
                 new HttpClient(new SocketsHttpHandler()
                 {

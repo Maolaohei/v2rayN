@@ -83,6 +83,86 @@ public class StatusBarViewModelTests
         Assert.Equal(3, restored.TunModeItem.ProtectedProcesses.Count);
     }
 
+    [Fact]
+    public void Config_NetBridgeItem_RoundTrip_PreservesForwardMode()
+    {
+        var config = CreateTestConfig();
+        config.NetBridgeItem.ForwardMode = "CoreDirect";
+        config.NetBridgeItem.CoreDirectTcpPort = 40000;
+        config.NetBridgeItem.CoreDirectUdpPort = 40001;
+
+        var json = JsonUtils.Serialize(config);
+        var restored = JsonUtils.Deserialize<Config>(json);
+
+        Assert.NotNull(restored);
+        Assert.Equal("CoreDirect", restored.NetBridgeItem.ForwardMode);
+        Assert.Equal(40000, restored.NetBridgeItem.CoreDirectTcpPort);
+        Assert.Equal(40001, restored.NetBridgeItem.CoreDirectUdpPort);
+    }
+
+    [Fact]
+    public void Config_NetBridgeItem_DefaultForwardMode_IsBridge()
+    {
+        var item = new NetBridgeItem();
+        Assert.Equal("Bridge", item.ForwardMode);
+    }
+
+    [Fact]
+    public void TuplePatternMatch_ProcessListSetting_WithForwardMode()
+    {
+        // Simulate the tuple that ShowProcessListSetting creates
+        var processText = "chrome.exe,firefox.exe";
+        var dnsViaBridge = true;
+        var protocolMode = "TCP";
+        var forwardMode = "Bridge";
+
+        var tuple = (processText, dnsViaBridge, protocolMode, forwardMode);
+
+        // Verify pattern matching works (same as UpdateViewHandler)
+        if (tuple is (string pt, bool dvb, string pm, string fm))
+        {
+            Assert.Equal("chrome.exe,firefox.exe", pt);
+            Assert.True(dvb);
+            Assert.Equal("TCP", pm);
+            Assert.Equal("Bridge", fm);
+        }
+        else
+        {
+            Assert.Fail("Tuple pattern match failed");
+        }
+    }
+
+    [Fact]
+    public void TuplePatternMatch_CoreDirectMode()
+    {
+        var tuple = ("chrome.exe", true, "BOTH", "CoreDirect");
+
+        if (tuple is (string _, bool _, string _, string fm))
+        {
+            Assert.Equal("CoreDirect", fm);
+        }
+        else
+        {
+            Assert.Fail("Tuple pattern match failed");
+        }
+    }
+
+    [Fact]
+    public void ForwardMode_GetAllowedProtocolModes()
+    {
+        Assert.Equal(new[] { "TCP" }, NetBridgeManager.GetAllowedProtocolModes("Legacy"));
+        Assert.Equal(new[] { "TCP", "UDP", "BOTH" }, NetBridgeManager.GetAllowedProtocolModes("Bridge"));
+        Assert.Equal(new[] { "TCP", "UDP", "BOTH" }, NetBridgeManager.GetAllowedProtocolModes("CoreDirect"));
+    }
+
+    [Fact]
+    public void ForwardMode_FindFreePort_ReturnsPreferredIfAvailable()
+    {
+        // Port 49999 is unlikely to be in use
+        var port = NetBridgeManager.FindFreePort(49999);
+        Assert.Equal(49999, port);
+    }
+
     private static Config CreateTestConfig() => new()
     {
         TunModeItem = new TunModeItem(),

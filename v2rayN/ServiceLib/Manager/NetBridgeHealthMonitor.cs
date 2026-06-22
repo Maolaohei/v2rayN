@@ -15,6 +15,7 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     private readonly TimeSpan _idleThreshold;
     private System.Threading.Timer? _stuckTimer;
     private int _checkRunning;
+    private volatile bool _disposed;
     private long _lastTrafficBytes;
     private long _lastTrafficTimeUtc;
 
@@ -47,6 +48,7 @@ public sealed class NetBridgeHealthMonitor : IDisposable
 
     private async Task CheckStuckState()
     {
+        if (_disposed) return;
         if (!_isRunning()) return;
         if (Interlocked.CompareExchange(ref _checkRunning, 1, 0) != 0) return;
 
@@ -103,8 +105,15 @@ public sealed class NetBridgeHealthMonitor : IDisposable
         }
     }
 
+    ~NetBridgeHealthMonitor()
+    {
+        Dispose();
+    }
+
     public void Dispose()
     {
+        _disposed = true;
         StopStuckMonitor();
+        GC.SuppressFinalize(this);
     }
 }
