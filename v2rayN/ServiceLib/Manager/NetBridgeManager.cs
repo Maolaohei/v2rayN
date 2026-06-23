@@ -724,61 +724,13 @@ public sealed class NetBridgeManager : IDisposable
         }).ToList();
     }
 
-    #region NetBridgeBridge Process
+    #region NetBridgeBridge Process (deprecated — Bridge mode hidden)
 
+    [Obsolete("Bridge mode is deprecated. Use CoreDirect or Legacy instead.")]
     public async Task StartNetBridgeBridgeAsync(int socksPort)
     {
-        StopNetBridgeBridge();
-
-        try
-        {
-            var baseDir = AppContext.BaseDirectory;
-            var exePath = Path.Combine(baseDir, "NetBridgeBridge.exe");
-            if (!File.Exists(exePath))
-            {
-                await SafeInvoke(false, "NetBridgeBridge.exe not found, skipping");
-                return;
-            }
-
-            var args = $"-tcp-listen 127.0.0.1:35002 -udp-listen 127.0.0.1:35003 -core-socks 127.0.0.1:{socksPort}";
-
-            _nbBridgeProcess = new System.Diagnostics.Process
-            {
-                StartInfo = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = exePath,
-                    Arguments = args,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    WorkingDirectory = baseDir
-                },
-                EnableRaisingEvents = true
-            };
-
-            _nbBridgeProcess.OutputDataReceived += (_, e) =>
-            {
-                if (e.Data.IsNotEmpty())
-                    _ = SafeInvoke(false, $"[Bridge] {e.Data}");
-            };
-            _nbBridgeProcess.ErrorDataReceived += (_, e) =>
-            {
-                if (e.Data.IsNotEmpty())
-                    _ = SafeInvoke(false, $"[Bridge] {e.Data}");
-            };
-
-            _nbBridgeProcess.Start();
-            _nbBridgeProcess.BeginOutputReadLine();
-            _nbBridgeProcess.BeginErrorReadLine();
-
-            await SafeInvoke(false, $"NetBridgeBridge started (PID {_nbBridgeProcess.Id}), socks→127.0.0.1:{socksPort}");
-        }
-        catch (Exception ex)
-        {
-            await SafeInvoke(true, $"NetBridgeBridge start failed: {ex.Message}");
-            _nbBridgeProcess = null;
-        }
+        // Bridge mode deprecated — no longer starting NetBridgeBridge.exe
+        await SafeInvoke(false, "Bridge mode is deprecated, use CoreDirect or Legacy");
     }
 
     public void StopNetBridgeBridge()

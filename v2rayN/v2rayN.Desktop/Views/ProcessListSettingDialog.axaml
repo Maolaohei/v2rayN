@@ -64,7 +64,6 @@
                         VerticalAlignment="Center"
                         SelectedIndex="0"
                         SelectionChanged="CmbForwardMode_SelectionChanged">
-                        <ComboBoxItem Content="中转模式 (Bridge)" Tag="Bridge" />
                         <ComboBoxItem Content="协议直连 (CoreDirect)" Tag="CoreDirect" />
                         <ComboBoxItem Content="兼容模式 (Legacy)" Tag="Legacy" />
                     </ComboBox>

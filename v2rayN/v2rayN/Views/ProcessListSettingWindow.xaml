@@ -101,8 +101,7 @@
                         Width="160"
                         VerticalAlignment="Center"
                         SelectionChanged="CmbForwardMode_SelectionChanged">
-                        <ComboBoxItem Content="中转模式 (Bridge)" Tag="Bridge" IsSelected="True" />
-                        <ComboBoxItem Content="协议直连 (CoreDirect)" Tag="CoreDirect" />
+                        <ComboBoxItem Content="协议直连 (CoreDirect)" Tag="CoreDirect" IsSelected="True" />
                         <ComboBoxItem Content="兼容模式 (Legacy)" Tag="Legacy" />
                     </ComboBox>
                 </StackPanel>

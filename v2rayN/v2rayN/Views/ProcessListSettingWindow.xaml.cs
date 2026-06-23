@@ -17,7 +17,7 @@ public partial class ProcessListSettingWindow
     private readonly ListCollectionView _activeView;
     private bool _dnsViaBridge;
     private string _protocolMode = "TCP";
-    private string _forwardMode = "Bridge";
+    private string _forwardMode = "CoreDirect";
     private int _sessionAddedCount;
     private readonly Action _onNetBridgeStateChanged;
 
@@ -50,6 +50,12 @@ public partial class ProcessListSettingWindow
                 cmbForwardMode.SelectedItem = cbItem;
                 break;
             }
+        }
+        // Fallback to CoreDirect if Bridge (deprecated) or unknown
+        if (cmbForwardMode.SelectedItem == null)
+        {
+            cmbForwardMode.SelectedIndex = 0;
+            _forwardMode = "CoreDirect";
         }
 
         // Initialize protocol radio buttons

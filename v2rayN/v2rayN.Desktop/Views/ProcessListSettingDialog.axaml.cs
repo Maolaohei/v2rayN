@@ -14,7 +14,7 @@ public partial class ProcessListSettingDialog : Window
     private readonly DataGridCollectionView _activeView;
     private bool _dnsViaBridge;
     private string _protocolMode = "TCP";
-    private string _forwardMode = "Bridge";
+    private string _forwardMode = "CoreDirect";
     private int _sessionAddedCount;
     private readonly Action _onNetBridgeStateChanged;
 
@@ -108,10 +108,13 @@ public partial class ProcessListSettingDialog : Window
         // Wire up forward mode combo box
         cmbForwardMode.SelectedIndex = forwardMode switch
         {
-            "CoreDirect" => 1,
-            "Legacy" => 2,
-            _ => 0
+            "Legacy" => 1,
+            _ => 0  // Default to CoreDirect, fallback from deprecated Bridge
         };
+        // Fallback to CoreDirect if Bridge (deprecated) or unknown
+        if (cmbForwardMode.SelectedIndex < 0) cmbForwardMode.SelectedIndex = 0;
+        _forwardMode = cmbForwardMode.SelectedItem is Avalonia.Controls.ComboBoxItem sel
+            ? sel.Tag?.ToString() ?? "CoreDirect" : "CoreDirect";
         UpdateProtocolModeAvailability();
 
         CanMinimize = false;
