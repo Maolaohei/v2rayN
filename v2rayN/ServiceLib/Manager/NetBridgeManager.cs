@@ -664,6 +664,11 @@ public sealed class NetBridgeManager : IDisposable
         NetBridgeService.SetTrafficLoggingEnabled(enable);
     }
 
+    public static void SetRelayPort(ushort port)
+    {
+        NetBridgeService.SetRelayPort(port);
+    }
+
     public void ResetStatistics()
     {
         Interlocked.Exchange(ref _totalConnections, 0);
@@ -735,7 +740,7 @@ public sealed class NetBridgeManager : IDisposable
                 return;
             }
 
-            var args = $"-tcp-listen 127.0.0.1:35000 -udp-listen 127.0.0.1:35001 -core-socks 127.0.0.1:{socksPort}";
+            var args = $"-tcp-listen 127.0.0.1:35002 -udp-listen 127.0.0.1:35003 -core-socks 127.0.0.1:{socksPort}";
 
             _nbBridgeProcess = new System.Diagnostics.Process
             {
@@ -792,6 +797,9 @@ public sealed class NetBridgeManager : IDisposable
 
         try { _nbBridgeProcess.Dispose(); } catch { }
         _nbBridgeProcess = null;
+
+        // Reset relay port back to CoreDirect default
+        NetBridgeService.SetRelayPort(35000);
     }
 
     public bool IsNetBridgeBridgeRunning => _nbBridgeProcess is { HasExited: false };

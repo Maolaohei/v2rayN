@@ -719,6 +719,7 @@ public class StatusBarViewModel : MyReactiveObject
             switch (forwardMode)
             {
                 case "CoreDirect":
+                    NetBridgeManager.SetRelayPort(35000);
                     var preferredTcpPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
                     var nbTcpPort = NetBridgeManager.FindFreePort(preferredTcpPort);
                     if (nbTcpPort < 0)
@@ -742,9 +743,10 @@ public class StatusBarViewModel : MyReactiveObject
 
                 default: // "Bridge"
                     var socksPort = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
+                    NetBridgeManager.SetRelayPort(35002);
                     await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, socksPort);
                     await NetBridgeManager.Instance.StartNetBridgeBridgeAsync(socksPort);
-                    NoticeManager.Instance.SendMessageEx($"NetBridge 中转模式: ProxyBridgeCore → NetBridgeBridge → Core (SOCKS5:{socksPort})");
+                    NoticeManager.Instance.SendMessageEx($"NetBridge 中转模式: ProxyBridgeCore → NetBridgeBridge(35002) → Core(SOCKS5:{socksPort})");
                     break;
             }
 
