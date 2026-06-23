@@ -154,26 +154,63 @@ public partial class ProcessListSettingWindow
     {
         try
         {
-            var dllPath = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge", "WinDivert.dll");
-            var sysPath = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge", "WinDivert64.sys");
+            var baseDir = AppContext.BaseDirectory;
+            var nbDir = Path.Combine(baseDir, "bin", "NetBridge");
 
-            txtDriverFile.Text = File.Exists(dllPath) && File.Exists(sysPath)
-                ? "• 驱动文件: ✓ 已就绪"
-                : "• 驱动文件: ✗ 缺失";
+            // WinDivert
+            var winDivertDll = Path.Combine(nbDir, "WinDivert.dll");
+            var winDivertSys = Path.Combine(nbDir, "WinDivert64.sys");
+            var winDivertOk = File.Exists(winDivertDll) && File.Exists(winDivertSys);
+            txtWinDivert.Text = winDivertOk ? "✓ 就绪" : "✗ 缺失";
+            txtWinDivertPath.Text = winDivertOk ? nbDir : (winDivertOk ? "" : "文件缺失");
 
-            txtDriverService.Text = NetBridgeManager.Instance.IsRunning
-                ? "• 驱动服务: ✓ 已加载"
-                : "• 驱动服务: ○ 未加载";
+            // ProxyBridgeCore
+            var proxyBridgeDll = Path.Combine(nbDir, "ProxyBridgeCore.dll");
+            var proxyBridgeOk = File.Exists(proxyBridgeDll);
+            txtProxyBridge.Text = proxyBridgeOk ? "✓ 就绪" : "✗ 缺失";
+            txtProxyBridgePath.Text = proxyBridgeOk ? nbDir : "";
 
-            txtNetBridgeStatus.Text = NetBridgeManager.Instance.IsRunning
-                ? "• NetBridge: ✓ 运行中"
-                : "• NetBridge: ○ 未启动";
+            // NetBridgeBridge process
+            var nbBridgeProcesses = System.Diagnostics.Process.GetProcessesByName("NetBridgeBridge");
+            var nbBridgeRunning = nbBridgeProcesses.Length > 0;
+            if (nbBridgeRunning)
+            {
+                txtNetBridgeBridge.Text = "✓ 运行";
+                txtNetBridgeBridgeInfo.Text = $"PID {nbBridgeProcesses[0].Id}";
+                foreach (var p in nbBridgeProcesses) p.Dispose();
+            }
+            else
+            {
+                txtNetBridgeBridge.Text = "○ 未运行";
+                txtNetBridgeBridgeInfo.Text = "";
+            }
+
+            // Mode summary
+            var modeName = _forwardMode switch
+            {
+                "CoreDirect" => "协议直连",
+                "Legacy" => "兼容",
+                _ => "中转"
+            };
+            var protoName = _protocolMode switch
+            {
+                "UDP" => "UDP",
+                "BOTH" or "TCP+UDP" => "TCP+UDP",
+                _ => "TCP"
+            };
+            var running = NetBridgeManager.Instance.IsRunning;
+            var statusDot = running ? "●" : "○";
+            txtModeSummary.Text = $"当前模式: {modeName} ({_forwardMode}) · {protoName}  {statusDot} {(running ? "运行中" : "未启动")}";
         }
         catch
         {
-            txtDriverFile.Text = "• 驱动文件: ? 检查失败";
-            txtDriverService.Text = "• 驱动服务: ? 检查失败";
-            txtNetBridgeStatus.Text = "• NetBridge: ? 检查失败";
+            txtWinDivert.Text = "? 检查异常";
+            txtWinDivertPath.Text = "";
+            txtProxyBridge.Text = "? 检查异常";
+            txtProxyBridgePath.Text = "";
+            txtNetBridgeBridge.Text = "? 检查异常";
+            txtNetBridgeBridgeInfo.Text = "";
+            txtModeSummary.Text = "当前模式: 检查异常";
         }
     }
 

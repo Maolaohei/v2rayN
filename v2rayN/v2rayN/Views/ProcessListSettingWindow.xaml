@@ -61,55 +61,77 @@
                 <TextBlock
                     Margin="0,0,0,4"
                     FontWeight="Bold"
-                    Text="驱动状态" />
-                <StackPanel Margin="16,0,0,0">
-                    <TextBlock x:Name="txtDriverFile" Text="• 驱动文件: 检查中..." />
-                    <TextBlock x:Name="txtDriverService" Text="• 驱动服务: 检查中..." />
-                    <TextBlock x:Name="txtNetBridgeStatus" Text="• NetBridge: 检查中..." />
-                    <StackPanel
-                        Margin="0,4,0,0"
-                        Orientation="Horizontal">
-                        <TextBlock
-                            Margin="0,0,8,0"
-                            VerticalAlignment="Center"
-                            Text="转发模式:" />
-                        <ComboBox
-                            x:Name="cmbForwardMode"
-                            Width="160"
-                            VerticalAlignment="Center"
-                            SelectionChanged="CmbForwardMode_SelectionChanged">
-                            <ComboBoxItem Content="中转模式 (Bridge)" Tag="Bridge" IsSelected="True" />
-                            <ComboBoxItem Content="协议直连 (CoreDirect)" Tag="CoreDirect" />
-                            <ComboBoxItem Content="兼容模式 (Legacy)" Tag="Legacy" />
-                        </ComboBox>
-                    </StackPanel>
-                    <StackPanel
-                        Margin="0,4,0,0"
-                        Orientation="Horizontal">
-                        <TextBlock
-                            Margin="0,0,8,0"
-                            VerticalAlignment="Center"
-                            Text="• 协议模式:" />
-                        <RadioButton
-                            x:Name="rbProtocolTcp"
-                            Margin="0,0,4,0"
-                            Content="TCP"
-                            GroupName="ProtocolMode"
-                            IsChecked="True"
-                            VerticalAlignment="Center" />
-                        <RadioButton
-                            x:Name="rbProtocolUdp"
-                            Margin="0,0,4,0"
-                            Content="UDP"
-                            GroupName="ProtocolMode"
-                            VerticalAlignment="Center" />
-                        <RadioButton
-                            x:Name="rbProtocolBoth"
-                            Margin="0,0,0,0"
-                            Content="TCP+UDP"
-                            GroupName="ProtocolMode"
-                            VerticalAlignment="Center" />
-                    </StackPanel>
+                    Text="劫持状态" />
+                <TextBlock
+                    x:Name="txtModeSummary"
+                    Margin="0,0,0,6"
+                    FontSize="12"
+                    Foreground="#333"
+                    Text="当前模式: 检查中..." />
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="WinDivert 驱动" />
+                    <TextBlock x:Name="txtWinDivert" Grid.Row="0" Grid.Column="1" Text="检查中..." />
+                    <TextBlock x:Name="txtWinDivertPath" Grid.Row="0" Grid.Column="2" Foreground="Gray" Text="" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="ProxyBridgeCore" />
+                    <TextBlock x:Name="txtProxyBridge" Grid.Row="1" Grid.Column="1" Text="检查中..." />
+                    <TextBlock x:Name="txtProxyBridgePath" Grid.Row="1" Grid.Column="2" Foreground="Gray" Text="" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="NetBridgeBridge" />
+                    <TextBlock x:Name="txtNetBridgeBridge" Grid.Row="2" Grid.Column="1" Text="检查中..." />
+                    <TextBlock x:Name="txtNetBridgeBridgeInfo" Grid.Row="2" Grid.Column="2" Foreground="Gray" Text="" TextTrimming="CharacterEllipsis" />
+                </Grid>
+                <StackPanel
+                    Margin="0,4,0,0"
+                    Orientation="Horizontal">
+                    <TextBlock
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"
+                        Text="转发模式:" />
+                    <ComboBox
+                        x:Name="cmbForwardMode"
+                        Width="160"
+                        VerticalAlignment="Center"
+                        SelectionChanged="CmbForwardMode_SelectionChanged">
+                        <ComboBoxItem Content="中转模式 (Bridge)" Tag="Bridge" IsSelected="True" />
+                        <ComboBoxItem Content="协议直连 (CoreDirect)" Tag="CoreDirect" />
+                        <ComboBoxItem Content="兼容模式 (Legacy)" Tag="Legacy" />
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel
+                    Margin="0,4,0,0"
+                    Orientation="Horizontal">
+                    <TextBlock
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"
+                        Text="协议模式:" />
+                    <RadioButton
+                        x:Name="rbProtocolTcp"
+                        Margin="0,0,4,0"
+                        Content="TCP"
+                        GroupName="ProtocolMode"
+                        IsChecked="True"
+                        VerticalAlignment="Center" />
+                    <RadioButton
+                        x:Name="rbProtocolUdp"
+                        Margin="0,0,4,0"
+                        Content="UDP"
+                        GroupName="ProtocolMode"
+                        VerticalAlignment="Center" />
+                    <RadioButton
+                        x:Name="rbProtocolBoth"
+                        Margin="0,0,0,0"
+                        Content="TCP+UDP"
+                        GroupName="ProtocolMode"
+                        VerticalAlignment="Center" />
                 </StackPanel>
             </StackPanel>
         </Border>

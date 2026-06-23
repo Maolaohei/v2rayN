@@ -403,5 +403,8 @@ FodyWeavers.xsd
 # 测试版发布目录
 测试版/
 
+# 本地构建输出
+artifacts/
+
 # git filter-branch 残留
 .git-rewrite/

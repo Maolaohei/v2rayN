@@ -23,6 +23,7 @@ public sealed class NetBridgeManager : IDisposable
     private System.Threading.Timer? _networkChangeDebounceTimer;
     private NetBridgeHealthMonitor? _healthMonitor;
     private int _restartRunning;
+    private System.Diagnostics.Process? _nbBridgeProcess;
 
     // Connection statistics
     private long _totalConnections;
@@ -327,6 +328,7 @@ public sealed class NetBridgeManager : IDisposable
         {
             StopWatchdog();
             StopNetworkMonitor();
+            StopNetBridgeBridge();
 
             var resetCount = TcpConnectionResetter.ResetTrackedConnections();
             if (resetCount > 0)
@@ -364,6 +366,7 @@ public sealed class NetBridgeManager : IDisposable
         {
             StopWatchdog();
             StopNetworkMonitor();
+            StopNetBridgeBridge();
             _healthMonitor?.Dispose();
             _healthMonitor = null;
 
@@ -716,12 +719,92 @@ public sealed class NetBridgeManager : IDisposable
         }).ToList();
     }
 
+    #region NetBridgeBridge Process
+
+    public async Task StartNetBridgeBridgeAsync(int socksPort)
+    {
+        StopNetBridgeBridge();
+
+        try
+        {
+            var baseDir = AppContext.BaseDirectory;
+            var exePath = Path.Combine(baseDir, "NetBridgeBridge.exe");
+            if (!File.Exists(exePath))
+            {
+                await SafeInvoke(false, "NetBridgeBridge.exe not found, skipping");
+                return;
+            }
+
+            var args = $"-tcp-listen 127.0.0.1:35000 -udp-listen 127.0.0.1:35001 -core-socks 127.0.0.1:{socksPort}";
+
+            _nbBridgeProcess = new System.Diagnostics.Process
+            {
+                StartInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = args,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    WorkingDirectory = baseDir
+                },
+                EnableRaisingEvents = true
+            };
+
+            _nbBridgeProcess.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data.IsNotEmpty())
+                    _ = SafeInvoke(false, $"[Bridge] {e.Data}");
+            };
+            _nbBridgeProcess.ErrorDataReceived += (_, e) =>
+            {
+                if (e.Data.IsNotEmpty())
+                    _ = SafeInvoke(false, $"[Bridge] {e.Data}");
+            };
+
+            _nbBridgeProcess.Start();
+            _nbBridgeProcess.BeginOutputReadLine();
+            _nbBridgeProcess.BeginErrorReadLine();
+
+            await SafeInvoke(false, $"NetBridgeBridge started (PID {_nbBridgeProcess.Id}), socks→127.0.0.1:{socksPort}");
+        }
+        catch (Exception ex)
+        {
+            await SafeInvoke(true, $"NetBridgeBridge start failed: {ex.Message}");
+            _nbBridgeProcess = null;
+        }
+    }
+
+    public void StopNetBridgeBridge()
+    {
+        if (_nbBridgeProcess == null) return;
+
+        try
+        {
+            if (!_nbBridgeProcess.HasExited)
+            {
+                _nbBridgeProcess.Kill();
+                _nbBridgeProcess.WaitForExit(2000);
+            }
+        }
+        catch { }
+
+        try { _nbBridgeProcess.Dispose(); } catch { }
+        _nbBridgeProcess = null;
+    }
+
+    public bool IsNetBridgeBridgeRunning => _nbBridgeProcess is { HasExited: false };
+
+    #endregion
+
     public void Dispose()
     {
         StopWatchdog();
         StopNetworkMonitor();
         _healthMonitor?.Dispose();
         _healthMonitor = null;
+        StopNetBridgeBridge();
 
         try { _netBridgeService?.Dispose(); }
         catch { }

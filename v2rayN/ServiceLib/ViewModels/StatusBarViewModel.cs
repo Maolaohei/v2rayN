@@ -741,8 +741,10 @@ public class StatusBarViewModel : MyReactiveObject
                     break;
 
                 default: // "Bridge"
-                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                    NoticeManager.Instance.SendMessageEx("NetBridge 中转模式: ProxyBridgeCore → Core (SOCKS5)");
+                    var socksPort = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
+                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, socksPort);
+                    await NetBridgeManager.Instance.StartNetBridgeBridgeAsync(socksPort);
+                    NoticeManager.Instance.SendMessageEx($"NetBridge 中转模式: ProxyBridgeCore → NetBridgeBridge → Core (SOCKS5:{socksPort})");
                     break;
             }
 
