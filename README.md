@@ -15,7 +15,14 @@
 ### 进程流量劫持 (NetBridge)
 - **状态栏一键控制**：启动进程劫持开关 + 设置按钮
 - **与 TUN 互斥**：开一个自动关另一个，避免冲突
-- **驱动状态实时显示**：驱动文件 / 驱动服务 / NetBridge 运行状态
+- **劫持状态面板**：
+  - 模式摘要：当前转发模式 + 协议 + 运行状态
+  - 组件状态表：WinDivert 驱动 / ProxyBridgeCore / NetBridgeBridge（含 PID）
+- **三种转发模式**：
+  - 中转模式 (Bridge)：ProxyBridgeCore → NetBridgeBridge → Core SOCKS5
+  - 协议直连 (CoreDirect)：ProxyBridgeCore → Core 直连
+  - 兼容模式 (Legacy)：ProxyBridgeCore → Core SOCKS5（仅 TCP）
+- **NetBridgeBridge 自动管理**：Bridge 模式下自动启动/停止，生命周期跟随 NetBridgeManager
 - **智能进程列表**：
   - 当前运行进程（带搜索框、应用名显示）
   - 目标生效进程（带搜索框、无上限）
@@ -73,16 +80,52 @@
 
 ### 环境要求
 - .NET 10.0 SDK
+- Go 1.23+（编译 NetBridgeBridge）
+- GCC 或 MSVC（编译 ProxyBridge）
 - Windows 10.0.19041.0+
 
-### 编译命令
+### 快速构建
+
+```powershell
+# 整合版 (WPF) win-x64，默认 Release
+.\build.ps1
+
+# 散装版 (Avalonia Desktop)
+.\build.ps1 -Variant desktop
+
+# 指定架构
+.\build.ps1 -Arch arm64
+
+# Debug 构建
+.\build.ps1 -Configuration Debug
+
+# 仅编译子模块（ProxyBridge + NetBridgeBridge）
+.\build.ps1 -SubmodulesOnly
+
+# 跳过子模块编译，只跑 dotnet publish
+.\build.ps1 -SkipSubmodules
+```
+
+构建产物输出到 `artifacts/win-x64/`：
+```
+artifacts/win-x64/
+  v2rayN.exe
+  NetBridgeBridge.exe
+  AmazTool.exe
+  bin/NetBridge/
+    ProxyBridgeCore.dll
+    WinDivert.dll
+    WinDivert64.sys
+```
+
+### 手动构建
 
 ```bash
 # Debug 编译
 dotnet build v2rayN/v2rayN.csproj
 
 # Release 自包含单文件
-dotnet publish v2rayN/v2rayN.csproj -c Release -r win-x64 -p:SelfContained=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableWindowsTargeting=true -o v2rayN/发布版本/self-contained
+dotnet publish v2rayN/v2rayN.csproj -c Release -r win-x64 -p:SelfContained=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableWindowsTargeting=true -o artifacts/win-x64
 
 # 运行测试
 dotnet test v2rayN/ServiceLib.Tests/ServiceLib.Tests.csproj
@@ -93,7 +136,9 @@ dotnet test v2rayN/ServiceLib.Tests/ServiceLib.Tests.csproj
 本项目基于以下开源项目：
 
 - **[2dust/v2rayN](https://github.com/2dust/v2rayN)** - v2rayN 主项目（GPL-3.0）
-- **[2dust/NetBridge](https://github.com/2dust/NetBridge)** - 进程流量劫持核心（MIT）
+- **[Maolaohei/NetBridge](https://github.com/Maolaohei/NetBridge)** - 进程流量劫持核心（MIT）
+- **[Maolaohei/ProxyBridge](https://github.com/Maolaohei/ProxyBridge)** - WinDivert 网络包拦截与转发（MIT）
+- **[Maolaohei/NetBridgeBridge](https://github.com/Maolaohei/NetBridgeBridge)** - 中转模式 TCP/UDP 代理桥（MIT）
 - **[DHR60](https://github.com/DHR60)** - 节点检查改进（PR #9603）
 - **[Xray-core](https://github.com/XTLS/Xray-core)** - Xray 核心
 - **[sing-box](https://github.com/SagerNet/sing-box)** - sing-box 核心
