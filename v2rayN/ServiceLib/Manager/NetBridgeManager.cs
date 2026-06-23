@@ -97,7 +97,12 @@ public sealed class NetBridgeManager : IDisposable
 
             _netBridgeService.ConnectionReceived += OnConnectionReceived;
 
-            _driverLoaded = await CheckDriverAvailabilityAsync();
+            var (driverAvailable, driverWarning) = await CheckDriverAvailabilityAsync();
+            _driverLoaded = driverAvailable;
+            if (!string.IsNullOrEmpty(driverWarning))
+            {
+                await SafeInvoke(false, driverWarning);
+            }
             if (!_driverLoaded)
             {
                 var driverPath = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge", "WinDivert.dll");
@@ -181,7 +186,7 @@ public sealed class NetBridgeManager : IDisposable
         }
     }
 
-    private static async Task<bool> CheckDriverAvailabilityAsync()
+    private static async Task<(bool available, string? warning)> CheckDriverAvailabilityAsync()
     {
         try
         {
@@ -189,14 +194,52 @@ public sealed class NetBridgeManager : IDisposable
             if (!File.Exists(Path.Combine(baseDir, "WinDivert.dll"))
                 || !File.Exists(Path.Combine(baseDir, "WinDivert64.sys")))
             {
-                return false;
+                return (false, null);
             }
 
-            return true;
+            // Check for stale WinDivert driver from another program
+            try
+            {
+#pragma warning disable CA1416 // Windows-only API - WinDivert is Windows-only
+                using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                    @"SYSTEM\CurrentControlSet\Services\WinDivert");
+#pragma warning restore CA1416
+                if (key != null)
+                {
+#pragma warning disable CA1416
+                    var imagePath = key.GetValue("ImagePath") as string ?? "";
+#pragma warning restore CA1416
+                    var bundledSys = Path.Combine(baseDir, "WinDivert64.sys");
+                    if (File.Exists(bundledSys) && !string.IsNullOrEmpty(imagePath))
+                    {
+                        var driverPath = imagePath.Replace("\\??\\", "").Trim('"');
+                        if (File.Exists(driverPath) && !driverPath.Equals(bundledSys, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var bundledVer = FileVersionInfo.GetVersionInfo(bundledSys);
+                            var systemVer = FileVersionInfo.GetVersionInfo(driverPath);
+                            if (bundledVer.FileVersion != systemVer.FileVersion)
+                            {
+                                var warning =
+                                    $"[NetBridge] Warning: WinDivert driver version mismatch detected. " +
+                                    $"Bundled: {bundledVer.FileVersion ?? "unknown"}, " +
+                                    $"System: {systemVer.FileVersion ?? "unknown"} ({driverPath}). " +
+                                    "If WinDivert fails to start, run 'sc delete WinDivert' as Administrator and restart.";
+                                return (true, warning);
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Registry check is best-effort; don't fail init
+            }
+
+            return (true, null);
         }
         catch
         {
-            return false;
+            return (false, null);
         }
     }
 
