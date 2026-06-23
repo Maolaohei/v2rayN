@@ -247,7 +247,9 @@ public sealed class NetBridgeManager : IDisposable
             var started = false;
             for (var attempt = 0; attempt <= maxRetries; attempt++)
             {
-                started = _netBridgeService.Start();
+                // Run ProxyBridge_Start on background thread to avoid blocking UI
+                var startTask = Task.Run(() => _netBridgeService.Start());
+                started = await startTask;
                 if (started) break;
                 if (attempt < maxRetries)
                 {
