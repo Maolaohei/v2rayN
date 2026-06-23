@@ -192,51 +192,12 @@ public sealed class NetBridgeManager : IDisposable
                 return false;
             }
 
-            // v2.1.0: Also verify WinDivert service state if on Windows.
-            if (Utils.IsWindows())
-            {
-                try
-                {
-                    var scOutput = await RunScQueryAsync("WinDivert");
-                    if (scOutput.Contains("RUNNING", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Driver already loaded — good
-                    }
-                    else if (scOutput.Contains("STOPPED", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Service exists but stopped — ProxyBridgeCore will re-open handle
-                    }
-                }
-                catch
-                {
-                    // scm query failed — not fatal
-                }
-            }
-
             return true;
         }
         catch
         {
             return false;
         }
-    }
-
-    private static async Task<string> RunScQueryAsync(string serviceName)
-    {
-        using var process = new System.Diagnostics.Process();
-        process.StartInfo = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "sc",
-            Arguments = $"query {serviceName}",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        process.Start();
-        var output = await process.StandardOutput.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        return output;
     }
 
     public async Task<bool> Start()
@@ -280,9 +241,9 @@ public sealed class NetBridgeManager : IDisposable
             }
             catch { }
 
-            // v2.1.0 Phase 2: Retry with exponential backoff (500ms, 1000ms)
+            // v2.1.0 Phase 2: Retry with short backoff (200ms, 400ms)
             const int maxRetries = 2;
-            var delayMs = 500;
+            var delayMs = 200;
             var started = false;
             for (var attempt = 0; attempt <= maxRetries; attempt++)
             {
