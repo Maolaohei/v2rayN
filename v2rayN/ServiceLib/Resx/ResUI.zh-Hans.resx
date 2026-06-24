@@ -1104,6 +1104,30 @@
   <data name="TbSettingsEnableFragment" xml:space="preserve">
     <value>启用分片 (Fragment)</value>
   </data>
+  <data name="TbSettingsFragmentPackets" xml:space="preserve">
+    <value>分片数据包策略</value>
+  </data>
+  <data name="TbSettingsFragmentPacketsTip" xml:space="preserve">
+    <value>分片数据包策略 (tlshello = 仅TLS Hello, 1-N = 随机分片1~N个包)</value>
+  </data>
+  <data name="TbSettingsFragmentLength" xml:space="preserve">
+    <value>分片长度</value>
+  </data>
+  <data name="TbSettingsFragmentLengthTip" xml:space="preserve">
+    <value>分片大小范围，单位字节 (如: 50-100)。第一个值需小于等于第二个值。留空使用默认值。</value>
+  </data>
+  <data name="TbSettingsFragmentInterval" xml:space="preserve">
+    <value>分片间隔</value>
+  </data>
+  <data name="TbSettingsFragmentIntervalTip" xml:space="preserve">
+    <value>分片间间隔，单位毫秒 (如: 10-20)。留空使用默认值。</value>
+  </data>
+  <data name="TbSettingsFragmentMaxSplit" xml:space="preserve">
+    <value>最大分片数</value>
+  </data>
+  <data name="TbSettingsFragmentMaxSplitTip" xml:space="preserve">
+    <value>最大分片数量 (0 = 自动)。留空使用默认值。</value>
+  </data>
   <data name="TbSettingsEnableCacheFile4Sbox" xml:space="preserve">
     <value>启用 sing-box (规则集文件) 的缓存文件</value>
   </data>
@@ -1736,6 +1760,9 @@
   </data>
   <data name="FillCorrectSendThroughIPv4" xml:space="preserve">
     <value>请填写正确的 SendThrough IPv4 地址。</value>
+  </data>
+  <data name="FillFragmentParameterError" xml:space="preserve">
+    <value>请填写正确的分片参数。</value>
   </data>
   <data name="TbSettingsBindInterface" xml:space="preserve">
     <value>绑定网口</value>

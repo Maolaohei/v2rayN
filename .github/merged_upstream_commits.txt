@@ -1,0 +1,11 @@
+# 已合并的上游 commit 记录
+# 格式: <commit hash> <日期> <描述>
+# 用于避免后续重复合并
+
+# === 2026-06-24 合入 ===
+ce380b861cb29af58c9faab9314568d15eb7eecd 2026-06-20 Node check (#9603) - 节点校验重构（已在本地）
+81c118c9b2e67c9f3a1048a9663ea77c2be55bb4 2026-06-22 customizable packet fragmentation settings (#9597) - 自定义分片设置
+ef46f4e7e6fcb767a25306986e7212b9e719f2f0 2026-06-22 Hysteria Realm & Gecko (#9516) - Hysteria2 Realm和Gecko指纹
+3cebf492d14c94f5ce6b84ee62a3b66c4f502852 2026-06-23 Fix (#9614) - Bug修复（ParseProcess/TryParseRange工具方法）
+f1b88ccf2a0bb2fd4b332cb4dff0a807941564db 2026-06-22 Add GPG key file (#9608) - GPG签名（CI配置，未合入）
+e0c1ff24beec00066d38ae1f93a19015fa87c1aa 2026-06-23 Update README.md (#9616) - README更新（未合入）
