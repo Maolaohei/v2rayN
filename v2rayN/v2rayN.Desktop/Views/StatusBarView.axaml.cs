@@ -98,7 +98,7 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
                             if (modeChanged)
                             {
                                 await NetBridgeManager.Instance.Stop();
-                                await StartNetBridgeAsync();
+                                await NetBridgeManager.Instance.Start();
                             }
                             else
                             {

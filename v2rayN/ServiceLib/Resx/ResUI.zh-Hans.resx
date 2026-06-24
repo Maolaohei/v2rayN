@@ -1764,6 +1764,18 @@
   <data name="FillFragmentParameterError" xml:space="preserve">
     <value>请填写正确的分片参数。</value>
   </data>
+  <data name="InvalidHy2RealmUrl" xml:space="preserve">
+    <value>Hysteria2 Realm URL 格式无效。</value>
+  </data>
+  <data name="TbGeckoPacketSize" xml:space="preserve">
+    <value>Gecko 数据包大小</value>
+  </data>
+  <data name="TbHy2RealmUrl" xml:space="preserve">
+    <value>Realm URL</value>
+  </data>
+  <data name="TbHy2RealmUrlTip" xml:space="preserve">
+    <value>格式: realm://token@host/realm-name?stun=stun:port (不使用 Realm 请留空)</value>
+  </data>
   <data name="TbSettingsBindInterface" xml:space="preserve">
     <value>绑定网口</value>
   </data>

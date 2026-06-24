@@ -1770,6 +1770,18 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   <data name="FillFragmentParameterError" xml:space="preserve">
     <value>Please fill in the correct fragment parameter.</value>
   </data>
+  <data name="InvalidHy2RealmUrl" xml:space="preserve">
+    <value>Invalid Hysteria2 Realm URL format.</value>
+  </data>
+  <data name="TbGeckoPacketSize" xml:space="preserve">
+    <value>Gecko Packet Size</value>
+  </data>
+  <data name="TbHy2RealmUrl" xml:space="preserve">
+    <value>Realm URL</value>
+  </data>
+  <data name="TbHy2RealmUrlTip" xml:space="preserve">
+    <value>Format: realm://token@host/realm-name?stun=stun:port (leave empty if not using Realm)</value>
+  </data>
   <data name="TbSettingsBindInterface" xml:space="preserve">
     <value>Bind Interface</value>
   </data>
