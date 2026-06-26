@@ -19,7 +19,7 @@ public partial class OptionSettingWindow
         btnBrowseCustomSystemProxyPacPath.Click += BtnBrowseCustomSystemProxyPacPath_Click;
 
         clbdestOverride.ItemsSource = Global.destOverrideProtocols;
-        _config.Inbound.First().DestOverride?.ForEach(it =>
+        _config.Inbound.FirstOrDefault()?.DestOverride?.ForEach(it =>
         {
             clbdestOverride.SelectedItems.Add(it);
         });

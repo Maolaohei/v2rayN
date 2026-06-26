@@ -145,7 +145,11 @@ public class OptionSettingViewModel : MyReactiveObject
 
         #region Core
 
-        var inbound = _config.Inbound.First();
+        var inbound = _config.Inbound.FirstOrDefault();
+        if (inbound == null)
+        {
+            return;
+        }
         LocalPort = inbound.LocalPort;
         SecondLocalPortEnabled = inbound.SecondLocalPortEnabled;
         UdpEnabled = inbound.UdpEnabled;
@@ -378,6 +382,7 @@ public class OptionSettingViewModel : MyReactiveObject
         }
         _config.CoreBasicItem.EnableFragment = EnableFragment;
         _config.CoreBasicItem.EnableFinalFragment = EnableFinalFragment;
+        _config.Fragment4RayItem ??= new();
         _config.Fragment4RayItem.Packets = FragmentPackets;
         _config.Fragment4RayItem.Length = FragmentLength;
         _config.Fragment4RayItem.Interval = FragmentInterval;

@@ -28,7 +28,7 @@ public static class ConfigHandler
         {
             if (File.Exists(Utils.GetConfigPath(_configRes)))
             {
-                Logging.SaveLog("LoadConfig Exception");
+                Logging.SaveLog("LoadConfig Exception: file exists but failed to read");
                 return null;
             }
         }
@@ -41,9 +41,9 @@ public static class ConfigHandler
             Loglevel = "warning",
         };
 
-        if (config.Inbound == null)
+        if (config.Inbound == null || config.Inbound.Count == 0)
         {
-            config.Inbound = [];
+            config.Inbound ??= [];
             InItem inItem = new()
             {
                 Protocol = nameof(EInboundProtocol.socks),
@@ -57,10 +57,7 @@ public static class ConfigHandler
         }
         else
         {
-            if (config.Inbound.Count > 0)
-            {
-                config.Inbound.First().Protocol = nameof(EInboundProtocol.socks);
-            }
+            config.Inbound.First().Protocol = nameof(EInboundProtocol.socks);
         }
 
         config.RoutingBasicItem ??= new();

@@ -119,7 +119,7 @@
                     Grid.Column="2"
                     HorizontalAlignment="Left"
                     StaysOpen="True"
-                    Style="{StaticResource MaterialDesignToolForegroundPopupBox}">
+                    >
                     <StackPanel>
                         <TextBlock
                             Margin="{StaticResource Margin4}"

@@ -186,6 +186,19 @@ public partial class MainWindow
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
     {
+        try
+        {
+            return await UpdateViewHandlerCore(action, obj);
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog($"UpdateViewHandler [{action}] failed", ex);
+            return false;
+        }
+    }
+
+    private async Task<bool> UpdateViewHandlerCore(EViewAction action, object? obj)
+    {
         switch (action)
         {
             case EViewAction.AddServerWindow:

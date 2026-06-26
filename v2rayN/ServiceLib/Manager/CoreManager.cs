@@ -69,20 +69,22 @@ public class CoreManager
             return;
         }
 
-        var node = mainContext.Node;
-        var fileName = Utils.GetBinConfigPath(Global.CoreConfigFileName);
-        var result = await CoreConfigHandler.GenerateClientConfig(mainContext, fileName);
-        if (result.Success != true)
+        try
         {
-            await UpdateFunc(true, result.Msg);
-            return;
-        }
+            var node = mainContext.Node;
+            var fileName = Utils.GetBinConfigPath(Global.CoreConfigFileName);
+            var result = await CoreConfigHandler.GenerateClientConfig(mainContext, fileName);
+            if (result.Success != true)
+            {
+                await UpdateFunc(true, result.Msg);
+                return;
+            }
 
-        await UpdateFunc(false, $"{node.GetSummary()}");
-        await UpdateFunc(false, $"{Utils.GetRuntimeInfo()}");
-        await UpdateFunc(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
-        await CoreStop();
-        await Task.Delay(100);
+            await UpdateFunc(false, $"{node.GetSummary()}");
+            await UpdateFunc(false, $"{Utils.GetRuntimeInfo()}");
+            await UpdateFunc(false, string.Format(ResUI.StartService, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")));
+            await CoreStop();
+            await Task.Delay(100);
 
         if (Utils.IsWindows() && _config.TunModeItem.EnableTun)
         {
@@ -104,6 +106,12 @@ public class CoreManager
         if (_processService != null)
         {
             await UpdateFunc(true, $"{node.GetSummary()}");
+        }
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog($"{_tag}: LoadCore failed", ex);
+            await UpdateFunc(true, ex.Message);
         }
     }
 
@@ -195,36 +203,51 @@ public class CoreManager
 
     private async Task CoreStart(CoreConfigContext context)
     {
-        var node = context.Node;
-        var coreType = AppManager.Instance.GetCoreType(node, node.ConfigType);
-        var coreInfo = CoreInfoManager.Instance.GetCoreInfo(coreType);
-
-        var displayLog = node.ConfigType != EConfigType.Custom || node.DisplayLog;
-        var proc = await RunProcess(coreInfo, Global.CoreConfigFileName, displayLog, true);
-        if (proc is null)
+        try
         {
-            return;
+            var node = context.Node;
+            var coreType = AppManager.Instance.GetCoreType(node, node.ConfigType);
+            var coreInfo = CoreInfoManager.Instance.GetCoreInfo(coreType);
+
+            var displayLog = node.ConfigType != EConfigType.Custom || node.DisplayLog;
+            var proc = await RunProcess(coreInfo, Global.CoreConfigFileName, displayLog, true);
+            if (proc is null)
+            {
+                return;
+            }
+            _processService = proc;
         }
-        _processService = proc;
+        catch (Exception ex)
+        {
+            Logging.SaveLog($"{_tag}: CoreStart failed", ex);
+            await UpdateFunc(true, ex.Message);
+        }
     }
 
     private async Task CoreStartPreService(CoreConfigContext? preContext)
     {
-        if (_processService is { HasExited: false } && preContext != null)
+        try
         {
-            var preCoreType = preContext?.Node?.CoreType ?? ECoreType.Xray;
-            var fileName = Utils.GetBinConfigPath(Global.CorePreConfigFileName);
-            var result = await CoreConfigHandler.GenerateClientConfig(preContext, fileName);
-            if (result.Success)
+            if (_processService is { HasExited: false } && preContext != null)
             {
-                var coreInfo = CoreInfoManager.Instance.GetCoreInfo(preCoreType);
-                var proc = await RunProcess(coreInfo, Global.CorePreConfigFileName, true, true);
-                if (proc is null)
+                var preCoreType = preContext?.Node?.CoreType ?? ECoreType.Xray;
+                var fileName = Utils.GetBinConfigPath(Global.CorePreConfigFileName);
+                var result = await CoreConfigHandler.GenerateClientConfig(preContext, fileName);
+                if (result.Success)
                 {
-                    return;
+                    var coreInfo = CoreInfoManager.Instance.GetCoreInfo(preCoreType);
+                    var proc = await RunProcess(coreInfo, Global.CorePreConfigFileName, true, true);
+                    if (proc is null)
+                    {
+                        return;
+                    }
+                    _processPreService = proc;
                 }
-                _processPreService = proc;
             }
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog($"{_tag}: CoreStartPreService failed", ex);
         }
     }
 

@@ -533,7 +533,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         StaysOpen="True"
-                        Style="{StaticResource MaterialDesignToolForegroundPopupBox}">
+                        >
                         <StackPanel>
                             <TextBlock
                                 Margin="{StaticResource Margin4}"
@@ -1358,7 +1358,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         StaysOpen="True"
-                        Style="{StaticResource MaterialDesignToolForegroundPopupBox}">
+                        >
                         <StackPanel>
                             <TextBox
                                 x:Name="txtFinalmask"
@@ -1542,7 +1542,7 @@
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
                             StaysOpen="True"
-                            Style="{StaticResource MaterialDesignToolForegroundPopupBox}">
+                            >
                             <StackPanel>
                                 <TextBlock
                                     Width="400"
