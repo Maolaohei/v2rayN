@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
     <PropertyGroup>
         <Version>7.23.2</Version>
@@ -14,6 +14,7 @@
         <PackageLicenseExpression>GPL-3.0</PackageLicenseExpression>
         <Copyright>Copyright © 2017-$([System.DateTime]::UtcNow.Year) $(Authors)</Copyright>
         <InvariantGlobalization>false</InvariantGlobalization>
+        <NuGetAudit>false</NuGetAudit>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">

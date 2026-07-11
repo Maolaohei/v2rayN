@@ -6,10 +6,9 @@ namespace ServiceLib.HealthCheck.Checks;
 
 public class RoutingCheck
 {
-    private static readonly string[] DirectDomains = ["baidu.com", "bilibili.com", "taobao.com"];
     private static readonly string[] ProxyDomains = ["google.com", "youtube.com", "github.com"];
 
-    public async Task<HealthCheckResult> CheckAsync(int? proxyPort = null)
+    public async Task<HealthCheckResult> CheckAsync(int? proxyPort = null, bool tunEnabled = true)
     {
         var sw = Stopwatch.StartNew();
         var details = new Dictionary<string, object>();
@@ -25,6 +24,10 @@ public class RoutingCheck
             }
 
             details["proxy_port"] = port;
+            details["tun_enabled"] = tunEnabled;
+            details["routing_note"] = tunEnabled
+                ? "Proxy-domain probes go through local SOCKS (core routing). Direct domains are not judged via SOCKS under global TUN."
+                : "TUN off: only proxy-path reachability is checked via local SOCKS.";
 
             var loopResult = await CheckRoutingLoopAsync(port);
             foreach (var kv in loopResult)
@@ -32,40 +35,35 @@ public class RoutingCheck
                 details[kv.Key] = kv.Value;
             }
 
-            if (loopResult.TryGetValue("loop_detected", out var loopDetected) && (bool)loopDetected)
+            if (loopResult.TryGetValue("loop_detected", out var loopDetected) && loopDetected is true)
             {
                 sw.Stop();
                 return new HealthCheckResult("Routing", HealthCheckStatus.Fail,
-                    "Routing loop detected — proxy server IP is routed into TUN", sw.Elapsed, details);
+                    "Routing loop detected - proxy server IP is routed into TUN", sw.Elapsed, details);
             }
 
             var proxyOk = await ProbeDomainsAsync(ProxyDomains, port, "proxy", details);
-            var directOk = await ProbeDomainsAsync(DirectDomains, port, "direct", details);
 
-            if (!proxyOk && !directOk)
-            {
-                sw.Stop();
-                return new HealthCheckResult("Routing", HealthCheckStatus.Fail,
-                    "Cannot verify routing — proxy connection failed", sw.Elapsed, details);
-            }
+            // "Direct domains via SOCKS" is misleading under TUN/global proxy:
+            // SOCKS always hits core, so success only means core can reach CN sites
+            // (often via proxy/direct outbound rules), not "system direct bypass".
+            details["direct_probe_mode"] = "informational_via_socks_disabled";
+            details["direct_domains"] = "skipped (would not represent system direct under TUN)";
 
             if (!proxyOk)
             {
                 sw.Stop();
                 return new HealthCheckResult("Routing", HealthCheckStatus.Warning,
-                    "Proxy domains unreachable — routing may be incorrect", sw.Elapsed, details);
+                    "Proxy domains unreachable via local SOCKS - routing or node may be incorrect", sw.Elapsed, details);
             }
 
-            if (!directOk)
-            {
-                sw.Stop();
-                return new HealthCheckResult("Routing", HealthCheckStatus.Warning,
-                    "Direct domains unreachable — may be routing through proxy unnecessarily", sw.Elapsed, details);
-            }
-
+            var exitNote = details.TryGetValue("loop_note", out var ln) ? ln?.ToString() : null;
             sw.Stop();
             return new HealthCheckResult("Routing", HealthCheckStatus.Pass,
-                "Routing verification passed", sw.Elapsed, details);
+                string.IsNullOrEmpty(exitNote)
+                    ? "Proxy-path routing verification passed"
+                    : $"Proxy-path routing OK ({exitNote})",
+                sw.Elapsed, details);
         }
         catch (Exception ex)
         {
@@ -118,6 +116,8 @@ public class RoutingCheck
             if (!string.IsNullOrEmpty(exitIp))
             {
                 result["exit_ip"] = exitIp;
+                // True loop detection would compare exit IP with server IP + self-exclude;
+                // obtaining an exit IP only proves the proxy path works, not a loop.
                 result["loop_detected"] = false;
                 result["loop_note"] = $"Exit IP: {exitIp}";
             }

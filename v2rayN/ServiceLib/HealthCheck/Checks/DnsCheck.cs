@@ -47,7 +47,7 @@ public class DnsCheck
 
             if (systemFailed && !dohFailed)
             {
-                details["conclusion"] = "System DNS failed but DoH works — TUN DNS may not be hijacking system DNS";
+                details["conclusion"] = "System DNS failed but DoH works - TUN DNS may not be hijacking system DNS";
                 sw.Stop();
                 return new HealthCheckResult("DNS", HealthCheckStatus.Warning,
                     "System DNS resolution failed (DoH works)", sw.Elapsed, details);
@@ -55,29 +55,27 @@ public class DnsCheck
 
             if (!systemFailed && dohFailed)
             {
-                details["conclusion"] = "System DNS works but DoH failed — DoH endpoint may be blocked";
+                details["conclusion"] = "System DNS works but DoH failed - DoH endpoint may be blocked";
                 sw.Stop();
                 return new HealthCheckResult("DNS", HealthCheckStatus.Warning,
                     "DoH resolution failed (system DNS works)", sw.Elapsed, details);
             }
 
-            var leakResult = CheckDnsLeak(systemResults, doh1Results);
-            foreach (var kv in leakResult)
+            // Different A records between system resolver and public DoH are common
+            // (CDN geo-steering, split-horizon, fake-ip). Treat as informational only.
+            var compare = CompareResolvers(systemResults, doh1Results);
+            foreach (var kv in compare)
             {
                 details[kv.Key] = kv.Value;
             }
 
-            if (leakResult.TryGetValue("leak_detected", out var leakStr) && (bool)leakStr)
-            {
-                details["conclusion"] = "System DNS and DoH return different IPs — possible DNS leak";
-                sw.Stop();
-                return new HealthCheckResult("DNS", HealthCheckStatus.Warning,
-                    "DNS leak detected (system != DoH)", sw.Elapsed, details);
-            }
+            details["leak_detected"] = false;
+            details["leak_policy"] = "IP mismatch alone is not treated as DNS leak";
+            details["conclusion"] = "System DNS and DoH both resolve; IP differences are informational";
 
             sw.Stop();
             return new HealthCheckResult("DNS", HealthCheckStatus.Pass,
-                "All DNS resolution methods working, no leak detected", sw.Elapsed, details);
+                "DNS resolution working (system + DoH)", sw.Elapsed, details);
         }
         catch (Exception ex)
         {
@@ -88,12 +86,12 @@ public class DnsCheck
         }
     }
 
-    private static Dictionary<string, object> CheckDnsLeak(
+    private static Dictionary<string, object> CompareResolvers(
         Dictionary<string, List<string>> system,
         Dictionary<string, List<string>> doh)
     {
         var result = new Dictionary<string, object>();
-        var leakDetected = false;
+        var mismatchCount = 0;
 
         foreach (var domain in TestDomains)
         {
@@ -106,17 +104,17 @@ public class DnsCheck
 
                 if (!common)
                 {
-                    leakDetected = true;
-                    result[$"leak_{domain}"] = $"system={sysIps.First()}, doh={dohIps.First()}";
+                    mismatchCount++;
+                    result[$"compare_{domain}"] = $"diff system={sysIps.First()}, doh={dohIps.First()} (informational)";
                 }
                 else
                 {
-                    result[$"leak_{domain}"] = "consistent";
+                    result[$"compare_{domain}"] = "overlap";
                 }
             }
         }
 
-        result["leak_detected"] = leakDetected;
+        result["resolver_mismatch_count"] = mismatchCount;
         return result;
     }
 

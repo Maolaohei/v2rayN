@@ -1878,4 +1878,94 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   <data name="TbLegacyProtectTip" xml:space="preserve">
     <value>If enabled, use sing-box TUN; otherwise, use xray TUN.</value>
   </data>
+  <data name="TunHealthCheckTitle" xml:space="preserve">
+    <value>TUN Health Check Result</value>
+  </data>
+  <data name="TunHealthCheckAllPassed" xml:space="preserve">
+    <value>All checks passed</value>
+  </data>
+  <data name="TunHealthCheckHasWarning" xml:space="preserve">
+    <value>Passed with warnings ({0} warnings)</value>
+  </data>
+  <data name="TunHealthCheckHasFailure" xml:space="preserve">
+    <value>Failures detected ({0} failures)</value>
+  </data>
+  <data name="TunHealthCheckPass" xml:space="preserve">
+    <value>Passed</value>
+  </data>
+  <data name="TunHealthCheckWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="TunHealthCheckFail" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="TunHealthCheckError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="TunHealthCheckDuration" xml:space="preserve">
+    <value>Duration: {0}ms</value>
+  </data>
+  <data name="TunHealthCheckDiagnosis" xml:space="preserve">
+    <value>Diagnosis:</value>
+  </data>
+  <data name="TunHealthCheckScore" xml:space="preserve">
+    <value>Health Score: {0}/100 ({1})</value>
+  </data>
+  <data name="TunHealthCheckLayerTunInterface" xml:space="preserve">
+    <value>TUN Interface</value>
+  </data>
+  <data name="TunHealthCheckLayerDns" xml:space="preserve">
+    <value>DNS</value>
+  </data>
+  <data name="TunHealthCheckLayerRouting" xml:space="preserve">
+    <value>Routing</value>
+  </data>
+  <data name="TunHealthCheckLayerOutbound" xml:space="preserve">
+    <value>Outbound</value>
+  </data>
+  <data name="TunHealthCheckLayerWebsite" xml:space="preserve">
+    <value>Website Access</value>
+  </data>
+  <data name="TunHealthCheckLayerQuality" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="TunHealthCheckSkipped" xml:space="preserve">
+    <value>Skipped</value>
+  </data>
+  <data name="TunHealthCheckCoreNotRunning" xml:space="preserve">
+    <value>Core is not running, please start a server first</value>
+  </data>
+  <data name="TunHealthCheckRunning" xml:space="preserve">
+    <value>Running health check...</value>
+  </data>
+  <data name="TunHealthCheckNonTunMode" xml:space="preserve">
+    <value>TUN is not enabled — running proxy-path checks only</value>
+  </data>
+  <data name="TunHealthCheckReportExported" xml:space="preserve">
+    <value>Report exported to: {0}</value>
+  </data>
+  <data name="TunHealthCheckCopyOk" xml:space="preserve">
+    <value>Report copied to clipboard</value>
+  </data>
+  <data name="TunHealthCheckExportFailed" xml:space="preserve">
+    <value>Export failed: {0}</value>
+  </data>
+  <data name="TunHealthCheckCopyReport" xml:space="preserve">
+    <value>Copy Report</value>
+  </data>
+  <data name="TunHealthCheckExportJson" xml:space="preserve">
+    <value>Export JSON</value>
+  </data>
+  <data name="TunHealthCheckClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="TunHealthCheckSummary" xml:space="preserve">
+    <value>Summary</value>
+  </data>
+  <data name="TunHealthCheckYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="TunHealthCheckNo" xml:space="preserve">
+    <value>No</value>
+  </data>
 </root>

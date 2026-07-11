@@ -51,7 +51,8 @@ public partial class TunHealthCheckResultWindow : Window
         if (scores.Count > 0)
         {
             var avg = (int)scores.Average();
-            txtScoreLabel.Text = "健康评分:";
+            txtScoreLabel.Text = string.Format(ResUI.TunHealthCheckScore, avg, GradeFromScore(avg)).Split(':')[0] + ":";
+            // Prefer score body only for value text
             txtScore.Text = $"{avg}/100 ({GradeFromScore(avg)})";
             txtScore.Foreground = avg >= 80 ? Brushes.Green : avg >= 50 ? new SolidColorBrush(Color.FromRgb(0xF5, 0x7C, 0x00)) : Brushes.Red;
         }
@@ -63,13 +64,13 @@ public partial class TunHealthCheckResultWindow : Window
 
         var layers = _report.Results.Select(r => new LayerResultDisplay
         {
-            LayerName = GetLayerNameChinese(r.Layer),
+            LayerName = GetLayerName(r.Layer),
             StatusText = r.Status switch
             {
                 HealthCheckStatus.Pass => ResUI.TunHealthCheckPass,
                 HealthCheckStatus.Warning => ResUI.TunHealthCheckWarning,
                 HealthCheckStatus.Fail => ResUI.TunHealthCheckFail,
-                HealthCheckStatus.Skipped => "已跳过",
+                HealthCheckStatus.Skipped => ResUI.TunHealthCheckSkipped,
                 HealthCheckStatus.Error => ResUI.TunHealthCheckError,
                 _ => ""
             },
@@ -100,7 +101,7 @@ public partial class TunHealthCheckResultWindow : Window
     {
         var items = new List<DetailItem>
         {
-            new() { Key = "摘要", Value = result.Summary }
+            new() { Key = ResUI.TunHealthCheckSummary, Value = result.Summary }
         };
 
         if (result.Details != null)
@@ -111,7 +112,7 @@ public partial class TunHealthCheckResultWindow : Window
 
                 var value = kvp.Value switch
                 {
-                    bool b => b ? "是" : "否",
+                    bool b => b ? ResUI.TunHealthCheckYes : ResUI.TunHealthCheckNo,
                     double d => d.ToString("F2"),
                     int i => i.ToString(),
                     _ => kvp.Value?.ToString() ?? ""
@@ -125,27 +126,29 @@ public partial class TunHealthCheckResultWindow : Window
 
     private static string FormatDetailKey(string key) => key switch
     {
-        "adapter" => "适配器",
-        "ipv4" => "IPv4 地址",
-        "ipv6" => "IPv6 地址",
-        "has_default_route" => "默认路由",
-        "hop_limit" => "跳数限制",
-        "dns_server" => "DNS 服务器",
-        "dns_port" => "DNS 端口",
-        "doh_result" => "DoH 解析",
-        "system_dns" => "系统 DNS",
-        "dns_leak_detected" => "DNS 泄漏",
-        "direct_domains" => "直连域名",
-        "proxy_domains" => "代理域名",
-        "loop_detected" => "环路检测",
-        "tcp_ok" => "TCP 连接",
-        "tls_ok" => "TLS 握手",
+        "adapter" => "Adapter",
+        "ipv4" => "IPv4",
+        "ipv6" => "IPv6",
+        "has_default_route" => "Default route",
+        "hop_limit" => "Hop limit",
+        "dns_server" => "DNS server",
+        "dns_port" => "DNS port",
+        "doh_result" => "DoH",
+        "system_dns" => "System DNS",
+        "dns_leak_detected" => "DNS leak",
+        "direct_domains" => "Direct domains",
+        "proxy_domains" => "Proxy domains",
+        "loop_detected" => "Loop",
+        "tcp_ok" => "TCP",
+        "tls_ok" => "TLS",
         "http_204" => "HTTP 204",
-        "exit_ip" => "出口 IP",
-        "latency_ms" => "延迟",
-        "packet_loss" => "丢包率",
-        "jitter" => "抖动",
-        "website_results" => "网站测试结果",
+        "exit_ip" => "Exit IP",
+        "latency_ms" => "Latency",
+        "packet_loss" => "Loss",
+        "jitter" => "Jitter",
+        "website_results" => "Websites",
+        "proxy_port" => "Proxy port",
+        "mode" => "Mode",
         _ => key
     };
 
@@ -158,7 +161,7 @@ public partial class TunHealthCheckResultWindow : Window
         _ => "F"
     };
 
-    private static string GetLayerNameChinese(string layer) => layer switch
+    private static string GetLayerName(string layer) => layer switch
     {
         "TUN Interface" => ResUI.TunHealthCheckLayerTunInterface,
         "DNS" => ResUI.TunHealthCheckLayerDns,
@@ -171,9 +174,10 @@ public partial class TunHealthCheckResultWindow : Window
 
     private void BtnCopy_Click(object sender, RoutedEventArgs e)
     {
-        var text = TunHealthCheckService.FormatReport(_report, "zh");
+        var locale = AppManager.Instance.Config?.UiItem?.CurrentLanguage ?? "en";
+        var text = TunHealthCheckService.FormatReport(_report, locale);
         Clipboard.SetText(text);
-        NoticeManager.Instance.Enqueue("报告已复制到剪贴板");
+        NoticeManager.Instance.Enqueue(ResUI.TunHealthCheckCopyOk);
     }
 
     private void BtnExport_Click(object sender, RoutedEventArgs e)
@@ -183,11 +187,11 @@ public partial class TunHealthCheckResultWindow : Window
             var jsonPath = Path.Combine(Utils.GetLogPath(), $"tun-health-{DateTime.Now:yyyyMMdd-HHmmss}.json");
             var json = TunHealthCheckService.ExportJson(_report);
             File.WriteAllText(jsonPath, json);
-            NoticeManager.Instance.Enqueue($"报告已导出: {jsonPath}");
+            NoticeManager.Instance.Enqueue(string.Format(ResUI.TunHealthCheckReportExported, jsonPath));
         }
         catch (Exception ex)
         {
-            NoticeManager.Instance.Enqueue($"导出失败: {ex.Message}");
+            NoticeManager.Instance.Enqueue(string.Format(ResUI.TunHealthCheckExportFailed, ex.Message));
         }
     }
 

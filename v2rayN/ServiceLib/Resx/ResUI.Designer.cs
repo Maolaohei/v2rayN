@@ -5347,6 +5347,123 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Skipped.
+        /// </summary>
+        public static string TunHealthCheckSkipped {
+            get {
+                return ResourceManager.GetString("TunHealthCheckSkipped", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Core is not running, please start a server first.
+        /// </summary>
+        public static string TunHealthCheckCoreNotRunning {
+            get {
+                return ResourceManager.GetString("TunHealthCheckCoreNotRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Running health check....
+        /// </summary>
+        public static string TunHealthCheckRunning {
+            get {
+                return ResourceManager.GetString("TunHealthCheckRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TUN is not enabled — running proxy-path checks only.
+        /// </summary>
+        public static string TunHealthCheckNonTunMode {
+            get {
+                return ResourceManager.GetString("TunHealthCheckNonTunMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Report exported to: {0}.
+        /// </summary>
+        public static string TunHealthCheckReportExported {
+            get {
+                return ResourceManager.GetString("TunHealthCheckReportExported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Report copied to clipboard.
+        /// </summary>
+        public static string TunHealthCheckCopyOk {
+            get {
+                return ResourceManager.GetString("TunHealthCheckCopyOk", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export failed: {0}.
+        /// </summary>
+        public static string TunHealthCheckExportFailed {
+            get {
+                return ResourceManager.GetString("TunHealthCheckExportFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copy Report.
+        /// </summary>
+        public static string TunHealthCheckCopyReport {
+            get {
+                return ResourceManager.GetString("TunHealthCheckCopyReport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export JSON.
+        /// </summary>
+        public static string TunHealthCheckExportJson {
+            get {
+                return ResourceManager.GetString("TunHealthCheckExportJson", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string TunHealthCheckClose {
+            get {
+                return ResourceManager.GetString("TunHealthCheckClose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Summary.
+        /// </summary>
+        public static string TunHealthCheckSummary {
+            get {
+                return ResourceManager.GetString("TunHealthCheckSummary", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yes.
+        /// </summary>
+        public static string TunHealthCheckYes {
+            get {
+                return ResourceManager.GetString("TunHealthCheckYes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No.
+        /// </summary>
+        public static string TunHealthCheckNo {
+            get {
+                return ResourceManager.GetString("TunHealthCheckNo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Process Traffic Hijack Settings 的本地化字符串。
         /// </summary>
         public static string ProcessListSettingTitle {

@@ -19,19 +19,62 @@ public class TunHealthCheckService
     {
         var sw = Stopwatch.StartNew();
         var results = new List<HealthCheckResult>();
+        var tunEnabled = _config?.TunModeItem?.EnableTun == true;
 
         await ReportProgress(progressFunc, "Layer 1: Checking TUN interface...");
         var layer1 = await RunCheckSafeAsync(() => new TunInterfaceCheck().CheckAsync());
+
+        if (!tunEnabled)
+        {
+            // Not a hard failure: allow proxy-path diagnosis when TUN is off.
+            if (layer1.Status is HealthCheckStatus.Fail or HealthCheckStatus.Error)
+            {
+                var details = new Dictionary<string, object>();
+                if (layer1.Details != null)
+                {
+                    foreach (var kv in layer1.Details)
+                    {
+                        details[kv.Key] = kv.Value;
+                    }
+                }
+                details["mode"] = "non_tun";
+                details["adapter_status"] = layer1.Summary;
+                results.Add(new HealthCheckResult(
+                    "TUN Interface",
+                    HealthCheckStatus.Skipped,
+                    "TUN is not enabled - adapter check skipped",
+                    layer1.Duration,
+                    details));
+            }
+            else
+            {
+                results.Add(layer1);
+            }
+
+            await ReportProgress(progressFunc, "TUN off: running proxy-path checks (DNS/Routing/Outbound)...");
+            var proxyOnly = await Task.WhenAll(
+                RunCheckSafeAsync(() => new DnsCheck().CheckAsync()),
+                RunCheckSafeAsync(() => new RoutingCheck().CheckAsync(tunEnabled: false)),
+                RunCheckSafeAsync(() => new OutboundCheck().CheckAsync())
+            );
+            results.AddRange(proxyOnly);
+
+            results.Add(SkippedResult("Website Access", "Skipped - full website suite requires TUN mode"));
+            results.Add(SkippedResult("Quality", "Skipped - quality suite requires TUN mode"));
+            sw.Stop();
+            return BuildReport(results, sw.Elapsed);
+        }
+
         results.Add(layer1);
 
         if (layer1.Status is HealthCheckStatus.Fail or HealthCheckStatus.Error)
         {
             await ReportProgress(progressFunc, "TUN interface failed, skipping dependent layers...");
-            results.Add(SkippedResult("DNS", "Skipped — TUN interface not available"));
-            results.Add(SkippedResult("Routing", "Skipped — TUN interface not available"));
-            results.Add(SkippedResult("Outbound", "Skipped — TUN interface not available"));
-            results.Add(SkippedResult("Website Access", "Skipped — TUN interface not available"));
-            results.Add(SkippedResult("Quality", "Skipped — TUN interface not available"));
+            results.Add(SkippedResult("DNS", "Skipped - TUN interface not available"));
+            results.Add(SkippedResult("Routing", "Skipped - TUN interface not available"));
+            results.Add(SkippedResult("Outbound", "Skipped - TUN interface not available"));
+            results.Add(SkippedResult("Website Access", "Skipped - TUN interface not available"));
+            results.Add(SkippedResult("Quality", "Skipped - TUN interface not available"));
             sw.Stop();
             return BuildReport(results, sw.Elapsed);
         }
@@ -39,17 +82,18 @@ public class TunHealthCheckService
         await ReportProgress(progressFunc, "Layers 2-4: Running parallel checks...");
         var layer24 = await Task.WhenAll(
             RunCheckSafeAsync(() => new DnsCheck().CheckAsync()),
-            RunCheckSafeAsync(() => new RoutingCheck().CheckAsync()),
+            RunCheckSafeAsync(() => new RoutingCheck().CheckAsync(tunEnabled: true)),
             RunCheckSafeAsync(() => new OutboundCheck().CheckAsync())
         );
         results.AddRange(layer24);
+
 
         var hasCriticalFailure = layer24.Any(r => r.Status is HealthCheckStatus.Fail or HealthCheckStatus.Error);
 
         await ReportProgress(progressFunc, "Layer 5: Checking website access...");
         if (hasCriticalFailure)
         {
-            results.Add(SkippedResult("Website Access", "Skipped — upstream layers have failures"));
+            results.Add(SkippedResult("Website Access", "Skipped - upstream layers have failures"));
         }
         else
         {
@@ -59,7 +103,7 @@ public class TunHealthCheckService
             if (layer5.Status is HealthCheckStatus.Fail or HealthCheckStatus.Error)
             {
                 await ReportProgress(progressFunc, "Website access failed, skipping quality test...");
-                results.Add(SkippedResult("Quality", "Skipped — website access failed, latency data unreliable"));
+                results.Add(SkippedResult("Quality", "Skipped - website access failed, latency data unreliable"));
                 sw.Stop();
                 return BuildReport(results, sw.Elapsed);
             }
@@ -94,11 +138,13 @@ public class TunHealthCheckService
         return new HealthCheckResult(layer, HealthCheckStatus.Skipped, reason, TimeSpan.Zero);
     }
 
-    private static HealthCheckReport BuildReport(List<HealthCheckResult> results, TimeSpan totalDuration)
+    private HealthCheckReport BuildReport(List<HealthCheckResult> results, TimeSpan totalDuration)
     {
         var overall = DetermineOverall(results);
         var report = new HealthCheckReport(overall, results, totalDuration);
-        var diagnosis = DiagnosisEngine.Diagnose(report);
+        var locale = _config?.UiItem?.CurrentLanguage
+            ?? System.Globalization.CultureInfo.CurrentUICulture.Name;
+        var diagnosis = DiagnosisEngine.Diagnose(report, locale);
         return report with { Diagnosis = diagnosis };
     }
 
@@ -141,7 +187,7 @@ public class TunHealthCheckService
                 HealthCheckStatus.Pass => ("  ✓  ", "Pass"),
                 HealthCheckStatus.Warning => ("  ⚠  ", "Warning"),
                 HealthCheckStatus.Fail => ("  ✗  ", "Fail"),
-                HealthCheckStatus.Skipped => ("  ○  ", "Skipped"),
+                HealthCheckStatus.Skipped => ("  -  ", ResUI.TunHealthCheckSkipped),
                 HealthCheckStatus.Error => ("  !  ", "Error"),
                 _ => ("  ?  ", "")
             };
@@ -190,7 +236,7 @@ public class TunHealthCheckService
                 HealthCheckStatus.Pass => ("  ✓  ", ResUI.TunHealthCheckPass),
                 HealthCheckStatus.Warning => ("  ⚠  ", ResUI.TunHealthCheckWarning),
                 HealthCheckStatus.Fail => ("  ✗  ", ResUI.TunHealthCheckFail),
-                HealthCheckStatus.Skipped => ("  ○  ", "已跳过"),
+                HealthCheckStatus.Skipped => ("  -  ", ResUI.TunHealthCheckSkipped),
                 HealthCheckStatus.Error => ("  !  ", ResUI.TunHealthCheckError),
                 _ => ("  ?  ", "")
             };

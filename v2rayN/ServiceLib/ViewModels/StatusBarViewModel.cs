@@ -435,11 +435,18 @@ public class StatusBarViewModel : MyReactiveObject
     {
         if (!AppManager.Instance.IsRunningCore(ECoreType.Xray) && !AppManager.Instance.IsRunningCore(ECoreType.sing_box))
         {
-            NoticeManager.Instance.SendMessageEx("Core is not running, please start a server first");
+            NoticeManager.Instance.SendMessageEx(ResUI.TunHealthCheckCoreNotRunning);
             return;
         }
 
-        await TestServerAvailabilitySub("Running TUN health check...");
+        var locale = _config.UiItem?.CurrentLanguage ?? "en";
+        var isZh = locale.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
+        if (_config.TunModeItem?.EnableTun != true)
+        {
+            NoticeManager.Instance.SendMessageEx(ResUI.TunHealthCheckNonTunMode);
+        }
+
+        await TestServerAvailabilitySub(ResUI.TunHealthCheckRunning);
 
         var service = new TunHealthCheckService(_config);
         var report = await service.RunFullCheckAsync(async msg =>
@@ -447,7 +454,7 @@ public class StatusBarViewModel : MyReactiveObject
             await TestServerAvailabilitySub(msg);
         });
 
-        var reportText = TunHealthCheckService.FormatReport(report, "en");
+        var reportText = TunHealthCheckService.FormatReport(report, isZh ? "zh" : "en");
         NoticeManager.Instance.SendMessageEx(reportText);
         await TestServerAvailabilitySub(report.Summary);
 
@@ -458,7 +465,7 @@ public class StatusBarViewModel : MyReactiveObject
             var jsonPath = Path.Combine(Utils.GetLogPath(), $"tun-health-{DateTime.Now:yyyyMMdd-HHmmss}.json");
             var json = TunHealthCheckService.ExportJson(report);
             await File.WriteAllTextAsync(jsonPath, json);
-            NoticeManager.Instance.SendMessageEx($"Report exported to: {jsonPath}");
+            NoticeManager.Instance.SendMessageEx(string.Format(ResUI.TunHealthCheckReportExported, jsonPath));
         }
         catch { }
     }
