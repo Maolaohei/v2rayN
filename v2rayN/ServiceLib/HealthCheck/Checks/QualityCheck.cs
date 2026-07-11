@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using ServiceLib.HealthCheck.Models;
 
 namespace ServiceLib.HealthCheck.Checks;
@@ -7,13 +8,17 @@ public class QualityCheck
 {
     private const int TestRounds = 3;
 
-    public async Task<HealthCheckResult> CheckAsync()
+    public async Task<HealthCheckResult> CheckAsync(int? proxyPort = null)
     {
         var sw = Stopwatch.StartNew();
         var details = new Dictionary<string, object>();
 
         try
         {
+            var port = proxyPort ?? AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
+            details["proxy_port"] = port;
+            details["probe_mode"] = "socks5";
+
             var rtts = new List<int>();
             var ttfbs = new List<int>();
             var failures = 0;
@@ -24,13 +29,22 @@ public class QualityCheck
                 "https://www.gstatic.com/generate_204"
             };
 
+            using var handler = new SocketsHttpHandler
+            {
+                Proxy = new WebProxy($"socks5://{Global.Loopback}:{port}"),
+                UseProxy = true,
+                ConnectTimeout = TimeSpan.FromSeconds(5),
+                AllowAutoRedirect = false,
+            };
+            using var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
+
             for (var i = 0; i < TestRounds; i++)
             {
                 foreach (var url in urls)
                 {
                     try
                     {
-                        var (ttfb, totalTime) = await MeasureHttpAsync(url);
+                        var (ttfb, totalTime) = await MeasureHttpAsync(http, url);
                         rtts.Add(totalTime);
                         ttfbs.Add(ttfb);
                     }
@@ -49,7 +63,7 @@ public class QualityCheck
             {
                 sw.Stop();
                 return new HealthCheckResult("Quality", HealthCheckStatus.Fail,
-                    "All quality test requests failed", sw.Elapsed, details);
+                    "All quality test requests via SOCKS failed", sw.Elapsed, details);
             }
 
             var avgRtt = (int)rtts.Average();
@@ -81,7 +95,7 @@ public class QualityCheck
             var grade = GradeFromScore(totalScore);
             sw.Stop();
             return new HealthCheckResult("Quality", status,
-                $"Health Score: {totalScore}/100 ({grade})", sw.Elapsed, details);
+                $"Health Score: {totalScore}/100 ({grade}) via SOCKS", sw.Elapsed, details);
         }
         catch (Exception ex)
         {
@@ -131,10 +145,8 @@ public class QualityCheck
         _ => "F"
     };
 
-    private static async Task<(int TtfbMs, int TotalMs)> MeasureHttpAsync(string url)
+    private static async Task<(int TtfbMs, int TotalMs)> MeasureHttpAsync(HttpClient http, string url)
     {
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-
         var measureSw = Stopwatch.StartNew();
         var response = await http.GetAsync(url);
         var ttfb = (int)measureSw.ElapsedMilliseconds;

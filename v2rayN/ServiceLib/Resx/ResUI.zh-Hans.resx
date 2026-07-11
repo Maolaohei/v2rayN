@@ -1965,4 +1965,37 @@
   <data name="TunHealthCheckNo" xml:space="preserve">
     <value>否</value>
   </data>
+  <data name="TunHealthCheckOneClickFix" xml:space="preserve">
+    <value>一键修复</value>
+  </data>
+  <data name="TunHealthCheckApplySelectedFixes" xml:space="preserve">
+    <value>应用所选修复</value>
+  </data>
+  <data name="TunHealthCheckNoFixes" xml:space="preserve">
+    <value>本次报告没有可自动修复项。</value>
+  </data>
+  <data name="TunHealthCheckFixApplied" xml:space="preserve">
+    <value>已应用 {0} 项修复。</value>
+  </data>
+  <data name="TunHealthCheckFixPartial" xml:space="preserve">
+    <value>部分完成：成功 {0}，失败 {1}。</value>
+  </data>
+  <data name="TunHealthCheckFixConfirm" xml:space="preserve">
+    <value>应用所选自动修复？可能会重载核心。</value>
+  </data>
+  <data name="TunHealthCheckAvailableFixes" xml:space="preserve">
+    <value>可自动修复项</value>
+  </data>
+  <data name="TunHealthCheckFixRequiresAdmin" xml:space="preserve">
+    <value>(需管理员)</value>
+  </data>
+  <data name="TunHealthCheckFixRequiresReload" xml:space="preserve">
+    <value>(需重载)</value>
+  </data>
+  <data name="TunHealthCheckSelectAllFixes" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="TunHealthCheckFixDone" xml:space="preserve">
+    <value>一键修复完成。</value>
+  </data>
 </root>

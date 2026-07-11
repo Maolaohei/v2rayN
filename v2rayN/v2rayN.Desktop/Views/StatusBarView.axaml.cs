@@ -1,5 +1,7 @@
 using DialogHostAvalonia;
 using ServiceLib.Handler;
+using ServiceLib.HealthCheck;
+using ServiceLib.HealthCheck.Models;
 using ServiceLib.Resx;
 using v2rayN.Desktop.Common;
 
@@ -69,7 +71,21 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
                 return await PasswordInputAsync();
 
             case EViewAction.TunHealthCheckResult:
-                if (obj is string reportText)
+                if (obj is HealthCheckReport report)
+                {
+                    var locale = AppManager.Instance.Config?.UiItem?.CurrentLanguage ?? "en";
+                    var isZh = locale.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
+                    var reportText = TunHealthCheckService.FormatReport(report, locale);
+                    var fixes = report.AvailableFixes ?? [];
+                    if (fixes.Count > 0)
+                    {
+                        var fixLines = string.Join("\n", fixes.Select(f => "- " + f.Title(isZh)));
+                        reportText += "\n\n" + ResUI.TunHealthCheckAvailableFixes + ":\n" + fixLines;
+                    }
+                    var box = new MessageBoxDialog(ResUI.TunHealthCheckTitle, reportText);
+                    await box.ShowDialog(VisualRoot as Window);
+                }
+                else if (obj is string reportText)
                 {
                     var box = new MessageBoxDialog(ResUI.TunHealthCheckTitle, reportText);
                     await box.ShowDialog(VisualRoot as Window);

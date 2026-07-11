@@ -11,7 +11,8 @@ public record HealthCheckReport(
     HealthCheckOverallStatus OverallStatus,
     List<HealthCheckResult> Results,
     TimeSpan TotalDuration,
-    List<string>? Diagnosis = null)
+    List<string>? Diagnosis = null,
+    List<HealthCheckFixAction>? AvailableFixes = null)
 {
     public string Summary => OverallStatus switch
     {

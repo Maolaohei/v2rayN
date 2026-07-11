@@ -21,6 +21,12 @@
             Orientation="Horizontal"
             HorizontalAlignment="Right">
             <Button
+                x:Name="btnOneClickFix"
+                MinWidth="100"
+                Margin="{StaticResource MarginLeftRight8}"
+                Content="{x:Static resx:ResUI.TunHealthCheckOneClickFix}"
+                Style="{StaticResource DefButton}" />
+            <Button
                 x:Name="btnCopy"
                 Width="100"
                 Margin="{StaticResource MarginLeftRight8}"
@@ -147,6 +153,39 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+
+                <materialDesign:Card
+                    x:Name="cardFixes"
+                    Margin="{StaticResource Margin4}"
+                    Padding="12"
+                    Visibility="Collapsed">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                FontSize="14"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TunHealthCheckAvailableFixes}" />
+                            <Button
+                                x:Name="btnSelectAllFixes"
+                                DockPanel.Dock="Right"
+                                Margin="8,0,0,0"
+                                Padding="8,2"
+                                Content="{x:Static resx:ResUI.TunHealthCheckSelectAllFixes}"
+                                Style="{StaticResource DefButton}" />
+                        </DockPanel>
+                        <ItemsControl x:Name="lstFixes">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox
+                                        Margin="0,4"
+                                        IsChecked="{Binding IsSelected}"
+                                        Content="{Binding DisplayText}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                </materialDesign:Card>
                 <materialDesign:Card
                     x:Name="cardDiagnosis"
                     Margin="{StaticResource Margin4}"

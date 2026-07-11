@@ -1968,4 +1968,37 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   <data name="TunHealthCheckNo" xml:space="preserve">
     <value>No</value>
   </data>
+  <data name="TunHealthCheckOneClickFix" xml:space="preserve">
+    <value>One-Click Fix</value>
+  </data>
+  <data name="TunHealthCheckApplySelectedFixes" xml:space="preserve">
+    <value>Apply Selected Fixes</value>
+  </data>
+  <data name="TunHealthCheckNoFixes" xml:space="preserve">
+    <value>No automatic fixes available for this report.</value>
+  </data>
+  <data name="TunHealthCheckFixApplied" xml:space="preserve">
+    <value>Applied {0} fix(es).</value>
+  </data>
+  <data name="TunHealthCheckFixPartial" xml:space="preserve">
+    <value>Applied with issues: {0} ok, {1} failed.</value>
+  </data>
+  <data name="TunHealthCheckFixConfirm" xml:space="preserve">
+    <value>Apply the selected automatic fixes? Core may reload.</value>
+  </data>
+  <data name="TunHealthCheckAvailableFixes" xml:space="preserve">
+    <value>Available Fixes</value>
+  </data>
+  <data name="TunHealthCheckFixRequiresAdmin" xml:space="preserve">
+    <value>(Admin)</value>
+  </data>
+  <data name="TunHealthCheckFixRequiresReload" xml:space="preserve">
+    <value>(Reload)</value>
+  </data>
+  <data name="TunHealthCheckSelectAllFixes" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="TunHealthCheckFixDone" xml:space="preserve">
+    <value>One-click fix finished.</value>
+  </data>
 </root>

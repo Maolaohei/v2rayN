@@ -5464,6 +5464,105 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to One-Click Fix.
+        /// </summary>
+        public static string TunHealthCheckOneClickFix {
+            get {
+                return ResourceManager.GetString("TunHealthCheckOneClickFix", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply Selected Fixes.
+        /// </summary>
+        public static string TunHealthCheckApplySelectedFixes {
+            get {
+                return ResourceManager.GetString("TunHealthCheckApplySelectedFixes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No automatic fixes available for this report..
+        /// </summary>
+        public static string TunHealthCheckNoFixes {
+            get {
+                return ResourceManager.GetString("TunHealthCheckNoFixes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Applied {0} fix(es)..
+        /// </summary>
+        public static string TunHealthCheckFixApplied {
+            get {
+                return ResourceManager.GetString("TunHealthCheckFixApplied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Applied with issues: {0} ok, {1} failed..
+        /// </summary>
+        public static string TunHealthCheckFixPartial {
+            get {
+                return ResourceManager.GetString("TunHealthCheckFixPartial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply the selected automatic fixes? Core may reload..
+        /// </summary>
+        public static string TunHealthCheckFixConfirm {
+            get {
+                return ResourceManager.GetString("TunHealthCheckFixConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Available Fixes.
+        /// </summary>
+        public static string TunHealthCheckAvailableFixes {
+            get {
+                return ResourceManager.GetString("TunHealthCheckAvailableFixes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (Admin).
+        /// </summary>
+        public static string TunHealthCheckFixRequiresAdmin {
+            get {
+                return ResourceManager.GetString("TunHealthCheckFixRequiresAdmin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (Reload).
+        /// </summary>
+        public static string TunHealthCheckFixRequiresReload {
+            get {
+                return ResourceManager.GetString("TunHealthCheckFixRequiresReload", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select All.
+        /// </summary>
+        public static string TunHealthCheckSelectAllFixes {
+            get {
+                return ResourceManager.GetString("TunHealthCheckSelectAllFixes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to One-click fix finished..
+        /// </summary>
+        public static string TunHealthCheckFixDone {
+            get {
+                return ResourceManager.GetString("TunHealthCheckFixDone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Process Traffic Hijack Settings 的本地化字符串。
         /// </summary>
         public static string ProcessListSettingTitle {
