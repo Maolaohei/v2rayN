@@ -82,7 +82,6 @@ public sealed class HealthCheckAutoFixService
         var results = new List<HealthCheckFixResult>();
         var ordered = fixIds
             .Distinct()
-            // apply config mutations before reload/reboot
             .OrderBy(id => id switch
             {
                 HealthCheckFixId.EnableAutoRouteStrictRoute => 10,
@@ -147,9 +146,17 @@ public sealed class HealthCheckAutoFixService
 
         if (wantEnableTun)
         {
-            // Persist route defaults first; EnableTun toggle reloads via StatusBarViewModel.
-            needSave = true;
-            results.Add(await ApplyEnableTunAsync());
+            var tunResult = await ApplyEnableTunAsync();
+            results.Add(tunResult);
+            if (tunResult.Success && !tunResult.Skipped)
+            {
+                needSave = true;
+                // RebootAsAdmin path already exits; otherwise reload after save.
+                if (!needRebootAdmin)
+                {
+                    needReload = true;
+                }
+            }
         }
 
         if (needSave)
@@ -264,7 +271,7 @@ public sealed class HealthCheckAutoFixService
     {
         _config.TunModeItem ??= new TunModeItem();
 
-        if (_config.TunModeItem.EnableTun || StatusBarViewModel.Instance.EnableTun)
+        if (_config.TunModeItem.EnableTun)
         {
             return new HealthCheckFixResult(
                 HealthCheckFixId.EnableTun, true, true,
@@ -274,6 +281,8 @@ public sealed class HealthCheckAutoFixService
 
         if (Utils.IsWindows() && !Utils.IsAdministrator())
         {
+            // Caller will still attempt reboot if RebootAsAdmin was selected;
+            // here we reboot immediately because EnableTun requires elevation.
             await AppManager.Instance.RebootAsAdmin();
             return new HealthCheckFixResult(
                 HealthCheckFixId.EnableTun, true, false,
@@ -281,16 +290,20 @@ public sealed class HealthCheckAutoFixService
                 "当前非管理员，正在以管理员重启以开启 TUN。");
         }
 
-        if (!_config.TunModeItem.AutoRoute) _config.TunModeItem.AutoRoute = true;
-        if (!_config.TunModeItem.StrictRoute) _config.TunModeItem.StrictRoute = true;
-
-        // Drive through StatusBarViewModel so UI state + DoEnableTun stay consistent
-        StatusBarViewModel.Instance.EnableTun = true;
-        await Task.CompletedTask;
+        _config.TunModeItem.EnableTun = true;
+        _config.TunModeItem.EnableLegacyProtect = false;
+        if (!_config.TunModeItem.AutoRoute)
+        {
+            _config.TunModeItem.AutoRoute = true;
+        }
+        if (!_config.TunModeItem.StrictRoute)
+        {
+            _config.TunModeItem.StrictRoute = true;
+        }
 
         return new HealthCheckFixResult(
             HealthCheckFixId.EnableTun, true, false,
-            "TUN enable requested via status bar (legacy protect will be off).",
-            "已通过状态栏请求开启 TUN（将关闭进程劫持）。");
+            "TUN enabled (legacy protect off).",
+            "已开启 TUN（已关闭进程劫持）。");
     }
 }
