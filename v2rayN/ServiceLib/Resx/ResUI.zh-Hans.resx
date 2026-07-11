@@ -1872,4 +1872,7 @@
   <data name="ProcessListImportTooMany" xml:space="preserve">
     <value>EXE 文件过多（{0}个），仅导入前 {1} 个</value>
   </data>
+  <data name="TbLegacyProtectTip" xml:space="preserve">
+    <value>启用则使用 sing-box TUN ,否则使用 xray TUN</value>
+  </data>
 </root>

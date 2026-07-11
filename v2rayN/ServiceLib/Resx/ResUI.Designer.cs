@@ -3392,6 +3392,15 @@ namespace ServiceLib.Resx {
                 return ResourceManager.GetString("TbLegacyProtect", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to If enabled, use sing-box TUN; otherwise, use xray TUN.
+        /// </summary>
+        public static string TbLegacyProtectTip {
+            get {
+                return ResourceManager.GetString("TbLegacyProtectTip", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   查找类似 Address (IPv4, IPv6) 的本地化字符串。

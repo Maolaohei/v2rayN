@@ -457,27 +457,44 @@ public sealed class NetBridgeManager : IDisposable
 
         try
         {
-            if (!await CheckHealthAsync())
+            var healthOk = await CheckHealthAsync();
+            var connectivityOk = healthOk && await NetBridgeHealthMonitor.VerifyConnectivityAsync();
+            var socksPort = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
+            var coreReady = ServiceLib.Services.NetBridgeRestartPolicy.IsCoreReady(socksPort);
+
+            // Avoid false restarts when core is switching or a single probe fails.
+            if (!ServiceLib.Services.NetBridgeRestartPolicy.ShouldRestart(healthOk, connectivityOk, coreReady))
+            {
+                return;
+            }
+
+            if (!healthOk)
             {
                 await SafeInvoke(true, $"NetBridge health check failed (attempt {_restartCount + 1}/{MaxRestartAttempts}), attempting restart...");
-                _isProxyRunning = false;
-                RaiseStateChanged();
-                await RestartAsync();
             }
-            else if (!await NetBridgeHealthMonitor.VerifyConnectivityAsync())
+            else
             {
                 await SafeInvoke(true, $"NetBridge connectivity lost (attempt {_restartCount + 1}/{MaxRestartAttempts}), forcing restart...");
-                _isProxyRunning = false;
-                RaiseStateChanged();
-                await RestartAsync();
             }
+
+            _isProxyRunning = false;
+            RaiseStateChanged();
+            ServiceLib.Services.NetBridgeRestartPolicy.MarkRestarted();
+            await RestartAsync();
         }
         catch (Exception ex)
         {
             await SafeInvoke(true, $"NetBridge watchdog error: {ex.Message}");
-            _isProxyRunning = false;
-            RaiseStateChanged();
-            await RestartAsync();
+            // Transient exceptions alone should not force restart without policy gate.
+            var socksPort = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
+            var coreReady = ServiceLib.Services.NetBridgeRestartPolicy.IsCoreReady(socksPort);
+            if (ServiceLib.Services.NetBridgeRestartPolicy.ShouldRestart(false, false, coreReady))
+            {
+                _isProxyRunning = false;
+                RaiseStateChanged();
+                ServiceLib.Services.NetBridgeRestartPolicy.MarkRestarted();
+                await RestartAsync();
+            }
         }
         finally
         {

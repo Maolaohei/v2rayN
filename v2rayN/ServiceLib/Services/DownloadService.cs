@@ -108,9 +108,10 @@ public class DownloadService
     /// </summary>
     public async Task<string?> TryDownloadString(string url, IWebProxy? webProxy, string userAgent)
     {
+        var timeout = 15;
         try
         {
-            var result1 = await DownloadStringAsync(url, webProxy, userAgent, 15);
+            var result1 = await DownloadStringAsync(url, webProxy, userAgent, timeout);
             if (result1.IsNotEmpty())
             {
                 return result1;
@@ -128,7 +129,7 @@ public class DownloadService
 
         try
         {
-            var result2 = await DownloadStringViaDownloader(url, webProxy, userAgent, 15);
+            var result2 = await DownloadStringViaDownloader(url, webProxy, userAgent, timeout);
             if (result2.IsNotEmpty())
             {
                 return result2;
@@ -154,12 +155,14 @@ public class DownloadService
     {
         try
         {
-            var proxyKey = webProxy?.ToString() ?? "";
+            var connectTimeout = Math.Clamp(timeout / 5, 2, 5);
+            var proxyKey = (webProxy?.ToString() ?? "direct") + ":" + connectTimeout;
             var client = _proxyClients.GetOrAdd(proxyKey, _ =>
                 new HttpClient(new SocketsHttpHandler()
                 {
                     Proxy = webProxy,
-                    UseProxy = webProxy != null
+                    UseProxy = webProxy != null,
+                    ConnectTimeout = TimeSpan.FromSeconds(connectTimeout)
                 }));
 
             if (userAgent.IsNullOrEmpty())
@@ -177,7 +180,8 @@ public class DownloadService
             }
 
             using var cts = new CancellationTokenSource();
-            var response = await client.SendAsync(request, cts.Token).WaitAsync(TimeSpan.FromSeconds(timeout), cts.Token);
+            cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+            var response = await client.SendAsync(request, cts.Token);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStringAsync(cts.Token);
         }

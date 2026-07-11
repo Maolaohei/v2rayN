@@ -1773,4 +1773,7 @@
   <data name="TbSaveNetBridgeRule" xml:space="preserve">
     <value>保存規則</value>
   </data>
+  <data name="TbLegacyProtectTip" xml:space="preserve">
+    <value>啟用則使用 sing-box TUN ,否則使用 xray TUN</value>
+  </data>
 </root>

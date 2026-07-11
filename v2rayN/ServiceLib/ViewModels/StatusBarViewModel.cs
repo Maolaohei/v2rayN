@@ -251,6 +251,11 @@ public class StatusBarViewModel : MyReactiveObject
             .AsObservable()
             .Subscribe(async _ =>
             {
+                var socksPort = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
+                var coreReady = ServiceLib.Services.NetBridgeRestartPolicy.IsCoreReady(socksPort);
+                if (!coreReady) return; // avoid false restart while core is switching
+                if (!ServiceLib.Services.NetBridgeRestartPolicy.ShouldRestart(true, false, coreReady)) return;
+                ServiceLib.Services.NetBridgeRestartPolicy.MarkRestarted();
                 await Task.Run(async () => await RestartNetBridgeAsync());
             });
 
@@ -739,13 +744,8 @@ public class StatusBarViewModel : MyReactiveObject
                     NoticeManager.Instance.SendMessageEx("NetBridge 兼容模式: ProxyBridgeCore → Core (SOCKS5, 仅TCP)");
                     break;
 
-                default: // "Bridge"
-                    var socksPort = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
-                    NetBridgeManager.SetRelayPort(35002);
-                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, socksPort);
-                    await NetBridgeManager.Instance.StartNetBridgeBridgeAsync(socksPort);
-                    NoticeManager.Instance.SendMessageEx($"NetBridge 中转模式: ProxyBridgeCore → NetBridgeBridge(35002) → Core(SOCKS5:{socksPort})");
-                    break;
+                default: // "Bridge" 已废弃，回退到 Legacy
+                    goto case "Legacy";
             }
 
             await NetBridgeManager.Instance.UpdateRoutes(ruleProcess);
