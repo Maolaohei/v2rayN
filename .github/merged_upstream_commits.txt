@@ -9,3 +9,10 @@ ef46f4e7e6fcb767a25306986e7212b9e719f2f0 2026-06-22 Hysteria Realm & Gecko (#951
 3cebf492d14c94f5ce6b84ee62a3b66c4f502852 2026-06-23 Fix (#9614) - Bug修复（ParseProcess/TryParseRange工具方法）
 f1b88ccf2a0bb2fd4b332cb4dff0a807941564db 2026-06-22 Add GPG key file (#9608) - GPG签名（CI配置，未合入）
 e0c1ff24beec00066d38ae1f93a19015fa87c1aa 2026-06-23 Update README.md (#9616) - README更新（未合入）
+
+# === 2026-07-12 合入 ===
+2c70b018ce35e79feee43642caf4363bb0f90a39 2026-07-11 Revert "Fix" (#9727) - 修复 Balancer strategy 配置逻辑
+a0bd8f99344d382053a0bfddb98f91c492aa6af7 2026-07-11 Remove fallbackTag (#9728) - 移除废弃的 fallbackTag 字段
+88d59488fdddd0b3bd21a0291918cea5e0938598 2026-07-11 feat: support custom headers for Xray HTTP outbounds (#9690) - Xray HTTP 自定义 Headers
+3ca49dd9db76bd8f24a0a8d6d4f2cf4dce7ca653 2026-07-11 Add option to hide IP info column - 隐藏 IP 信息列选项
+1de83f96edeb199beeb0b54e226c88f626cb2bd2 2026-07-11 up 7.23.4 - 版本号更新

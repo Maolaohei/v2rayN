@@ -1872,9 +1872,6 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   <data name="InvalidHttpOutboundHeaders" xml:space="preserve">
     <value>Please enter valid HTTP request headers JSON.</value>
   </data>
-  <data name="TbHy2RealmUrlTip" xml:space="preserve">
-    <value>Format: realm://&lt;token&gt;@&lt;rendezvous-host&gt;[:port]/&lt;realm-name&gt;?stun=&lt;stun-host&gt;[:port]</value>
-  </data>
   <data name="ProcessListPresetAdded" xml:space="preserve">
     <value>Added {0} processes</value>
   </data>

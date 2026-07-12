@@ -1869,9 +1869,6 @@
   <data name="InvalidHttpOutboundHeaders" xml:space="preserve">
     <value>请填写合法的HTTP请求头JSON。</value>
   </data>
-  <data name="TbHy2RealmUrlTip" xml:space="preserve">
-    <value>格式：realm://&lt;token&gt;@&lt;rendezvous-host&gt;[:port]/&lt;realm-name&gt;?stun=&lt;stun-host&gt;[:port]</value>
-  </data>
   <data name="ProcessListPresetAdded" xml:space="preserve">
     <value>已添加 {0} 个进程</value>
   </data>

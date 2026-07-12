@@ -367,15 +367,6 @@ namespace ServiceLib.Resx {
         }
         
         /// <summary>
-        ///   查找类似 Invalid Realm URL. 的本地化字符串。
-        /// </summary>
-        public static string InvalidHy2RealmUrl {
-            get {
-                return ResourceManager.GetString("InvalidHy2RealmUrl", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 Please enter valid HTTP request headers JSON. 的本地化字符串。
         /// </summary>
         public static string InvalidHttpOutboundHeaders {
