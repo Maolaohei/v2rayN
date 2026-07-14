@@ -47,6 +47,9 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
         {
             cmbSystemProxy.Items.RemoveAt(cmbSystemProxy.Items.Count - 1);
         }
+
+        // Because this view has not yet been initialized when DispatcherRefreshIcon is first called.
+        RefreshIcon();
     }
 
     private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
@@ -54,8 +57,7 @@ public partial class StatusBarView : ReactiveUserControl<StatusBarViewModel>
         switch (action)
         {
             case EViewAction.DispatcherRefreshIcon:
-                Dispatcher.UIThread.Post(RefreshIcon,
-                DispatcherPriority.Default);
+                Dispatcher.UIThread.Post(RefreshIcon, DispatcherPriority.Default);
                 break;
 
             case EViewAction.SetClipboardData:

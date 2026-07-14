@@ -77,11 +77,7 @@ public partial class StatusBarView
         switch (action)
         {
             case EViewAction.DispatcherRefreshIcon:
-                Application.Current?.Dispatcher.Invoke(async () =>
-                {
-                    tbNotify.Icon = await WindowsManager.Instance.GetNotifyIcon(_config);
-                    Application.Current.MainWindow.Icon = WindowsManager.Instance.GetAppIcon(_config);
-                }, DispatcherPriority.Normal);
+                Application.Current?.Dispatcher.Invoke(async () => await RefreshIcon(), DispatcherPriority.Normal);
                 break;
 
             case EViewAction.SetClipboardData:
@@ -160,6 +156,15 @@ public partial class StatusBarView
         await AppManager.Instance.AppExitAsync(true);
     }
 
+
+    private async Task RefreshIcon()
+    {
+        tbNotify.Icon = await WindowsManager.Instance.GetNotifyIcon(_config);
+        if (Application.Current?.MainWindow != null)
+        {
+            Application.Current.MainWindow.Icon = WindowsManager.Instance.GetAppIcon(_config);
+        }
+    }
     private void btnTunHealthCheck_Click(object sender, RoutedEventArgs e)
     {
         ViewModel?.RunTunHealthCheck();
