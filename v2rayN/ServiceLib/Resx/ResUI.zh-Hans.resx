@@ -1882,7 +1882,7 @@
     <value>EXE 文件过多（{0}个），仅导入前 {1} 个</value>
   </data>
   <data name="TbLegacyProtectTip" xml:space="preserve">
-    <value>启用则使用 sing-box TUN ,否则使用 xray TUN</value>
+    <value>通过 WinDivert（NetBridge）劫持所选进程流量，与 TUN 模式互斥。</value>
   </data>
   <data name="TunHealthCheckTitle" xml:space="preserve">
     <value>TUN 一键诊断结果</value>

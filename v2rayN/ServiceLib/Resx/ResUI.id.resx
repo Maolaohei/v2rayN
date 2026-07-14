@@ -1690,7 +1690,7 @@ Tindakan "Ambil sertifikat" mungkin gagal jika sertifikat self-signed digunakan 
     <value>Kebijakan routing ICMP</value>
   </data>
   <data name="TbLegacyProtect" xml:space="preserve">
-    <value>Legacy TUN Protect</value>
+    <value>Start Process Hijack</value>
   </data>
   <data name="TbCamouflageDomain" xml:space="preserve">
     <value>Domain kamuflase</value>

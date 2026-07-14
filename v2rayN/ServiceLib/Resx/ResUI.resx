@@ -1885,7 +1885,7 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>Too many EXE files ({0}), only imported first {1}</value>
   </data>
   <data name="TbLegacyProtectTip" xml:space="preserve">
-    <value>If enabled, use sing-box TUN; otherwise, use xray TUN.</value>
+    <value>Intercept selected process traffic via WinDivert (NetBridge). Mutually exclusive with TUN mode.</value>
   </data>
   <data name="TunHealthCheckTitle" xml:space="preserve">
     <value>TUN Health Check Result</value>

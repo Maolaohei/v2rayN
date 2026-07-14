@@ -3412,7 +3412,7 @@ namespace ServiceLib.Resx {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to If enabled, use sing-box TUN; otherwise, use xray TUN.
+        ///   Looks up a localized string similar to Intercept selected process traffic via WinDivert (NetBridge). Mutually exclusive with TUN mode.
         /// </summary>
         public static string TbLegacyProtectTip {
             get {

@@ -1687,7 +1687,7 @@
     <value>Политика маршрутизации ICMP</value>
   </data>
   <data name="TbLegacyProtect" xml:space="preserve">
-    <value>Устаревшая защита TUN (Legacy Protect)</value>
+    <value>Перехват процессов</value>
   </data>
   <data name="TbCamouflageDomain" xml:space="preserve">
     <value>Камуфляжный домен</value>
@@ -1789,7 +1789,7 @@
     <value>Размер пакета Gecko (мин/макс)</value>
   </data>
   <data name="TbLegacyProtectTip" xml:space="preserve">
-    <value>Если включено, используется sing-box TUN; иначе — xray TUN.</value>
+    <value>Перехват трафика выбранных процессов через WinDivert (NetBridge). Несовместимо с режимом TUN.</value>
   </data>
   <data name="TbRootCertificateProvider" xml:space="preserve">
     <value>Поставщик корневых сертификатов</value>

@@ -1690,7 +1690,7 @@
     <value>ICMP 路由策略</value>
   </data>
   <data name="TbLegacyProtect" xml:space="preserve">
-    <value>舊版 TUN 保護</value>
+    <value>啟動進程劫持</value>
   </data>
   <data name="TbCamouflageDomain" xml:space="preserve">
     <value>偽裝域名</value>
@@ -1780,7 +1780,7 @@
     <value>保存規則</value>
   </data>
   <data name="TbLegacyProtectTip" xml:space="preserve">
-    <value>啟用則使用 sing-box TUN ,否則使用 xray TUN</value>
+    <value>透過 WinDivert（NetBridge）劫持所選進程流量，與 TUN 模式互斥。</value>
   </data>
   <data name="InvalidHttpOutboundHeaders" xml:space="preserve">
     <value>請填寫合法的HTTP請求頭JSON。</value>

@@ -1684,7 +1684,7 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>Politique de routage ICMP</value>
   </data>
   <data name="TbLegacyProtect" xml:space="preserve">
-    <value>Protection TUN héritée</value>
+    <value>Interception de processus</value>
   </data>
   <data name="TbCamouflageDomain" xml:space="preserve">
     <value>Domaine de camouflage</value>
