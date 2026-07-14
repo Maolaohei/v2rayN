@@ -26,7 +26,11 @@ public partial class CoreConfigV2rayService
             var forwardMode = _config.NetBridgeItem?.ForwardMode ?? "Bridge";
             if (forwardMode == "CoreDirect" && _config.TunModeItem.EnableLegacyProtect)
             {
-                var nbTcpPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
+                var nbTcpPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35050;
+                if (nbTcpPort <= 0 || nbTcpPort == 35000)
+                {
+                    nbTcpPort = 35050;
+                }
                 var nbInbound = new Inbounds4Ray
                 {
                     tag = "netbridge",

@@ -299,7 +299,7 @@ public class NetBridgeItem
     /// <summary>
     /// TCP port for Core Direct mode (netbridge inbound on Core).
     /// </summary>
-    public int CoreDirectTcpPort { get; set; } = 35000;
+    public int CoreDirectTcpPort { get; set; } = 35050;
 
     /// <summary>
     /// UDP port for Core Direct mode (netbridge inbound on Core).

@@ -106,7 +106,7 @@ public sealed class NetBridgeManager : IDisposable
             if (!_driverLoaded)
             {
                 var driverPath = Path.Combine(AppContext.BaseDirectory, "bin", "NetBridge", "WinDivert.dll");
-                await SafeInvoke(true, $"驱动文件未找到: {driverPath}");
+                await SafeInvoke(true, $"濠电姷顣槐鏇㈠磻閻旂厧绠犻柟鎯х－閺嗭附銇勯幒宥囧妽闁告瑥绻橀弻宥夊传閸曨剙娅ｅ┑鈽嗗亝閿曘垽寮诲☉銏犖ㄦい鏍仦椤庡秴顪冮妶鍡楀缂侇喗鐟╁濠氭晸閻樻煡鍞跺銈嗗姧缁辨洟宕欑憴鍕瘈闁靛骏缍嗗鎰版煥閺囨ê鐏╅柣? {driverPath}");
                 return;
             }
 
@@ -119,7 +119,7 @@ public sealed class NetBridgeManager : IDisposable
                 log: msg => SafeInvoke(false, msg));
 
             _isInitialized = true;
-            await SafeInvoke(false, "NetBridge 初始化成功");
+            await SafeInvoke(false, "NetBridge initialized");
         }
         catch (Exception ex)
         {
@@ -548,6 +548,9 @@ public sealed class NetBridgeManager : IDisposable
             await Init(_updateFunc);
             if (_isInitialized)
             {
+                // Sanitize CoreDirect port before re-applying; never point relay at accept port 35000.
+                SanitizeCoreDirectPorts();
+
                 // Apply forward mode BEFORE Start so first redirected packets use the right ports.
                 await ConfigureForwardModeAsync(_config?.NetBridgeItem?.ForwardMode);
                 await Start();
@@ -711,10 +714,28 @@ public sealed class NetBridgeManager : IDisposable
     }
 
     /// <summary>
-    /// Apply native forward mode for current config:
-    /// CoreDirect/Bridge => NetBridge protocol; Legacy (default) => SOCKS5 relay.
-    /// Also ensures proxy config points at local socks for Legacy.
+    /// ProxyBridge accepts hijacked TCP on fixed 35000. Core netbridge inbound must use a different port.
+    /// Native UDP redirect currently hardcodes 35001.
     /// </summary>
+    public void SanitizeCoreDirectPorts()
+    {
+        if (_config?.NetBridgeItem == null) return;
+        var tcp = _config.NetBridgeItem.CoreDirectTcpPort;
+        if (tcp <= 0 || tcp == 35000)
+        {
+            _config.NetBridgeItem.CoreDirectTcpPort = 35050;
+        }
+        var udp = _config.NetBridgeItem.CoreDirectUdpPort;
+        if (udp <= 0 || udp == 35000 || udp == _config.NetBridgeItem.CoreDirectTcpPort)
+        {
+            // Keep native hard-coded UDP redirect port unless occupied by TCP.
+            _config.NetBridgeItem.CoreDirectUdpPort = 35001;
+            if (_config.NetBridgeItem.CoreDirectUdpPort == _config.NetBridgeItem.CoreDirectTcpPort)
+            {
+                _config.NetBridgeItem.CoreDirectUdpPort = _config.NetBridgeItem.CoreDirectTcpPort + 1;
+            }
+        }
+    }
     public async Task ConfigureForwardModeAsync(string? forwardMode = null)
     {
         // Bridge is deprecated and falls back to Legacy SOCKS5.
@@ -725,8 +746,14 @@ public sealed class NetBridgeManager : IDisposable
 
         if (useNetBridgeProto)
         {
-            var port = (ushort)(_config?.NetBridgeItem?.CoreDirectTcpPort ?? 35000);
-            SetRelayPort(port);
+            SanitizeCoreDirectPorts();
+            // ProxyBridge accepts redirected TCP on fixed 35000; Core netbridge must differ.
+            var port = _config?.NetBridgeItem?.CoreDirectTcpPort ?? 35050;
+            if (port <= 0 || port == 35000)
+            {
+                port = 35050;
+            }
+            SetRelayPort((ushort)port);
         }
         else
         {
@@ -801,12 +828,12 @@ public sealed class NetBridgeManager : IDisposable
         }).ToList();
     }
 
-    #region NetBridgeBridge Process (deprecated — Bridge mode hidden)
+    #region NetBridgeBridge Process (deprecated 闂?Bridge mode hidden)
 
     [Obsolete("Bridge mode is deprecated. Use CoreDirect or Legacy instead.")]
     public async Task StartNetBridgeBridgeAsync(int socksPort)
     {
-        // Bridge mode deprecated — no longer starting NetBridgeBridge.exe
+        // Bridge mode deprecated 闂?no longer starting NetBridgeBridge.exe
         await SafeInvoke(false, "Bridge mode is deprecated, use CoreDirect or Legacy");
     }
 
@@ -827,8 +854,10 @@ public sealed class NetBridgeManager : IDisposable
         try { _nbBridgeProcess.Dispose(); } catch { }
         _nbBridgeProcess = null;
 
-        // Reset relay port back to CoreDirect default
-        NetBridgeService.SetRelayPort(35000);
+        // Do NOT force 35000 (ProxyBridge accept). Restore configured CoreDirect port.
+        var corePort = _config?.NetBridgeItem?.CoreDirectTcpPort ?? 35050;
+        if (corePort <= 0 || corePort == 35000) corePort = 35050;
+        try { NetBridgeService.SetRelayPort((ushort)corePort); } catch { }
     }
 
     public bool IsNetBridgeBridgeRunning => _nbBridgeProcess is { HasExited: false };

@@ -513,15 +513,10 @@ public class StatusBarViewModel : MyReactiveObject
         {
             try
             {
-                // Re-assert SOCKS endpoint for Legacy path (CoreDirect ignores proxy config).
-                var forwardMode = _config.NetBridgeItem?.ForwardMode ?? "Bridge";
-                if (forwardMode is not "CoreDirect")
-                {
-                    NetBridgeManager.SetUseNetBridgeProtocol(false);
-                    await NetBridgeManager.Instance.UpdateProxyConfig(
-                        Global.Loopback,
-                        AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                }
+                // Re-apply native forward mode so CoreDirect keeps the correct Core relay port
+                // and Legacy re-asserts SOCKS after system-proxy toggles.
+                await NetBridgeManager.Instance.ConfigureForwardModeAsync(
+                    _config.NetBridgeItem?.ForwardMode);
 
                 var reset = NetBridgeManager.Instance.ResetHijackedConnections();
                 if (reset > 0)
@@ -682,21 +677,6 @@ public class StatusBarViewModel : MyReactiveObject
                     return;
                 }
             }
-            else if (cachedForwardMode == "CoreDirect")
-            {
-                var nbPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
-                AppEvents.ReloadRequested.Publish();
-
-                for (var i = 0; i < 50; i++)
-                {
-                    await Task.Delay(100);
-                    if (!NetBridgeHealthMonitor.IsLocalPortAvailable(nbPort))
-                    {
-                        break;
-                    }
-                }
-            }
-
             await StartNetBridgeAsync(cachedForwardMode);
         }
         else
@@ -743,7 +723,6 @@ public class StatusBarViewModel : MyReactiveObject
     {
         var ruleProcess = _config.NetBridgeItem?.RuleProcess ?? "";
         var forwardMode = cachedForwardMode ?? _config.NetBridgeItem?.ForwardMode ?? "Bridge";
-        var protocolMode = _config.NetBridgeItem?.ProtocolMode ?? "TCP";
         var dnsViaProxy = _config.NetBridgeItem?.EnableDnsViaProxy ?? true;
 
         await NetBridgeManager.Instance.Init(async (isError, msg) =>
@@ -751,55 +730,98 @@ public class StatusBarViewModel : MyReactiveObject
             NoticeManager.Instance.SendMessageEx(msg);
         });
 
-        // Select native redirect protocol BEFORE Start so first packets use the right ports.
-        // Legacy/Bridge(default) => SOCKS5 local relay; CoreDirect => NetBridge binary protocol.
-        var useNetBridgeProto = forwardMode == "CoreDirect";
-        NetBridgeManager.SetUseNetBridgeProtocol(useNetBridgeProto);
+        // ProxyBridge always accepts WinDivert-redirected CoreDirect TCP on fixed 35000
+        // (NB_CORE_TCP_PORT). Core's netbridge inbound MUST be a different port; that port
+        // is what SetRelayPort() points nb_tcp at.
+        const int proxyBridgeAcceptPort = 35000;
 
-        var succeed = await NetBridgeManager.Instance.Start();
-
-        if (succeed)
+        if (forwardMode == "CoreDirect")
         {
-            switch (forwardMode)
+            _config.NetBridgeItem ??= new();
+            var preferredTcpPort = _config.NetBridgeItem.CoreDirectTcpPort;
+            if (preferredTcpPort <= 0 || preferredTcpPort == proxyBridgeAcceptPort)
             {
-                case "CoreDirect":
-                    NetBridgeManager.SetUseNetBridgeProtocol(true);
-                    NetBridgeManager.SetRelayPort(35000);
-                    var preferredTcpPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
-                    var nbTcpPort = NetBridgeManager.FindFreePort(preferredTcpPort);
-                    if (nbTcpPort < 0)
-                    {
-                        NoticeManager.Instance.SendMessageEx("NetBridge 协议直连: 所有端口均被占用，无法启动");
-                        return;
-                    }
-                    if (nbTcpPort != preferredTcpPort)
-                    {
-                        _config.NetBridgeItem ??= new();
-                        _config.NetBridgeItem.CoreDirectTcpPort = nbTcpPort;
-                        await ConfigHandler.SaveConfig(_config);
-                    }
-                    NoticeManager.Instance.SendMessageEx($"NetBridge 协议直连: ProxyBridgeCore → Core:{nbTcpPort}");
-                    break;
-
-                case "Legacy":
-                    NetBridgeManager.SetUseNetBridgeProtocol(false);
-                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                    NoticeManager.Instance.SendMessageEx("NetBridge 兼容模式: ProxyBridgeCore → Core (SOCKS5)");
-                    break;
-
-                default: // "Bridge" 已废弃，回退到 Legacy SOCKS
-                    NetBridgeManager.SetUseNetBridgeProtocol(false);
-                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                    NoticeManager.Instance.SendMessageEx("NetBridge 兼容模式: ProxyBridgeCore → Core (SOCKS5)");
-                    break;
+                preferredTcpPort = 35050;
             }
 
-            await NetBridgeManager.Instance.UpdateRoutes(ruleProcess);
+            var nbTcpPort = NetBridgeManager.FindFreePort(preferredTcpPort);
+            if (nbTcpPort < 0 || nbTcpPort == proxyBridgeAcceptPort)
+            {
+                nbTcpPort = NetBridgeManager.FindFreePort(proxyBridgeAcceptPort + 1);
+            }
+            if (nbTcpPort < 0 || nbTcpPort == proxyBridgeAcceptPort)
+            {
+                NoticeManager.Instance.SendMessageEx("NetBridge CoreDirect: no free Core port");
+                return;
+            }
 
-            _config.NetBridgeItem ??= new();
-            _config.NetBridgeItem.EnableDnsViaProxy = dnsViaProxy;
-            await NetBridgeManager.Instance.SetDnsViaProxy(dnsViaProxy);
+            var portChanged = _config.NetBridgeItem.CoreDirectTcpPort != nbTcpPort;
+            _config.NetBridgeItem.CoreDirectTcpPort = nbTcpPort;
+            // Native UDP redirect hardcodes 35001 (NB_CORE_UDP_PORT). Keep config aligned.
+            if (_config.NetBridgeItem.CoreDirectUdpPort <= 0 ||
+                _config.NetBridgeItem.CoreDirectUdpPort == proxyBridgeAcceptPort ||
+                _config.NetBridgeItem.CoreDirectUdpPort == nbTcpPort)
+            {
+                _config.NetBridgeItem.CoreDirectUdpPort = 35001;
+            }
+
+            if (portChanged)
+            {
+                await ConfigHandler.SaveConfig(_config);
+            }
+
+            // Core must expose netbridge inbound BEFORE ProxyBridge connects to it.
+            AppEvents.ReloadRequested.Publish();
+            var coreReady = false;
+            for (var i = 0; i < 50; i++)
+            {
+                await Task.Delay(100);
+                // Port not available => something is listening (core inbound).
+                if (!NetBridgeHealthMonitor.IsLocalPortAvailable(nbTcpPort))
+                {
+                    coreReady = true;
+                    break;
+                }
+            }
+            if (!coreReady)
+            {
+                NoticeManager.Instance.SendMessageEx($"NetBridge CoreDirect: Core not listening on {nbTcpPort}, starting anyway");
+            }
+
+            NetBridgeManager.SetUseNetBridgeProtocol(true);
+            var succeed = await NetBridgeManager.Instance.Start();
+            if (!succeed)
+            {
+                return;
+            }
+
+            // Critical: relay port = Core inbound, NOT ProxyBridge accept port 35000.
+            NetBridgeManager.SetUseNetBridgeProtocol(true);
+            NetBridgeManager.SetRelayPort((ushort)nbTcpPort);
+            NoticeManager.Instance.SendMessageEx($"NetBridge CoreDirect: ProxyBridgeCore(35000) -> Core:{nbTcpPort}");
         }
+        else
+        {
+            // Legacy / Bridge(fallback): SOCKS5 local relay -> Core mixed inbound.
+            NetBridgeManager.SetUseNetBridgeProtocol(false);
+            var succeed = await NetBridgeManager.Instance.Start();
+            if (!succeed)
+            {
+                return;
+            }
+
+            NetBridgeManager.SetUseNetBridgeProtocol(false);
+            await NetBridgeManager.Instance.UpdateProxyConfig(
+                Global.Loopback,
+                AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+            NoticeManager.Instance.SendMessageEx("NetBridge Legacy: ProxyBridgeCore -> Core (SOCKS5)");
+        }
+
+        await NetBridgeManager.Instance.UpdateRoutes(ruleProcess);
+
+        _config.NetBridgeItem ??= new();
+        _config.NetBridgeItem.EnableDnsViaProxy = dnsViaProxy;
+        await NetBridgeManager.Instance.SetDnsViaProxy(dnsViaProxy);
     }
 
     private async Task StopNetBridgeAsync()
