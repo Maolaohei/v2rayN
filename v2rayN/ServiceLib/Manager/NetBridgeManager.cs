@@ -548,10 +548,13 @@ public sealed class NetBridgeManager : IDisposable
             await Init(_updateFunc);
             if (_isInitialized)
             {
+                // Apply forward mode BEFORE Start so first redirected packets use the right ports.
+                await ConfigureForwardModeAsync(_config?.NetBridgeItem?.ForwardMode);
                 await Start();
                 if (_isProxyRunning)
                 {
-                    await UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                    // Re-apply after Start (proxy config / relay port must stick on live service).
+                    await ConfigureForwardModeAsync(_config?.NetBridgeItem?.ForwardMode);
                     await UpdateRoutes(_config?.NetBridgeItem?.RuleProcess);
                     await SetDnsViaProxy(_config?.NetBridgeItem?.EnableDnsViaProxy ?? false);
                     await SafeInvoke(false, "NetBridge restarted successfully");
@@ -692,10 +695,61 @@ public sealed class NetBridgeManager : IDisposable
         NetBridgeService.SetRelayPort(port);
     }
 
+    /// <summary>
+    /// Enable NetBridge binary protocol (CoreDirect/Bridge) vs Legacy SOCKS5 local relay.
+    /// Must be applied before Start() / before new hijacked connections.
+    /// </summary>
+    public static void SetUseNetBridgeProtocol(bool enable)
+    {
+        NetBridgeService.SetUseNetBridgeProtocol(enable);
+    }
+
     public void ResetStatistics()
     {
         Interlocked.Exchange(ref _totalConnections, 0);
         _processConnections.Clear();
+    }
+
+    /// <summary>
+    /// Apply native forward mode for current config:
+    /// CoreDirect/Bridge => NetBridge protocol; Legacy (default) => SOCKS5 relay.
+    /// Also ensures proxy config points at local socks for Legacy.
+    /// </summary>
+    public async Task ConfigureForwardModeAsync(string? forwardMode = null)
+    {
+        // Bridge is deprecated and falls back to Legacy SOCKS5.
+        // Only CoreDirect uses the NetBridge binary protocol path.
+        forwardMode ??= _config?.NetBridgeItem?.ForwardMode ?? "Legacy";
+        var useNetBridgeProto = forwardMode == "CoreDirect";
+        SetUseNetBridgeProtocol(useNetBridgeProto);
+
+        if (useNetBridgeProto)
+        {
+            var port = (ushort)(_config?.NetBridgeItem?.CoreDirectTcpPort ?? 35000);
+            SetRelayPort(port);
+        }
+        else
+        {
+            // Legacy SOCKS5 path requires a valid proxy config
+            await UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+        }
+    }
+
+    /// <summary>
+    /// After system-proxy change: force hijacked apps to reconnect so they do not keep
+    /// stale sockets that were established under the previous proxy settings.
+    /// </summary>
+    public int ResetHijackedConnections()
+    {
+        try
+        {
+            var n = TcpConnectionResetter.ResetTrackedConnections();
+            return n;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     private async Task<bool> ApplyRoutesInternal()

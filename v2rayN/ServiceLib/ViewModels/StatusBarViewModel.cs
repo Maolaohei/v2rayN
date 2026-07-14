@@ -506,6 +506,35 @@ public class StatusBarViewModel : MyReactiveObject
         BlSystemProxyNothing = type == ESysProxyType.Unchanged;
         BlSystemProxyPac = type == ESysProxyType.Pac;
 
+        // System proxy and process hijack are independent. When proxy is toggled while
+        // NetBridge is active, Chrome/etc may keep half-open sockets that were established
+        // via WinINET proxy and no longer work after clear (or vice versa). Force reconnect.
+        if (EnableLegacyProtect && NetBridgeManager.Instance.IsRunning)
+        {
+            try
+            {
+                // Re-assert SOCKS endpoint for Legacy path (CoreDirect ignores proxy config).
+                var forwardMode = _config.NetBridgeItem?.ForwardMode ?? "Bridge";
+                if (forwardMode is not "CoreDirect")
+                {
+                    NetBridgeManager.SetUseNetBridgeProtocol(false);
+                    await NetBridgeManager.Instance.UpdateProxyConfig(
+                        Global.Loopback,
+                        AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                }
+
+                var reset = NetBridgeManager.Instance.ResetHijackedConnections();
+                if (reset > 0)
+                {
+                    NoticeManager.Instance.SendMessageEx($"NetBridge: reset {reset} hijacked TCP connections after proxy change");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog($"NetBridge proxy-change refresh failed: {ex.Message}");
+            }
+        }
+
         if (blChange)
         {
             _updateView?.Invoke(EViewAction.DispatcherRefreshIcon, null);
@@ -722,6 +751,11 @@ public class StatusBarViewModel : MyReactiveObject
             NoticeManager.Instance.SendMessageEx(msg);
         });
 
+        // Select native redirect protocol BEFORE Start so first packets use the right ports.
+        // Legacy/Bridge(default) => SOCKS5 local relay; CoreDirect => NetBridge binary protocol.
+        var useNetBridgeProto = forwardMode == "CoreDirect";
+        NetBridgeManager.SetUseNetBridgeProtocol(useNetBridgeProto);
+
         var succeed = await NetBridgeManager.Instance.Start();
 
         if (succeed)
@@ -729,6 +763,7 @@ public class StatusBarViewModel : MyReactiveObject
             switch (forwardMode)
             {
                 case "CoreDirect":
+                    NetBridgeManager.SetUseNetBridgeProtocol(true);
                     NetBridgeManager.SetRelayPort(35000);
                     var preferredTcpPort = _config.NetBridgeItem?.CoreDirectTcpPort ?? 35000;
                     var nbTcpPort = NetBridgeManager.FindFreePort(preferredTcpPort);
@@ -747,12 +782,16 @@ public class StatusBarViewModel : MyReactiveObject
                     break;
 
                 case "Legacy":
+                    NetBridgeManager.SetUseNetBridgeProtocol(false);
                     await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
-                    NoticeManager.Instance.SendMessageEx("NetBridge 兼容模式: ProxyBridgeCore → Core (SOCKS5, 仅TCP)");
+                    NoticeManager.Instance.SendMessageEx("NetBridge 兼容模式: ProxyBridgeCore → Core (SOCKS5)");
                     break;
 
-                default: // "Bridge" 已废弃，回退到 Legacy
-                    goto case "Legacy";
+                default: // "Bridge" 已废弃，回退到 Legacy SOCKS
+                    NetBridgeManager.SetUseNetBridgeProtocol(false);
+                    await NetBridgeManager.Instance.UpdateProxyConfig(Global.Loopback, AppManager.Instance.GetLocalPort(EInboundProtocol.socks));
+                    NoticeManager.Instance.SendMessageEx("NetBridge 兼容模式: ProxyBridgeCore → Core (SOCKS5)");
+                    break;
             }
 
             await NetBridgeManager.Instance.UpdateRoutes(ruleProcess);
