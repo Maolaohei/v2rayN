@@ -181,7 +181,7 @@ public partial class ProfilesView
                 return new SubEditWindow((SubItem)obj).ShowDialog() ?? false;
 
             case EViewAction.DispatcherRefreshServersBiz:
-                Application.Current?.Dispatcher.Invoke(RefreshServersBiz, DispatcherPriority.Normal);
+                Application.Current?.Dispatcher.BeginInvoke(RefreshServersBiz, DispatcherPriority.Normal);
                 break;
         }
 

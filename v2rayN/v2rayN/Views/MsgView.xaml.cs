@@ -47,7 +47,7 @@ public partial class MsgView
                     return false;
                 }
 
-                Application.Current?.Dispatcher.Invoke(() =>
+                Application.Current?.Dispatcher.BeginInvoke(() =>
                 {
                     ShowMsg(obj);
                 }, DispatcherPriority.ApplicationIdle);

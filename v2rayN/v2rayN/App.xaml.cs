@@ -92,7 +92,7 @@ public partial class App : Application
             Logging.SaveLog($"NetBridge stop failed in OnExit: {ex.Message}");
         }
 
-        // Give 500ms for native cleanup to complete before exit
-        Thread.Sleep(500);
+        // Brief yield for native cleanup; avoid long UI-thread stall on exit.
+        Thread.Sleep(100);
     }
 }

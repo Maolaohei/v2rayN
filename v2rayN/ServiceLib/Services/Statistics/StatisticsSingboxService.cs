@@ -4,6 +4,7 @@ namespace ServiceLib.Services.Statistics;
 
 public class StatisticsSingboxService
 {
+    private const int PollIntervalMs = 2000;
     private readonly Config _config;
     private bool _exitFlag;
     private ClientWebSocket? webSocket;
@@ -58,7 +59,7 @@ public class StatisticsSingboxService
 
         while (!_exitFlag)
         {
-            await Task.Delay(1000);
+            await Task.Delay(PollIntervalMs);
             try
             {
                 if (!AppManager.Instance.IsRunningCore(ECoreType.sing_box))

@@ -214,7 +214,7 @@ public class ClashUIItem
     public bool ProxiesAutoRefresh { get; set; }
     public int ProxiesAutoDelayTestInterval { get; set; } = 10;
     public bool ConnectionsAutoRefresh { get; set; }
-    public int ConnectionsRefreshInterval { get; set; } = 2;
+    public int ConnectionsRefreshInterval { get; set; } = 5;
     public List<ColumnItem> ConnectionsColumnItem { get; set; }
 }
 

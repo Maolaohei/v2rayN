@@ -65,8 +65,6 @@ public class ClashConnectionsViewModel : MyReactiveObject
 
     public async Task RefreshConnections(List<ConnectionItem>? connections)
     {
-        ConnectionItems.Clear();
-
         var dtNow = DateTime.Now;
         var lstModel = new List<ClashConnectionModel>();
         foreach (var item in connections ?? [])
@@ -90,12 +88,13 @@ public class ClashConnectionsViewModel : MyReactiveObject
 
             lstModel.Add(model);
         }
-        if (lstModel.Count <= 0)
-        {
-            return;
-        }
 
-        ConnectionItems.AddRange(lstModel);
+        // Always replace in one pass to avoid clear-then-empty flicker and extra collection churn.
+        ConnectionItems.Clear();
+        if (lstModel.Count > 0)
+        {
+            ConnectionItems.AddRange(lstModel);
+        }
         await Task.CompletedTask;
     }
 
@@ -126,7 +125,7 @@ public class ClashConnectionsViewModel : MyReactiveObject
             var numOfExecuted = 1;
             while (true)
             {
-                await Task.Delay(1000 * 5);
+                await Task.Delay(1000 * 10);
                 numOfExecuted++;
                 if (!(AutoRefresh && AppManager.Instance.ShowInTaskbar && AppManager.Instance.IsRunningCore(ECoreType.sing_box)))
                 {

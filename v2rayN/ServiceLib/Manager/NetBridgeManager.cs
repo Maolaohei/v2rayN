@@ -139,9 +139,11 @@ public sealed class NetBridgeManager : IDisposable
 
             if (_processConnections.Count > MaxProcessEntries)
             {
-                var oldest = _processConnections.OrderBy(kvp => kvp.Value).Take(_processConnections.Count / 2).Select(kvp => kvp.Key).ToList();
-                foreach (var key in oldest)
+                // Cheap half-trim: remove arbitrary half of keys without OrderBy sort cost.
+                var removeCount = _processConnections.Count / 2;
+                foreach (var key in _processConnections.Keys)
                 {
+                    if (removeCount-- <= 0) break;
                     _processConnections.TryRemove(key, out _);
                 }
             }
@@ -458,7 +460,9 @@ public sealed class NetBridgeManager : IDisposable
         try
         {
             var healthOk = await CheckHealthAsync();
-            var connectivityOk = healthOk && await NetBridgeHealthMonitor.VerifyConnectivityAsync();
+            // Avoid external multi-host Ping on every healthy tick (major idle CPU/network waste).
+            // Long-idle + connectivity is handled by NetBridgeHealthMonitor stuck path.
+            var connectivityOk = healthOk;
             var socksPort = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
             var coreReady = ServiceLib.Services.NetBridgeRestartPolicy.IsCoreReady(socksPort);
 
@@ -777,6 +781,67 @@ public sealed class NetBridgeManager : IDisposable
         {
             return 0;
         }
+    }
+
+    // Coalesce rapid system-proxy toggles so only one heavy TCP-table scan runs at a time.
+    private int _proxyChangeRefreshRunning;
+    private int _proxyChangeRefreshQueued;
+
+    /// <summary>
+    /// Background-safe refresh after system-proxy mode change while process hijack is on.
+    /// Re-applies forward mode (CoreDirect port / Legacy SOCKS) then resets tracked TCP sockets.
+    /// Must not be called on the UI thread for the reset portion; caller should Task.Run.
+    /// Returns total sockets reset by the last completed pass (0 if skipped/coalesced).
+    /// </summary>
+    public async Task<int> RefreshAfterSystemProxyChangeAsync(string? forwardMode = null)
+    {
+        // Queue another pass if one is already running (toggle spam).
+        if (Interlocked.Exchange(ref _proxyChangeRefreshRunning, 1) == 1)
+        {
+            Interlocked.Exchange(ref _proxyChangeRefreshQueued, 1);
+            return 0;
+        }
+
+        var totalReset = 0;
+        try
+        {
+            do
+            {
+                Interlocked.Exchange(ref _proxyChangeRefreshQueued, 0);
+                if (!_isProxyRunning)
+                {
+                    break;
+                }
+
+                try
+                {
+                    await ConfigureForwardModeAsync(forwardMode ?? _config?.NetBridgeItem?.ForwardMode);
+                }
+                catch (Exception ex)
+                {
+                    Logging.SaveLog($"NetBridgeManager: ConfigureForwardMode after proxy change failed: {ex.Message}");
+                }
+
+                // TCP table scan + SetTcpEntry is the multi-second cost on busy systems.
+                totalReset = ResetHijackedConnections();
+            }
+            while (Interlocked.CompareExchange(ref _proxyChangeRefreshQueued, 0, 1) == 1 && _isProxyRunning);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _proxyChangeRefreshRunning, 0);
+            // If a queue bit arrived after the loop check but before clear, kick one more pass.
+            if (Interlocked.Exchange(ref _proxyChangeRefreshQueued, 0) == 1 && _isProxyRunning)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try { await RefreshAfterSystemProxyChangeAsync(forwardMode); }
+                    catch { /* logged inside */ }
+                });
+            }
+        }
+
+        return totalReset;
     }
 
     private async Task<bool> ApplyRoutesInternal()

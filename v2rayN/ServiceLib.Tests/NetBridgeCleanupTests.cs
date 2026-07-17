@@ -217,7 +217,9 @@ public class NetBridgeCleanupTests
         var monitor = new NetBridgeHealthMonitor(
             forceRecover: () => { recoverTriggered = true; return Task.CompletedTask; },
             isRunning: () => true,
-            idleThreshold: TimeSpan.FromMilliseconds(50));
+            idleThreshold: TimeSpan.FromMilliseconds(50),
+            // Idle alone is not enough; inject connectivity failure for product path.
+            connectivityCheck: () => Task.FromResult(false));
 
         // Record traffic in the past (simulate old traffic)
         // By not recording again, _lastTrafficTime stays at construction time
@@ -232,6 +234,24 @@ public class NetBridgeCleanupTests
         monitor.Dispose();
 
         Assert.True(recoverTriggered);
+    }
+
+    [Fact]
+    public void HealthMonitor_DoesNotTrigger_WhenIdleButConnectivityOk()
+    {
+        var recoverTriggered = false;
+        var monitor = new NetBridgeHealthMonitor(
+            forceRecover: () => { recoverTriggered = true; return Task.CompletedTask; },
+            isRunning: () => true,
+            idleThreshold: TimeSpan.FromMilliseconds(50),
+            connectivityCheck: () => Task.FromResult(true));
+
+        monitor.StartStuckMonitor(TimeSpan.FromMilliseconds(30));
+        Thread.Sleep(200);
+        monitor.StopStuckMonitor();
+        monitor.Dispose();
+
+        Assert.False(recoverTriggered);
     }
 
     [Fact]
@@ -284,7 +304,9 @@ public class NetBridgeCleanupTests
         var monitor = new NetBridgeHealthMonitor(
             forceRecover: () => { Interlocked.Increment(ref recoverCount); return Task.CompletedTask; },
             isRunning: () => true,
-            idleThreshold: TimeSpan.FromMilliseconds(50));
+            idleThreshold: TimeSpan.FromMilliseconds(50),
+            // Idle alone is not enough; inject connectivity failure for product path.
+            connectivityCheck: () => Task.FromResult(false));
 
         monitor.StartStuckMonitor(TimeSpan.FromMilliseconds(20));
 

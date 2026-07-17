@@ -499,41 +499,47 @@ public class StatusBarViewModel : MyReactiveObject
 
     public async Task ChangeSystemProxyAsync(ESysProxyType type, bool blChange)
     {
+        // Apply WinINET/proxy settings first so subsequent reconnects pick up the new mode.
         await SysProxyHandler.UpdateSysProxy(_config, false);
 
+        // UI flags must update immediately; do not wait on NetBridge TCP reset work.
         BlSystemProxyClear = type == ESysProxyType.ForcedClear;
         BlSystemProxySet = type == ESysProxyType.ForcedChange;
         BlSystemProxyNothing = type == ESysProxyType.Unchanged;
         BlSystemProxyPac = type == ESysProxyType.Pac;
 
-        // System proxy and process hijack are independent. When proxy is toggled while
-        // NetBridge is active, Chrome/etc may keep half-open sockets that were established
-        // via WinINET proxy and no longer work after clear (or vice versa). Force reconnect.
-        if (EnableLegacyProtect && NetBridgeManager.Instance.IsRunning)
-        {
-            try
-            {
-                // Re-apply native forward mode so CoreDirect keeps the correct Core relay port
-                // and Legacy re-asserts SOCKS after system-proxy toggles.
-                await NetBridgeManager.Instance.ConfigureForwardModeAsync(
-                    _config.NetBridgeItem?.ForwardMode);
-
-                var reset = NetBridgeManager.Instance.ResetHijackedConnections();
-                if (reset > 0)
-                {
-                    NoticeManager.Instance.SendMessageEx($"NetBridge: reset {reset} hijacked TCP connections after proxy change");
-                }
-            }
-            catch (Exception ex)
-            {
-                Logging.SaveLog($"NetBridge proxy-change refresh failed: {ex.Message}");
-            }
-        }
-
         if (blChange)
         {
             _updateView?.Invoke(EViewAction.DispatcherRefreshIcon, null);
         }
+
+        // System proxy and process hijack are independent. When proxy is toggled while
+        // NetBridge is active, Chrome/etc may keep half-open sockets that were established
+        // via WinINET proxy and no longer work after clear (or vice versa). Force reconnect.
+        // IMPORTANT: ResetHijackedConnections scans TCP tables + SetTcpEntry and can stall
+        // the UI thread for seconds if done inline on the ReactiveCommand/MainThread path.
+        if (EnableLegacyProtect && NetBridgeManager.Instance.IsRunning)
+        {
+            var forwardMode = _config.NetBridgeItem?.ForwardMode;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var reset = await NetBridgeManager.Instance.RefreshAfterSystemProxyChangeAsync(forwardMode);
+                    if (reset > 0)
+                    {
+                        NoticeManager.Instance.SendMessageEx(
+                            $"NetBridge: reset {reset} hijacked TCP connections after proxy change");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logging.SaveLog($"NetBridge proxy-change refresh failed: {ex.Message}");
+                }
+            });
+        }
+
+        await Task.CompletedTask;
     }
 
     private async Task RefreshRoutingsMenu()
@@ -689,9 +695,8 @@ public class StatusBarViewModel : MyReactiveObject
 
     private async Task<bool> WaitForTunStop()
     {
-        // Give core time to process ReloadRequested and begin TUN teardown
-        await Task.Delay(1000);
-        // Poll every 100ms, max 5 seconds
+        // Poll quickly; ReloadRequested is already published before this wait.
+        // Poll every 100ms, max ~5 seconds (first check is immediate).
         for (var i = 0; i < 50; i++)
         {
             if (!IsTunAdapterActive())

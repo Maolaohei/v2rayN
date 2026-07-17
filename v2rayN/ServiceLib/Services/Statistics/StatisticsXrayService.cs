@@ -3,6 +3,7 @@ namespace ServiceLib.Services.Statistics;
 public class StatisticsXrayService
 {
     private const long linkBase = 1024;
+    private const int PollIntervalMs = 2000;
     private ServerSpeedItem _serverSpeedItem = new();
     private readonly Config _config;
     private bool _exitFlag;
@@ -27,10 +28,10 @@ public class StatisticsXrayService
     {
         while (!_exitFlag)
         {
-            await Task.Delay(1000);
+            await Task.Delay(PollIntervalMs);
             try
             {
-                if (AppManager.Instance.RunningCoreType != ECoreType.Xray)
+                if (!AppManager.Instance.IsRunningCore(ECoreType.Xray))
                 {
                     continue;
                 }

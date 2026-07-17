@@ -376,7 +376,18 @@ public class ProfilesViewModel : MyReactiveObject
     private async Task RefreshServersBiz()
     {
         var lstModel = await GetProfileItemsEx(_config.SubIndexId, _serverFilter);
-        _lstProfile = JsonUtils.Deserialize<List<ProfileItem>>(JsonUtils.Serialize(lstModel)) ?? [];
+        // MoveServer only needs IndexId order; avoid full JSON deep-copy of the whole list.
+        _lstProfile = lstModel?.Select(m => new ProfileItem
+        {
+            IndexId = m.IndexId,
+            ConfigType = m.ConfigType,
+            Remarks = m.Remarks,
+            Address = m.Address,
+            Port = m.Port,
+            Network = m.Network,
+            StreamSecurity = m.StreamSecurity,
+            Subid = m.Subid
+        }).ToList() ?? [];
 
         ProfileItems.Clear();
         ProfileItems.AddRange(lstModel);
@@ -468,7 +479,19 @@ public class ProfilesViewModel : MyReactiveObject
         }
         else
         {
-            lstSelected = JsonUtils.Deserialize<List<ProfileItem>>(JsonUtils.Serialize(orderProfiles));
+            lstSelected = orderProfiles?
+                .Where(sp => sp != null && sp.IndexId.IsNotEmpty())
+                .Select(sp => new ProfileItem
+                {
+                    IndexId = sp.IndexId,
+                    ConfigType = sp.ConfigType,
+                    Remarks = sp.Remarks,
+                    Address = sp.Address,
+                    Port = sp.Port,
+                    Network = sp.Network,
+                    StreamSecurity = sp.StreamSecurity,
+                    Subid = sp.Subid
+                }).ToList() ?? [];
         }
 
         return lstSelected;
@@ -730,7 +753,19 @@ public class ProfilesViewModel : MyReactiveObject
                 actionType = ESpeedActionType.Realping;
             }
 
-            lstSelected = JsonUtils.Deserialize<List<ProfileItem>>(JsonUtils.Serialize(ProfileItems?.OrderBy(t => t.Sort)));
+            lstSelected = ProfileItems?
+                .OrderBy(t => t.Sort)
+                .Select(sp => new ProfileItem
+                {
+                    IndexId = sp.IndexId,
+                    ConfigType = sp.ConfigType,
+                    Remarks = sp.Remarks,
+                    Address = sp.Address,
+                    Port = sp.Port,
+                    Network = sp.Network,
+                    StreamSecurity = sp.StreamSecurity,
+                    Subid = sp.Subid
+                }).ToList();
         }
         else
         {

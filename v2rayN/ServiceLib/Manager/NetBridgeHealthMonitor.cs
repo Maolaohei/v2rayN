@@ -12,6 +12,7 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     private readonly Func<Task> _forceRecover;
     private readonly Func<bool> _isRunning;
     private readonly Func<string, Task>? _log;
+    private readonly Func<Task<bool>> _connectivityCheck;
     private readonly TimeSpan _idleThreshold;
     private System.Threading.Timer? _stuckTimer;
     private int _checkRunning;
@@ -19,12 +20,19 @@ public sealed class NetBridgeHealthMonitor : IDisposable
     private long _lastTrafficBytes;
     private long _lastTrafficTimeUtc;
 
-    public NetBridgeHealthMonitor(Func<Task> forceRecover, Func<bool> isRunning, Func<string, Task>? log = null, TimeSpan? idleThreshold = null)
+    public NetBridgeHealthMonitor(
+        Func<Task> forceRecover,
+        Func<bool> isRunning,
+        Func<string, Task>? log = null,
+        TimeSpan? idleThreshold = null,
+        Func<Task<bool>>? connectivityCheck = null)
     {
         _forceRecover = forceRecover;
         _isRunning = isRunning;
         _log = log;
-        _idleThreshold = idleThreshold ?? TimeSpan.FromMinutes(2);
+        // Pure idle is normal; default is long to avoid false restarts.
+        _idleThreshold = idleThreshold ?? TimeSpan.FromMinutes(15);
+        _connectivityCheck = connectivityCheck ?? VerifyConnectivityAsync;
         _lastTrafficTimeUtc = DateTime.UtcNow.Ticks;
     }
 
@@ -58,7 +66,12 @@ public sealed class NetBridgeHealthMonitor : IDisposable
             var idle = new TimeSpan(DateTime.UtcNow.Ticks - lastTicks);
             if (idle < _idleThreshold) return;
 
-            if (_log != null) await _log.Invoke($"NetBridge stuck: no traffic for {(int)idle.TotalSeconds}s, triggering recovery");
+            // Idle alone is not a failure (user may simply have no traffic).
+            // Only recover when connectivity also looks broken.
+            var connectivityOk = await _connectivityCheck();
+            if (connectivityOk) return;
+
+            if (_log != null) await _log.Invoke($"NetBridge stuck: no traffic for {(int)idle.TotalSeconds}s and connectivity failed, triggering recovery");
             await _forceRecover();
         }
         finally
@@ -71,12 +84,28 @@ public sealed class NetBridgeHealthMonitor : IDisposable
 
     public static async Task<bool> VerifyConnectivityAsync()
     {
+        // Cheap local first hop probe; fall back to 1-2 hosts max.
+        try
+        {
+            using var ping = new Ping();
+            var reply = await ping.SendPingAsync("1.1.1.1", 1200);
+            if (reply.Status == IPStatus.Success)
+            {
+                return true;
+            }
+        }
+        catch
+        {
+            // continue
+        }
+
         foreach (var host in ConnectivityHosts)
         {
+            if (host == "1.1.1.1") continue;
             try
             {
                 using var ping = new Ping();
-                var reply = await ping.SendPingAsync(host, 3000);
+                var reply = await ping.SendPingAsync(host, 1200);
                 if (reply.Status == IPStatus.Success)
                 {
                     return true;

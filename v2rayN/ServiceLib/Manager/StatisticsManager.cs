@@ -23,22 +23,76 @@ public class StatisticsManager
         {
             await InitData();
 
-            _statisticsXray = new StatisticsXrayService(config, UpdateServerStatHandler);
-            _statisticsSingbox = new StatisticsSingboxService(config, UpdateServerStatHandler);
+            // Defer service creation until a core is actually running.
+            // Starting both Xray + sing-box pollers is pure idle waste.
+            UpdateRunningCore(AppManager.Instance.RunningCoreType);
         }
+    }
+
+    /// <summary>
+    /// Ensure only the statistics service matching the current core is active.
+    /// </summary>
+    public void UpdateRunningCore(ECoreType coreType)
+    {
+        if (_config == null)
+        {
+            return;
+        }
+
+        if (!(_config.GuiItem.EnableStatistics || _config.GuiItem.DisplayRealTimeSpeed))
+        {
+            CloseServices();
+            return;
+        }
+
+        var needXray = coreType is ECoreType.Xray or ECoreType.v2fly or ECoreType.v2fly_v5;
+        var needSingbox = coreType is ECoreType.sing_box or ECoreType.mihomo;
+
+        if (needXray)
+        {
+            CloseSingbox();
+            _statisticsXray ??= new StatisticsXrayService(_config, UpdateServerStatHandler);
+            return;
+        }
+
+        if (needSingbox)
+        {
+            CloseXray();
+            _statisticsSingbox ??= new StatisticsSingboxService(_config, UpdateServerStatHandler);
+            return;
+        }
+
+        CloseServices();
     }
 
     public void Close()
     {
         try
         {
-            _statisticsXray?.Close();
-            _statisticsSingbox?.Close();
+            CloseServices();
         }
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
         }
+    }
+
+    private void CloseServices()
+    {
+        CloseXray();
+        CloseSingbox();
+    }
+
+    private void CloseXray()
+    {
+        _statisticsXray?.Close();
+        _statisticsXray = null;
+    }
+
+    private void CloseSingbox()
+    {
+        _statisticsSingbox?.Close();
+        _statisticsSingbox = null;
     }
 
     public async Task ClearAllServerStatistics()

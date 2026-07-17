@@ -103,6 +103,7 @@ public class CoreManager
         await CoreStartPreService(preContext);
 
         AppManager.Instance.RunningCoreType = preContext?.RunCoreType ?? mainContext.RunCoreType;
+        StatisticsManager.Instance.UpdateRunningCore(AppManager.Instance.RunningCoreType);
 
         if (_processService != null)
         {
@@ -159,14 +160,14 @@ public class CoreManager
 
     public async Task CoreStop()
     {
-        // Use TryEnter to prevent deadlock if called concurrently
+        // Wait for in-progress stop so concurrent LoadCore doesn't skip teardown and dual-run cores.
         bool lockTaken = false;
         try
         {
-            Monitor.TryEnter(_stopLock, 3000, ref lockTaken);
+            Monitor.TryEnter(_stopLock, 10000, ref lockTaken);
             if (!lockTaken)
             {
-                Logging.SaveLog($"{_tag}: CoreStop another stop already in progress, skipping");
+                Logging.SaveLog($"{_tag}: CoreStop wait timed out, another stop may still be finishing");
                 return;
             }
 
