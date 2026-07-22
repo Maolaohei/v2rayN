@@ -37,6 +37,13 @@ public sealed class AppManager
 
     public ECoreType RunningCoreType { get; set; }
 
+    /// <summary>
+    /// True when another v2rayN process is already running.
+    /// Secondary instances must NOT touch the system proxy so they don't
+    /// override or clear the proxy settings owned by the primary instance.
+    /// </summary>
+    public bool IsSecondaryInstance { get; private set; }
+
     public bool IsRunningCore(ECoreType type)
     {
         switch (type)
@@ -104,6 +111,37 @@ public sealed class AppManager
         //First determine the port value
         _ = StatePort;
         _ = StatePort2;
+
+        // Detect if another v2rayN process is already running (multi-instance scenario).
+        // If so, this instance must not touch the system proxy to avoid overriding the
+        // primary instance's proxy settings or clearing them on exit.
+        if (Utils.IsWindows())
+        {
+            try
+            {
+                var currentPid = Environment.ProcessId;
+                var currentExePath = Utils.GetExePath();
+                var others = Process.GetProcesses()
+                    .Where(p => p.Id != currentPid)
+                    .Where(p =>
+                    {
+                        try { return p.ProcessName.Equals("v2rayN", StringComparison.OrdinalIgnoreCase); }
+                        catch { return false; }
+                    })
+                    .ToList();
+
+                if (others.Count > 0)
+                {
+                    IsSecondaryInstance = true;
+                    _config.SystemProxyItem.SysProxyType = ESysProxyType.Unchanged;
+                    Logging.SaveLog($"Secondary instance detected ({others.Count} other v2rayN process(es)). System proxy management disabled.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog($"Secondary instance detection failed: {ex.Message}");
+            }
+        }
 
         Task.Run(async () =>
         {

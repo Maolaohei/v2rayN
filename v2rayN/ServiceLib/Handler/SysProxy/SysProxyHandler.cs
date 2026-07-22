@@ -6,6 +6,13 @@ public static class SysProxyHandler
 
     public static async Task<bool> UpdateSysProxy(Config config, bool forceDisable)
     {
+        // Secondary instances must never touch the system proxy — doing so would
+        // override the primary instance's settings or clear them on exit.
+        if (AppManager.Instance.IsSecondaryInstance)
+        {
+            return true;
+        }
+
         var type = config.SystemProxyItem.SysProxyType;
 
         if (forceDisable && type != ESysProxyType.Unchanged)

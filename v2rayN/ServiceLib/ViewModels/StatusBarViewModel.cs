@@ -63,6 +63,13 @@ public class StatusBarViewModel : MyReactiveObject
     [Reactive]
     public bool BlSystemProxyPacVisible { get; set; }
 
+    /// <summary>
+    /// Controls whether the system-proxy segmented control is interactive.
+    /// Disabled for secondary instances to prevent proxy override.
+    /// </summary>
+    [Reactive]
+    public bool BlSystemProxyEnabled { get; set; } = true;
+
     #endregion System Proxy
 
     #region UI
@@ -107,6 +114,12 @@ public class StatusBarViewModel : MyReactiveObject
         RunningServerToolTipText = "-";
         BlSystemProxyPacVisible = Utils.IsWindows();
         BlIsNonWindows = Utils.IsNonWindows();
+
+        // Secondary instances cannot change system proxy via UI.
+        if (AppManager.Instance.IsSecondaryInstance)
+        {
+            BlSystemProxyEnabled = false;
+        }
 
         if (_config.TunModeItem.EnableTun && AllowEnableTun())
         {
@@ -196,22 +209,24 @@ public class StatusBarViewModel : MyReactiveObject
         });
 
         //System proxy
+        // Secondary instance: system-proxy commands must be disabled.
+        var canChangeProxy = Observable.Return(!AppManager.Instance.IsSecondaryInstance);
         SystemProxyClearCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await SetListenerType(ESysProxyType.ForcedClear);
-        });
+        }, canChangeProxy);
         SystemProxySetCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await SetListenerType(ESysProxyType.ForcedChange);
-        });
+        }, canChangeProxy);
         SystemProxyNothingCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await SetListenerType(ESysProxyType.Unchanged);
-        });
+        }, canChangeProxy);
         SystemProxyPacCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await SetListenerType(ESysProxyType.Pac);
-        });
+        }, canChangeProxy);
 
         #endregion WhenAnyValue && ReactiveCommand
 
@@ -485,6 +500,11 @@ public class StatusBarViewModel : MyReactiveObject
 
     private async Task SetListenerType(ESysProxyType type)
     {
+        // Secondary instance must not modify system proxy state or config.
+        if (AppManager.Instance.IsSecondaryInstance)
+        {
+            return;
+        }
         if (_config.SystemProxyItem.SysProxyType == type)
         {
             return;
@@ -499,6 +519,12 @@ public class StatusBarViewModel : MyReactiveObject
 
     public async Task ChangeSystemProxyAsync(ESysProxyType type, bool blChange)
     {
+        // Secondary instance must not change system proxy — it belongs to the primary instance.
+        if (AppManager.Instance.IsSecondaryInstance)
+        {
+            return;
+        }
+
         // Apply WinINET/proxy settings first so subsequent reconnects pick up the new mode.
         await SysProxyHandler.UpdateSysProxy(_config, false);
 
@@ -581,6 +607,10 @@ public class StatusBarViewModel : MyReactiveObject
     private async Task DoSystemProxySelected(bool c)
     {
         if (!c)
+        {
+            return;
+        }
+        if (AppManager.Instance.IsSecondaryInstance)
         {
             return;
         }
