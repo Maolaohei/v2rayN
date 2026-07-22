@@ -89,7 +89,7 @@ public class UIItem
     public bool EnableAutoAdjustMainLvColWidth { get; set; }
     public int MainGirdHeight1 { get; set; }
     public int MainGirdHeight2 { get; set; }
-    public EGirdOrientation MainGirdOrientation { get; set; } = EGirdOrientation.Vertical;
+    public EGirdOrientation MainGirdOrientation { get; set; } = EGirdOrientation.Horizontal;
     public string? ColorPrimaryName { get; set; }
     public string? CurrentTheme { get; set; }
     public string CurrentLanguage { get; set; }

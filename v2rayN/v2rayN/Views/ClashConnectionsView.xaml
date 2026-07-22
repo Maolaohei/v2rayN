@@ -12,9 +12,12 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:TypeArguments="vms:ClashConnectionsViewModel"
+    Style="{StaticResource ViewGlobal}"
     mc:Ignorable="d">
 
-    <DockPanel Margin="{StaticResource Margin4}">
+    <Grid>
+    <Border Style="{StaticResource ContentCard}" Margin="{StaticResource Margin8}" Padding="10">
+        <DockPanel>
         <WrapPanel
             Margin="{StaticResource Margin8}"
             VerticalAlignment="Center"
@@ -32,20 +35,20 @@
 
             <Button
                 x:Name="btnConnectionCloseAll"
-                Width="24"
-                Height="24"
+                Width="32"
+                Height="32"
                 Margin="{StaticResource MarginLeftRight8}"
-                Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                Style="{StaticResource QuietToolButton}"
                 ToolTip="{x:Static resx:ResUI.menuConnectionCloseAll}">
                 <materialDesign:PackIcon VerticalAlignment="Center" Kind="Close" />
             </Button>
 
             <Button
                 x:Name="btnAutofitColumnWidth"
-                Width="24"
-                Height="24"
+                Width="32"
+                Height="32"
                 Margin="{StaticResource MarginLeftRight8}"
-                Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                Style="{StaticResource QuietToolButton}"
                 ToolTip="{x:Static resx:ResUI.menuProfileAutofitColumnWidth}">
                 <materialDesign:PackIcon VerticalAlignment="Center" Kind="ArrowSplitVertical" />
             </Button>
@@ -106,5 +109,25 @@
                     Header="{x:Static resx:ResUI.TbSortingTime}" />
             </DataGrid.Columns>
         </DataGrid>
-    </DockPanel>
+        </DockPanel>
+    </Border>
+        <StackPanel
+            x:Name="pnlEmptyConnections"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsHitTestVisible="False">
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="{DynamicResource StdFontSize1}"
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource DesignInk2Brush}"
+                Text="暂无连接" />
+            <TextBlock
+                Margin="0,6,0,0"
+                HorizontalAlignment="Center"
+                FontSize="{DynamicResource StdFontSize-1}"
+                Foreground="{DynamicResource DesignInk3Brush}"
+                Text="有流量经过时在此显示" />
+        </StackPanel>
+    </Grid>
 </reactiveui:ReactiveUserControl>

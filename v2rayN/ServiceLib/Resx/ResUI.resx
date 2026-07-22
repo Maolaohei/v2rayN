@@ -427,7 +427,7 @@
     <value>Routing Setting</value>
   </data>
   <data name="menuServers" xml:space="preserve">
-    <value>Configuration</value>
+    <value>Servers</value>
   </data>
   <data name="menuSetting" xml:space="preserve">
     <value>Settings</value>
@@ -439,7 +439,7 @@
     <value>Update current subscription with proxy</value>
   </data>
   <data name="menuSubscription" xml:space="preserve">
-    <value>Subscription Group</value>
+    <value>Subscription</value>
   </data>
   <data name="menuSubSetting" xml:space="preserve">
     <value>Subscription group settings</value>

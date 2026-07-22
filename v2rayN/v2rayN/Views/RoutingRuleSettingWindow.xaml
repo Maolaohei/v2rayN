@@ -89,7 +89,7 @@
                         Margin="8,0,8,0"
                         VerticalAlignment="Center"
                         IsHitTestVisible="False"
-                        Foreground="Gray"
+                        Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                         FontSize="12"
                         Text="例如: google.com / 8.8.8.8 / 443 / chrome.exe" />
                     <Button
@@ -135,7 +135,7 @@
                                         TextTrimming="CharacterEllipsis" />
                                     <TextBlock
                                         Width="150"
-                                        Foreground="Gray"
+                                        Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                                         Text="{Binding RuleFields}"
                                         TextTrimming="CharacterEllipsis" />
                                     <TextBlock
@@ -336,7 +336,7 @@
                     CanUserResizeRows="False"
                     CanUserSortColumns="False"
                     EnableRowVirtualization="True"
-                    GridLinesVisibility="All"
+                    GridLinesVisibility="Horizontal"
                     HeadersVisibility="Column"
                     IsReadOnly="True"
                     Style="{StaticResource DefDataGrid}">

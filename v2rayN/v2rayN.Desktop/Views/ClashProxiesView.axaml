@@ -91,8 +91,8 @@
                     <DataTemplate>
                         <Label
                             Width="160"
-                            Margin="-4,-6"
-                            Padding="0"
+                            Margin="4,2"
+                            Padding="8,6"
                             Theme="{DynamicResource TagLabel}">
                             <Grid Margin="{StaticResource Margin4}" RowDefinitions="1*,8,1*">
                                 <DockPanel Grid.Row="0">
@@ -125,14 +125,14 @@
                     <DataTemplate>
                         <Label
                             Width="160"
-                            Margin="-10,-6"
-                            Padding="0"
+                            Margin="4,2"
+                            Padding="8,6"
                             Theme="{DynamicResource TagLabel}">
                             <DockPanel>
                                 <Border
-                                    Width="5"
-                                    Margin="0,1"
-                                    Background="YellowGreen"
+                                    Width="4"
+                                    Margin="0,2,6,2"
+                                    Classes="ActiveIndicator"
                                     CornerRadius="4"
                                     DockPanel.Dock="Left"
                                     IsVisible="{Binding IsActive}" />

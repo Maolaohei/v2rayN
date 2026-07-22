@@ -20,13 +20,26 @@ public partial class MsgView
         menuMsgViewCopy.Click += menuMsgViewCopy_Click;
         menuMsgViewCopyAll.Click += menuMsgViewCopyAll_Click;
         menuMsgViewClear.Click += menuMsgViewClear_Click;
+        togCollapseLog.Checked += TogCollapseLog_Changed;
+        togCollapseLog.Unchecked += TogCollapseLog_Changed;
+    }
+
+    private void TogCollapseLog_Changed(object sender, RoutedEventArgs e)
+    {
+        var expanded = togCollapseLog.IsChecked == true;
+        txtMsg.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+        if (icoCollapseLog != null)
+        {
+            // Keep chevron icon — never let toggle chrome replace it with a checkmark.
+            icoCollapseLog.Kind = expanded
+                ? MaterialDesignThemes.Wpf.PackIconKind.ChevronDown
+                : MaterialDesignThemes.Wpf.PackIconKind.ChevronRight;
+        }
     }
 
     private void TxtMsgFilter_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        txtMsgFilterWatermark.Visibility = string.IsNullOrEmpty(txtMsgFilter.Text)
-            ? System.Windows.Visibility.Visible
-            : System.Windows.Visibility.Collapsed;
+        // HintAssist on DefTextBox handles watermark.
     }
 
     private void TxtMsgFilter_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -84,14 +97,12 @@ public partial class MsgView
 
     private void menuMsgViewCopy_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        var data = txtMsg.SelectedText.TrimEx();
-        WindowsUtils.SetClipboardData(data);
+        WindowsUtils.SetClipboardData(txtMsg.SelectedText);
     }
 
     private void menuMsgViewCopyAll_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        var data = txtMsg.Text;
-        WindowsUtils.SetClipboardData(data);
+        WindowsUtils.SetClipboardData(txtMsg.Text);
     }
 
     private void menuMsgViewClear_Click(object sender, System.Windows.RoutedEventArgs e)

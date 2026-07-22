@@ -1,3 +1,7 @@
+using System.Collections.Specialized;
+using System.Reactive.Disposables;
+using System.Windows;
+
 namespace v2rayN.Views;
 
 /// <summary>
@@ -28,6 +32,25 @@ public partial class ClashProxiesView
             this.Bind(ViewModel, vm => vm.RuleModeSelected, v => v.cmbRulemode.SelectedIndex).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SortingSelected, v => v.cmbSorting.SelectedIndex).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.AutoRefresh, v => v.togAutoRefresh.IsChecked).DisposeWith(disposables);
+
+            void RefreshEmpty()
+            {
+                if (pnlEmptyProxies == null || ViewModel == null)
+                {
+                    return;
+                }
+
+                var empty = ViewModel.ProxyGroups == null || ViewModel.ProxyGroups.Count == 0;
+                pnlEmptyProxies.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            NotifyCollectionChangedEventHandler onGroups = (_, _) => RefreshEmpty();
+            if (ViewModel?.ProxyGroups is INotifyCollectionChanged ncc)
+            {
+                ncc.CollectionChanged += onGroups;
+                Disposable.Create(() => ncc.CollectionChanged -= onGroups).DisposeWith(disposables);
+            }
+            RefreshEmpty();
         });
     }
 

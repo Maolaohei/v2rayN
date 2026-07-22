@@ -28,7 +28,7 @@
     <DockPanel Margin="{StaticResource Margin8}">
         <StackPanel
             Margin="{StaticResource Margin4}"
-            HorizontalAlignment="Center"
+            HorizontalAlignment="Right"
             DockPanel.Dock="Bottom"
             Orientation="Horizontal">
             <Button
@@ -36,14 +36,14 @@
                 Width="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
                 IsDefault="True"
-                Style="{StaticResource DefButton}" />
+                Style="{StaticResource DefButtonPrimary}" />
             <Button
                 x:Name="btnCancel"
                 Width="100"
                 Margin="{StaticResource MarginLeftRight8}"
                 Content="{x:Static resx:ResUI.TbCancel}"
                 IsCancel="true"
-                Style="{StaticResource DefButton}" />
+                Style="{StaticResource DefButtonSecondary}" />
         </StackPanel>
         <ScrollViewer
             materialDesign:ScrollViewerAssist.IsAutoHideEnabled="True"

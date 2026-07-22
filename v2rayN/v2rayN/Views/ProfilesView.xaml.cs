@@ -1,3 +1,4 @@
+using System.Reactive.Disposables;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
@@ -41,6 +42,42 @@ public partial class ProfilesView
         {
             this.OneWayBind(ViewModel, vm => vm.ProfileItems, v => v.lstProfiles.ItemsSource).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedProfile, v => v.lstProfiles.SelectedItem).DisposeWith(disposables);
+
+            void RefreshEmptyState()
+            {
+                if (pnlEmptyProfiles == null || ViewModel == null)
+                {
+                    return;
+                }
+
+                pnlEmptyProfiles.Visibility = ViewModel.ProfileItems.Count == 0
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+
+            System.Collections.Specialized.NotifyCollectionChangedEventHandler onProfilesChanged = (_, _) =>
+            {
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher == null)
+                {
+                    RefreshEmptyState();
+                    return;
+                }
+
+                if (dispatcher.CheckAccess())
+                {
+                    RefreshEmptyState();
+                }
+                else
+                {
+                    dispatcher.Invoke(RefreshEmptyState);
+                }
+            };
+
+            ViewModel!.ProfileItems.CollectionChanged += onProfilesChanged;
+            Disposable.Create(() => ViewModel.ProfileItems.CollectionChanged -= onProfilesChanged)
+                .DisposeWith(disposables);
+            RefreshEmptyState();
 
             this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.lstGroup.ItemsSource).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSub, v => v.lstGroup.SelectedItem).DisposeWith(disposables);
@@ -240,7 +277,12 @@ public partial class ProfilesView
             return;
         }
 
-        var colName = ((MyDGTextColumn)colHeader.Column).ExName;
+        var colName = GetColumnExName(colHeader.Column);
+        if (colName.IsNullOrEmpty())
+        {
+            return;
+        }
+
         ViewModel?.SortServer(colName);
     }
 
@@ -361,31 +403,51 @@ public partial class ProfilesView
     {
         try
         {
+            // Card layout (mock): only Remarks + Delay/Speed metrics are primary.
+            // Secondary engineering columns stay collapsed unless explicitly restored later.
+            var primary = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Remarks", "DelayVal" };
+
+            foreach (var column in lstProfiles.Columns)
+            {
+                var exName = GetColumnExName(column);
+                if (exName.IsNullOrEmpty())
+                {
+                    continue;
+                }
+
+                if (!primary.Contains(exName))
+                {
+                    column.Visibility = Visibility.Collapsed;
+                }
+            }
+
             var lvColumnItem = _config.UiItem.MainColumnItem.OrderBy(t => t.Index).ToList();
             var displayIndex = 0;
             foreach (var item in lvColumnItem)
             {
-                foreach (var item2 in lstProfiles.Columns.Cast<MyDGTextColumn>())
+                if (!primary.Contains(item.Name))
                 {
-                    if (item2.ExName == item.Name)
+                    continue;
+                }
+
+                foreach (var column in lstProfiles.Columns)
+                {
+                    var exName = GetColumnExName(column);
+                    if (exName != item.Name)
                     {
-                        if (item.Width < 0)
-                        {
-                            item2.Visibility = Visibility.Hidden;
-                        }
-                        else
-                        {
-                            item2.Width = item.Width;
-                            item2.DisplayIndex = displayIndex++;
-                        }
-                        if (item.Name.StartsWith("to", StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            item2.Visibility = _config.GuiItem.EnableStatistics ? Visibility.Visible : Visibility.Hidden;
-                        }
-                        if (item.Name.Equals("IpInfo", StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            item2.Visibility = _config.SpeedTestItem.IPAPIUrl.IsNotEmpty() && !_config.UiItem.HideColumnIpInfo ? Visibility.Visible : Visibility.Hidden;
-                        }
+                        continue;
+                    }
+
+                    if (item.Width < 0)
+                    {
+                        // Keep primary columns visible even if previously hidden in spreadsheet mode.
+                        column.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        column.Width = item.Width;
+                        column.DisplayIndex = displayIndex++;
+                        column.Visibility = Visibility.Visible;
                     }
                 }
             }
@@ -401,13 +463,19 @@ public partial class ProfilesView
         try
         {
             List<ColumnItem> lvColumnItem = [];
-            foreach (var item2 in lstProfiles.Columns.Cast<MyDGTextColumn>())
+            foreach (var column in lstProfiles.Columns)
             {
+                var exName = GetColumnExName(column);
+                if (exName.IsNullOrEmpty())
+                {
+                    continue;
+                }
+
                 lvColumnItem.Add(new()
                 {
-                    Name = item2.ExName,
-                    Width = (int)(item2.Visibility == Visibility.Visible ? item2.ActualWidth : -1),
-                    Index = item2.DisplayIndex
+                    Name = exName,
+                    Width = (int)(column.Visibility == Visibility.Visible ? column.ActualWidth : -1),
+                    Index = column.DisplayIndex
                 });
             }
             _config.UiItem.MainColumnItem = lvColumnItem;
@@ -416,6 +484,16 @@ public partial class ProfilesView
         {
             Logging.SaveLog(_tag, ex);
         }
+    }
+
+    private static string? GetColumnExName(DataGridColumn column)
+    {
+        return column switch
+        {
+            MyDGTextColumn textColumn => textColumn.ExName,
+            MyDGTemplateColumn templateColumn => templateColumn.ExName,
+            _ => null
+        };
     }
 
     #endregion UI

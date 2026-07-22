@@ -20,7 +20,9 @@
         <converters:DelayColorConverter x:Key="DelayColorConverter" />
     </UserControl.Resources>
 
-    <DockPanel Margin="{StaticResource Margin4}">
+    <Grid>
+    <Border Style="{StaticResource ContentCard}" Margin="{StaticResource Margin8}" Padding="10">
+        <DockPanel>
         <WrapPanel
             Margin="{StaticResource Margin8}"
             VerticalAlignment="Center"
@@ -59,20 +61,20 @@
 
             <Button
                 x:Name="menuProxiesReload"
-                Width="24"
-                Height="24"
+                Width="32"
+                Height="32"
                 Margin="{StaticResource MarginLeftRight8}"
-                Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                Style="{StaticResource QuietToolButton}"
                 ToolTip="{x:Static resx:ResUI.menuProxiesReload}">
                 <materialDesign:PackIcon VerticalAlignment="Center" Kind="Reload" />
             </Button>
 
             <Button
                 x:Name="menuProxiesDelaytest"
-                Width="24"
-                Height="24"
+                Width="32"
+                Height="32"
                 Margin="{StaticResource MarginLeftRight8}"
-                Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                Style="{StaticResource QuietToolButton}"
                 ToolTip="{x:Static resx:ResUI.menuProxiesDelaytest}">
                 <materialDesign:PackIcon VerticalAlignment="Center" Kind="LightningBolt" />
             </Button>
@@ -190,5 +192,25 @@
                 </ListView.ItemTemplate>
             </ListView>
         </DockPanel>
-    </DockPanel>
+        </DockPanel>
+    </Border>
+        <StackPanel
+            x:Name="pnlEmptyProxies"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsHitTestVisible="False">
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="{DynamicResource StdFontSize1}"
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource DesignInk2Brush}"
+                Text="暂无代理组" />
+            <TextBlock
+                Margin="0,6,0,0"
+                HorizontalAlignment="Center"
+                FontSize="{DynamicResource StdFontSize-1}"
+                Foreground="{DynamicResource DesignInk3Brush}"
+                Text="启动支持 Clash API 的内核后显示" />
+        </StackPanel>
+    </Grid>
 </reactiveui:ReactiveUserControl>

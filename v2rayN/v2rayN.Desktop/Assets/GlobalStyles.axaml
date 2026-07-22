@@ -6,8 +6,9 @@
     </Design.PreviewWith>
 
     <Style Selector="DataGrid">
-        <Setter Property="RowHeight" Value="24" />
+        <Setter Property="RowHeight" Value="34" />
         <Setter Property="ScrollViewer.AllowAutoHide" Value="False" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
     </Style>
 
     <Style Selector="PathIcon">
@@ -33,6 +34,33 @@
         <Setter Property="Height" Value="{StaticResource IconButtonHeight}" />
         <Setter Property="MinWidth" Value="{StaticResource IconButtonWidth}" />
         <Setter Property="Theme" Value="{DynamicResource BorderlessButton}" />
+        <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+    </Style>
+
+    <!--  Instant press feedback  -->
+    <Style Selector="Button.IconButton:pressed /template/ ContentPresenter">
+        <Setter Property="RenderTransform" Value="scale(0.94)" />
+    </Style>
+    <Style Selector="Button.IconButton:pointerover">
+        <Setter Property="Opacity" Value="0.85" />
+    </Style>
+
+    <!--  Destructive icon actions (clear / close-all / delete)  -->
+    <Style Selector="Button.IconButton.Danger PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorDanger}" />
+    </Style>
+
+    <!--  Active indicator brush for proxy cards  -->
+    <Style Selector="Border.ActiveIndicator">
+        <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}" />
+    </Style>
+
+    <!--  Active profile row: soft blue wash (mock: .row.active)  -->
+    <Style Selector="DataGridRow.ActiveProfile">
+        <Setter Property="Background" Value="{DynamicResource SemiColorPrimaryLight}" />
+    </Style>
+    <Style Selector="DataGridRow.ActiveProfile:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SemiColorPrimaryLightPointerover}" />
     </Style>
 
 </Styles>

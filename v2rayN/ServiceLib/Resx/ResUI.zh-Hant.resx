@@ -427,7 +427,7 @@
     <value>路由設定</value>
   </data>
   <data name="menuServers" xml:space="preserve">
-    <value>設定檔</value>
+    <value>伺服器</value>
   </data>
   <data name="menuSetting" xml:space="preserve">
     <value>設定</value>
@@ -439,7 +439,7 @@
     <value>更新目前訂閱 (透過代理)</value>
   </data>
   <data name="menuSubscription" xml:space="preserve">
-    <value>訂閱分組</value>
+    <value>訂閱</value>
   </data>
   <data name="menuSubSetting" xml:space="preserve">
     <value>訂閱分組設定</value>
@@ -1159,7 +1159,7 @@
     <value>上傳流量</value>
   </data>
   <data name="TbConnections" xml:space="preserve">
-    <value>目前連線</value>
+    <value>連線</value>
   </data>
   <data name="menuConnectionClose" xml:space="preserve">
     <value>關閉連線</value>
@@ -1168,7 +1168,7 @@
     <value>關閉所有連線</value>
   </data>
   <data name="TbProxies" xml:space="preserve">
-    <value>目前代理</value>
+    <value>代理</value>
   </data>
   <data name="menuRulemode" xml:space="preserve">
     <value>規則模式</value>

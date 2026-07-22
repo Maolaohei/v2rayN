@@ -75,8 +75,8 @@
                     BorderThickness="1"
                     CanUserReorderColumns="True"
                     CanUserResizeColumns="True"
-                    GridLinesVisibility="All"
-                    HeadersVisibility="All"
+                    GridLinesVisibility="Horizontal"
+                    HeadersVisibility="Column"
                     IsReadOnly="True"
                     ItemsSource="{Binding ProfileItems}"
                     SelectionMode="Single">

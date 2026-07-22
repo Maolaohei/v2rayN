@@ -427,7 +427,7 @@
     <value>路由设置</value>
   </data>
   <data name="menuServers" xml:space="preserve">
-    <value>配置项</value>
+    <value>服务器</value>
   </data>
   <data name="menuSetting" xml:space="preserve">
     <value>设置</value>
@@ -439,7 +439,7 @@
     <value>更新当前订阅 (通过代理)</value>
   </data>
   <data name="menuSubscription" xml:space="preserve">
-    <value>订阅分组</value>
+    <value>订阅</value>
   </data>
   <data name="menuSubSetting" xml:space="preserve">
     <value>订阅分组设置</value>
@@ -1186,7 +1186,7 @@
     <value>上传流量</value>
   </data>
   <data name="TbConnections" xml:space="preserve">
-    <value>当前连接</value>
+    <value>连接</value>
   </data>
   <data name="menuConnectionClose" xml:space="preserve">
     <value>关闭连接</value>
@@ -1195,7 +1195,7 @@
     <value>关闭所有连接</value>
   </data>
   <data name="TbProxies" xml:space="preserve">
-    <value>当前代理</value>
+    <value>代理</value>
   </data>
   <data name="menuRulemode" xml:space="preserve">
     <value>规则模式</value>

@@ -12,9 +12,79 @@
                 <materialDesign:BundledTheme
                     BaseTheme="Light"
                     PrimaryColor="Blue"
-                    SecondaryColor="Lime" />
+                    SecondaryColor="Teal" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--  Design tokens (apple-design-mockups/v2 instrument panel)  -->
+            <Color x:Key="DesignInkColor">#0B0C0F</Color>
+            <Color x:Key="DesignInk2Color">#3A3D45</Color>
+            <Color x:Key="DesignInk3Color">#6B7080</Color>
+            <Color x:Key="DesignPaperColor">#EEF0F4</Color>
+            <Color x:Key="DesignSurfaceColor">#F2F3F7</Color>
+            <Color x:Key="DesignCardColor">#FFFFFF</Color>
+            <Color x:Key="DesignLineColor">#140F121C</Color>
+            <Color x:Key="DesignLineStrongColor">#240F121C</Color>
+            <Color x:Key="DesignSelectColor">#2F6FED</Color>
+            <Color x:Key="DesignSelectSoftColor">#EBF1FF</Color>
+            <Color x:Key="DesignSignalColor">#0F9F6E</Color>
+            <Color x:Key="DesignSignalSoftColor">#E6F7F0</Color>
+            <Color x:Key="DesignWarnColor">#C47B12</Color>
+            <Color x:Key="DesignWarnSoftColor">#FFF4E5</Color>
+            <Color x:Key="DesignDangerColor">#D92D20</Color>
+            <Color x:Key="DesignDangerSoftColor">#FDECEB</Color>
+            <Color x:Key="DesignChipWellColor">#1F767680</Color>
+            <Color x:Key="DesignOrbOffColor">#8B90A0</Color>
+            <Color x:Key="DesignShadowColor">#0C101C</Color>
+
+            <SolidColorBrush x:Key="DesignInkBrush" Color="{StaticResource DesignInkColor}" />
+            <SolidColorBrush x:Key="DesignInk2Brush" Color="{StaticResource DesignInk2Color}" />
+            <SolidColorBrush x:Key="DesignInk3Brush" Color="{StaticResource DesignInk3Color}" />
+            <SolidColorBrush x:Key="DesignPaperBrush" Color="{StaticResource DesignPaperColor}" />
+            <SolidColorBrush x:Key="DesignSurfaceBrush" Color="{StaticResource DesignSurfaceColor}" />
+            <SolidColorBrush x:Key="DesignCardBrush" Color="{StaticResource DesignCardColor}" />
+            <!--  Semi-transparent menubar surface from the locked v3 design  -->
+            <SolidColorBrush x:Key="DesignMenuBarBrush" Color="#B8FFFFFF" />
+            <SolidColorBrush x:Key="DesignLineBrush" Color="{StaticResource DesignLineColor}" />
+            <SolidColorBrush x:Key="DesignLineStrongBrush" Color="{StaticResource DesignLineStrongColor}" />
+            <SolidColorBrush x:Key="DesignSelectBrush" Color="{StaticResource DesignSelectColor}" />
+            <SolidColorBrush x:Key="DesignSelectSoftBrush" Color="{StaticResource DesignSelectSoftColor}" />
+            <SolidColorBrush x:Key="DesignSignalBrush" Color="{StaticResource DesignSignalColor}" />
+            <SolidColorBrush x:Key="DesignSignalSoftBrush" Color="{StaticResource DesignSignalSoftColor}" />
+            <SolidColorBrush x:Key="DesignWarnBrush" Color="{StaticResource DesignWarnColor}" />
+            <SolidColorBrush x:Key="DesignWarnSoftBrush" Color="{StaticResource DesignWarnSoftColor}" />
+            <SolidColorBrush x:Key="DesignDangerBrush" Color="{StaticResource DesignDangerColor}" />
+            <SolidColorBrush x:Key="DesignDangerSoftBrush" Color="{StaticResource DesignDangerSoftColor}" />
+            <SolidColorBrush x:Key="DesignChipWellBrush" Color="{StaticResource DesignChipWellColor}" />
+            <SolidColorBrush x:Key="DesignOrbOffBrush" Color="{StaticResource DesignOrbOffColor}" />
+            <SolidColorBrush x:Key="DesignShadowBrush" Color="{StaticResource DesignShadowColor}" />
+            <SolidColorBrush x:Key="AppCanvasBrush" Color="{StaticResource DesignSurfaceColor}" />
+
+            <!--  Override Material Design primary to design select blue (not stock MD Blue)  -->
+            <SolidColorBrush x:Key="PrimaryHueLightBrush" Color="#8FB4F7" />
+            <SolidColorBrush x:Key="PrimaryHueLightForegroundBrush" Color="#0B0C0F" />
+            <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="{StaticResource DesignSelectColor}" />
+            <SolidColorBrush x:Key="PrimaryHueMidForegroundBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="PrimaryHueDarkBrush" Color="#1E54C7" />
+            <SolidColorBrush x:Key="PrimaryHueDarkForegroundBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SecondaryHueMidBrush" Color="{StaticResource DesignSignalColor}" />
+            <SolidColorBrush x:Key="SecondaryHueMidForegroundBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Primary" Color="{StaticResource DesignSelectColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Primary.Light" Color="{StaticResource DesignSelectSoftColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Primary.Dark" Color="#1E54C7" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Secondary" Color="{StaticResource DesignSignalColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Background" Color="{StaticResource DesignSurfaceColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Card.Background" Color="{StaticResource DesignCardColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Chip.Background" Color="{StaticResource DesignChipWellColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Foreground" Color="{StaticResource DesignInkColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Foreground.Light" Color="{StaticResource DesignInk3Color}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.TextBox.OutlineBorder" Color="{StaticResource DesignLineStrongColor}" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.ToggleButton.Switch.TrackOffBackground" Color="#33767680" />
+            <!--  Ensure primary foreground pair exists for MD controls  -->
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Primary.Foreground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Primary.Light.Foreground" Color="#0B0C0F" />
+            <SolidColorBrush x:Key="MaterialDesign.Brush.Primary.Dark.Foreground" Color="#FFFFFF" />
+
             <system:Double x:Key="MenuItemHeight">32</system:Double>
             <system:Double x:Key="StdFontSize">12</system:Double>
             <system:Double x:Key="StdFontSize1">13</system:Double>
@@ -120,6 +190,53 @@
                 BasedOn="{StaticResource MaterialDesignRaisedButton}"
                 TargetType="{x:Type ButtonBase}">
                 <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Padding" Value="16,0" />
+                <Setter Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DesignLineStrongBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="9" />
+            </Style>
+            <Style
+                x:Key="DefButtonPrimary"
+                BasedOn="{StaticResource MaterialDesignRaisedButton}"
+                TargetType="{x:Type ButtonBase}">
+                <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="MinWidth" Value="100" />
+                <Setter Property="Padding" Value="16,0" />
+                <Setter Property="Background" Value="{DynamicResource DesignSelectBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DesignSelectBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="9" />
+            </Style>
+            <Style
+                x:Key="DefButtonSecondary"
+                BasedOn="{StaticResource MaterialDesignOutlinedButton}"
+                TargetType="{x:Type ButtonBase}">
+                <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="MinWidth" Value="100" />
+                <Setter Property="Padding" Value="16,0" />
+                <Setter Property="Background" Value="{DynamicResource DesignCardBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DesignLineStrongBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="9" />
+            </Style>
+            <Style
+                x:Key="DefButtonQuiet"
+                BasedOn="{StaticResource MaterialDesignFlatButton}"
+                TargetType="{x:Type ButtonBase}">
+                <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Padding" Value="12,0" />
+                <Setter Property="Foreground" Value="{DynamicResource DesignInk2Brush}" />
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="9" />
+            </Style>
+            <Style x:Key="DialogFooter" TargetType="{x:Type StackPanel}">
+                <Setter Property="Orientation" Value="Horizontal" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="Margin" Value="0,8,0,0" />
             </Style>
             <Style
                 x:Key="DefContextMenu"
@@ -149,6 +266,13 @@
                 BasedOn="{StaticResource MaterialDesignDataGrid}"
                 TargetType="{x:Type DataGrid}">
                 <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DesignLineBrush}" />
+                <Setter Property="RowBackground" Value="Transparent" />
+                <Setter Property="AlternatingRowBackground" Value="{DynamicResource DesignChipWellBrush}" />
+                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource DesignLineBrush}" />
+                <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
             </Style>
             <Style
                 x:Key="DefTextBox"
@@ -169,12 +293,262 @@
                 TargetType="{x:Type GroupBox}">
                 <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
             </Style>
+            <!--  Quiet segmented chip (mock: gray well + white selected pill)  -->
+            <Style x:Key="QuietSegListBoxItem" TargetType="{x:Type ListBoxItem}">
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="1" />
+                <Setter Property="MinHeight" Value="28" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                            <Border
+                                x:Name="Bd"
+                                Padding="12,0"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0"
+                                CornerRadius="7"
+                                SnapsToDevicePixels="True">
+                                <ContentPresenter
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignCardBrush}" />
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource DesignLineBrush}" />
+                                    <Setter TargetName="Bd" Property="BorderThickness" Value="1" />
+                                    <Setter TargetName="Bd" Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.10" Direction="270" Color="{DynamicResource DesignShadowColor}" />
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignChipWellBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="QuietSegListBox" TargetType="{x:Type ListBox}">
+                <Setter Property="Background" Value="{DynamicResource DesignChipWellBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="2" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+                <Setter Property="ItemContainerStyle" Value="{StaticResource QuietSegListBoxItem}" />
+                <Setter Property="ItemsPanel">
+                    <Setter.Value>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ListBox}">
+                            <Border
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0"
+                                CornerRadius="9"
+                                SnapsToDevicePixels="True">
+                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <Style
                 x:Key="MyChipListBoxItem"
-                BasedOn="{StaticResource MaterialDesignChoiceChipPrimaryOutlineListBoxItem}"
+                BasedOn="{StaticResource QuietSegListBoxItem}"
                 TargetType="{x:Type ListBoxItem}">
-                <Setter Property="Margin" Value="-2,0" />
+                <Setter Property="Margin" Value="1" />
             </Style>
+            <Style
+                x:Key="QuietToolButton"
+                BasedOn="{StaticResource MaterialDesignIconButton}"
+                TargetType="{x:Type Button}">
+                <Setter Property="Width" Value="32" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Foreground" Value="{DynamicResource DesignInk2Brush}" />
+                <Setter Property="Background" Value="Transparent" />
+            </Style>
+            <Style
+                x:Key="QuietToolButtonPrimary"
+                BasedOn="{StaticResource QuietToolButton}"
+                TargetType="{x:Type Button}">
+                <Setter Property="Foreground" Value="{DynamicResource DesignSelectBrush}" />
+            </Style>
+            <!--  Soften default mini FABs used elsewhere so they don't read as loud MD blue circles  -->
+            <Style
+                TargetType="{x:Type Button}"
+                BasedOn="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                x:Key="MaterialDesignFloatingActionMiniLightButton">
+                <Setter Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource DesignSelectBrush}" />
+            </Style>
+            <!--  Mock inspector tabs: quiet pills, selected = soft blue wash  -->
+            <Style x:Key="InspectorTabItem" TargetType="{x:Type TabItem}">
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="Margin" Value="0,0,4,0" />
+                <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="MinHeight" Value="30" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type TabItem}">
+                            <Border
+                                x:Name="Bd"
+                                Margin="{TemplateBinding Margin}"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0"
+                                CornerRadius="8"
+                                SnapsToDevicePixels="True">
+                                <ContentPresenter
+                                    x:Name="ContentSite"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    ContentSource="Header"
+                                    RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource DesignSelectBrush}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="True" />
+                                        <Condition Property="IsMouseOver" Value="True" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="InspectorTabControl" TargetType="{x:Type TabControl}">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="ItemContainerStyle" Value="{StaticResource InspectorTabItem}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type TabControl}">
+                            <DockPanel LastChildFill="True">
+                                <Border
+                                    Margin="0,0,0,8"
+                                    Padding="2"
+                                    Background="Transparent"
+                                    DockPanel.Dock="Top">
+                                    <TabPanel
+                                        IsItemsHost="True"
+                                        KeyboardNavigation.TabIndex="1" />
+                                </Border>
+                                <Border Background="Transparent">
+                                    <ContentPresenter
+                                        x:Name="PART_SelectedContentHost"
+                                        Margin="0"
+                                        ContentSource="SelectedContent" />
+                                </Border>
+                            </DockPanel>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!--  Side inspector pills: selected = soft blue (mock .tab.on)  -->
+            <Style x:Key="SideTabListBoxItem" TargetType="{x:Type ListBoxItem}">
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="1" />
+                <Setter Property="MinHeight" Value="28" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                <Setter Property="FontSize" Value="{DynamicResource StdFontSize}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                            <Border
+                                x:Name="Bd"
+                                Padding="12,0"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0"
+                                CornerRadius="8"
+                                SnapsToDevicePixels="True">
+                                <ContentPresenter
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    RecognizesAccessKey="True" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource DesignSelectBrush}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="True" />
+                                        <Condition Property="IsMouseOver" Value="True" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                                </MultiTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="SideTabListBox" TargetType="{x:Type ListBox}" BasedOn="{StaticResource QuietSegListBox}">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="SelectionMode" Value="Single" />
+                <Setter Property="ItemContainerStyle" Value="{StaticResource SideTabListBoxItem}" />
+            </Style>
+            <Style x:Key="ContentCard" TargetType="{x:Type Border}">
+                <Setter Property="Background" Value="{DynamicResource DesignCardBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DesignLineBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.08" Direction="270" Color="{DynamicResource DesignShadowColor}" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <!-- AppCanvasBrush defined once with design tokens at top of dictionary -->
             <Style
                 x:Key="MyOutlinedTextComboBox"
                 BasedOn="{StaticResource MaterialDesignOutlinedComboBox}"
@@ -211,8 +585,8 @@
                 <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
                 <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
                 <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
-                <Setter Property="TextElement.Foreground" Value="{DynamicResource MaterialDesignBody}" />
-                <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource DesignInkBrush}" />
+                <Setter Property="Background" Value="{DynamicResource AppCanvasBrush}" />
                 <Setter Property="TextElement.FontFamily" Value="{x:Static conv:MaterialDesignFonts.MyFont}" />
                 <Setter Property="FontFamily" Value="{x:Static conv:MaterialDesignFonts.MyFont}" />
                 <Setter Property="ResizeMode" Value="CanResize" />
@@ -224,10 +598,19 @@
                 <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
                 <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
                 <Setter Property="TextOptions.TextHintingMode" Value="Fixed" />
-                <Setter Property="TextElement.Foreground" Value="{DynamicResource MaterialDesignBody}" />
-                <Setter Property="Background" Value="{DynamicResource MaterialDesignPaper}" />
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource DesignInkBrush}" />
+                <Setter Property="Background" Value="Transparent" />
                 <Setter Property="TextElement.FontFamily" Value="{x:Static conv:MaterialDesignFonts.MyFont}" />
                 <Setter Property="FontFamily" Value="{x:Static conv:MaterialDesignFonts.MyFont}" />
+            </Style>
+            <Style
+                TargetType="{x:Type ToolBar}"
+                BasedOn="{StaticResource MaterialDesignToolBar}">
+                <Setter Property="Background" Value="{DynamicResource DesignCardBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+            </Style>
+            <Style TargetType="{x:Type ToolBarTray}">
+                <Setter Property="Background" Value="{DynamicResource DesignCardBrush}" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

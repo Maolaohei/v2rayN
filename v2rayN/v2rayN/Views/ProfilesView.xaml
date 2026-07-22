@@ -18,17 +18,65 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:DelayColorConverter x:Key="DelayColorConverter" />
+        <conv:DelaySparkWidthConverter x:Key="DelaySparkWidthConverter" />
     </UserControl.Resources>
     <Grid>
         <DockPanel>
-            <WrapPanel Margin="{StaticResource Margin4}" DockPanel.Dock="Top">
+            <!--  Mock toolbar: quiet group segments + search + primary tools  -->
+            <DockPanel
+                Margin="10,10,10,6"
+                DockPanel.Dock="Top"
+                LastChildFill="True">
+                <StackPanel
+                    DockPanel.Dock="Right"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center">
+                    <Button
+                        x:Name="btnFastRealPing"
+                        Margin="0,0,2,0"
+                        Style="{StaticResource QuietToolButtonPrimary}"
+                        ToolTip="{x:Static resx:ResUI.menuFastRealPing}">
+                        <materialDesign:PackIcon Kind="LightningBolt" Width="18" Height="18" />
+                    </Button>
+                    <Button
+                        x:Name="menuMixedTestServer"
+                        Margin="0,0,2,0"
+                        Style="{StaticResource QuietToolButton}"
+                        ToolTip="{x:Static resx:ResUI.menuMixedTestServer}">
+                        <materialDesign:PackIcon Kind="Speedometer" Width="18" Height="18" />
+                    </Button>
+                    <Button
+                        x:Name="btnEditSub"
+                        Margin="0,0,2,0"
+                        Style="{StaticResource QuietToolButton}"
+                        AutomationProperties.Name="{x:Static resx:ResUI.menuSubEdit}"
+                        ToolTip="{x:Static resx:ResUI.menuSubEdit}">
+                        <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18" />
+                    </Button>
+                    <Button
+                        x:Name="btnAddSub"
+                        Margin="0,0,2,0"
+                        Style="{StaticResource QuietToolButton}"
+                        AutomationProperties.Name="{x:Static resx:ResUI.menuSubAdd}"
+                        ToolTip="{x:Static resx:ResUI.menuSubAdd}">
+                        <materialDesign:PackIcon Kind="Plus" Width="18" Height="18" />
+                    </Button>
+                    <Button
+                        x:Name="btnAutofitColumnWidth"
+                        Style="{StaticResource QuietToolButton}"
+                        AutomationProperties.Name="{x:Static resx:ResUI.menuProfileAutofitColumnWidth}"
+                        ToolTip="{x:Static resx:ResUI.menuProfileAutofitColumnWidth}">
+                        <materialDesign:PackIcon Kind="ArrowSplitVertical" Width="18" Height="18" />
+                    </Button>
+                </StackPanel>
+
                 <ListBox
                     x:Name="lstGroup"
-                    MaxHeight="200"
+                    MaxHeight="120"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
                     AutomationProperties.Name="{x:Static resx:ResUI.menuSubscription}"
-                    FontSize="{DynamicResource StdFontSize}"
-                    ItemContainerStyle="{StaticResource MyChipListBoxItem}"
-                    Style="{StaticResource MaterialDesignChoiceChipPrimaryOutlineListBox}">
+                    Style="{StaticResource QuietSegListBox}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Remarks}" />
@@ -36,81 +84,59 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button
-                    x:Name="btnEditSub"
-                    Width="30"
-                    Height="30"
-                    Margin="{StaticResource MarginLeftRight4}"
-                    AutomationProperties.Name="{x:Static resx:ResUI.menuSubEdit}"
-                    Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
-                    ToolTip="{x:Static resx:ResUI.menuSubEdit}">
-                    <materialDesign:PackIcon VerticalAlignment="Center" Kind="Edit" />
-                </Button>
-                <Button
-                    x:Name="btnAddSub"
-                    Width="30"
-                    Height="30"
-                    Margin="{StaticResource MarginLeftRight4}"
-                    AutomationProperties.Name="{x:Static resx:ResUI.menuSubAdd}"
-                    Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
-                    ToolTip="{x:Static resx:ResUI.menuSubAdd}">
-                    <materialDesign:PackIcon VerticalAlignment="Center" Kind="Plus" />
-                </Button>
+                <!--  Mock search: soft fill, no underline field  -->
+                <Border
+                    MinWidth="160"
+                    MaxWidth="260"
+                    Height="32"
+                    Margin="0,0,8,0"
+                    Padding="10,0"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource DesignChipWellBrush}"
+                    CornerRadius="8">
+                    <DockPanel>
+                        <materialDesign:PackIcon
+                            Width="16"
+                            Height="16"
+                            Margin="0,0,6,0"
+                            VerticalAlignment="Center"
+                            DockPanel.Dock="Left"
+                            Foreground="{DynamicResource DesignInk3Brush}"
+                            Kind="Magnify" />
+                        <TextBox
+                            x:Name="txtServerFilter"
+                            VerticalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            materialDesign:TextFieldAssist.DecorationVisibility="Collapsed"
+                            materialDesign:HintAssist.Hint="筛选节点"
+                            materialDesign:HintAssist.Foreground="{DynamicResource DesignInk3Brush}"
+                            materialDesign:TextFieldAssist.HasClearButton="True"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Foreground="{DynamicResource DesignInkBrush}"
+                            CaretBrush="{DynamicResource DesignInkBrush}"
+                            AutomationProperties.Name="{x:Static resx:ResUI.MsgServerTitle}"
+                            Style="{StaticResource DefTextBox}" />
+                    </DockPanel>
+                </Border>
+            </DockPanel>
 
-                <TextBox
-                    x:Name="txtServerFilter"
-                    Width="200"
-                    Margin="{StaticResource MarginLeftRight4}"
-                    VerticalContentAlignment="Center"
-                    materialDesign:HintAssist.Hint="{x:Static resx:ResUI.MsgServerTitle}"
-                    materialDesign:TextFieldAssist.HasClearButton="True"
-                    AutomationProperties.Name="{x:Static resx:ResUI.MsgServerTitle}"
-                    Style="{StaticResource DefTextBox}" />
-
-                <Button
-                    x:Name="btnAutofitColumnWidth"
-                    Width="30"
-                    Height="30"
-                    Margin="{StaticResource MarginLeftRight4}"
-                    AutomationProperties.Name="{x:Static resx:ResUI.menuProfileAutofitColumnWidth}"
-                    Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
-                    ToolTip="{x:Static resx:ResUI.menuProfileAutofitColumnWidth}">
-                    <materialDesign:PackIcon VerticalAlignment="Center" Kind="ArrowSplitVertical" />
-                </Button>
-
-                <Button
-                    x:Name="btnFastRealPing"
-                    Width="30"
-                    Height="30"
-                    Margin="{StaticResource MarginLeftRight4}"
-                    Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
-                    ToolTip="{x:Static resx:ResUI.menuFastRealPing}">
-                    <materialDesign:PackIcon VerticalAlignment="Center" Kind="LightningBolt" />
-                </Button>
-                <Button
-                    x:Name="menuMixedTestServer"
-                    Width="30"
-                    Height="30"
-                    Margin="{StaticResource MarginLeftRight4}"
-                    Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
-                    ToolTip="{x:Static resx:ResUI.menuMixedTestServer}">
-                    <materialDesign:PackIcon VerticalAlignment="Center" Kind="Speedometer" />
-                </Button>
-            </WrapPanel>
             <DataGrid
                 x:Name="lstProfiles"
-                materialDesign:DataGridAssist.CellPadding="2,2"
+                materialDesign:DataGridAssist.CellPadding="8,10"
                 AutoGenerateColumns="False"
-                BorderThickness="1"
+                BorderThickness="0"
+                Background="Transparent"
                 CanUserAddRows="False"
                 CanUserResizeRows="False"
                 CanUserSortColumns="False"
                 EnableRowVirtualization="True"
                 Focusable="True"
-                GridLinesVisibility="All"
-                HeadersVisibility="All"
+                GridLinesVisibility="None"
+                HeadersVisibility="None"
                 IsReadOnly="True"
-                RowHeaderWidth="40"
+                RowHeaderWidth="0"
+                RowHeight="56"
                 Style="{StaticResource DefDataGrid}">
                 <DataGrid.InputBindings>
                     <KeyBinding Command="ApplicationCommands.NotACommand" Gesture="Ctrl+C" />
@@ -261,118 +287,261 @@
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Resources>
+                    <!--  Card-like rows: rounded wash when active / hover  -->
                     <Style BasedOn="{StaticResource MaterialDesignDataGridRow}" TargetType="DataGridRow">
+                        <Setter Property="Margin" Value="8,2" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
                         <EventSetter Event="MouseDoubleClick" Handler="LstProfiles_MouseDoubleClick" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource DesignChipWellBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource DesignSelectSoftBrush}" />
+                            </Trigger>
+                        </Style.Triggers>
                     </Style>
                     <Style BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}" TargetType="DataGridColumnHeader">
                         <EventSetter Event="Click" Handler="LstProfiles_ColumnHeader_Click" />
                     </Style>
-
                     <Style BasedOn="{StaticResource MaterialDesignDataGridCell}" TargetType="DataGridCell">
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                        <Setter Property="Background" Value="Transparent" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
-                                <Setter Property="Foreground" Value="Black" />
-                                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
-                            </DataTrigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                            </Trigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
+                    <!--  Primary card column: name · protocol meta · sub  -->
+                    <base:MyDGTemplateColumn
+                        Width="*"
+                        MinWidth="220"
+                        ExName="Remarks"
+                        Header="{x:Static resx:ResUI.LvRemarks}"
+                        SortMemberPath="Remarks">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="4,2">
+                                    <Border
+                                        Width="4"
+                                        Height="28"
+                                        Margin="0,0,10,0"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource DesignSelectBrush}"
+                                        CornerRadius="4"
+                                        DockPanel.Dock="Left"
+                                        Visibility="{Binding IsActive, Converter={StaticResource BoolToVisConverter}}" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{DynamicResource StdFontSize1}"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding Remarks}" />
+                                            <Border
+                                                Margin="8,0,0,0"
+                                                Padding="6,1"
+                                                VerticalAlignment="Center"
+                                                Background="{DynamicResource DesignSignalSoftBrush}"
+                                                CornerRadius="5"
+                                                Visibility="{Binding IsActive, Converter={StaticResource BoolToVisConverter}}">
+                                                <TextBlock
+                                                    FontSize="10"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{DynamicResource DesignSignalBrush}"
+                                                    Text="{x:Static resx:ResUI.TipActiveServer}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,2,0,0" Orientation="Horizontal">
+                                            <TextBlock
+                                                FontSize="{DynamicResource StdFontSize-1}"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                                                Text="{Binding ConfigType}" />
+                                            <TextBlock
+                                                Margin="6,0,0,0"
+                                                FontSize="{DynamicResource StdFontSize-1}"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                                                Text="·" />
+                                            <TextBlock
+                                                Margin="6,0,0,0"
+                                                FontSize="{DynamicResource StdFontSize-1}"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                                                Text="{Binding Network}" />
+                                            <TextBlock
+                                                Margin="6,0,0,0"
+                                                FontSize="{DynamicResource StdFontSize-1}"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                                                Text="·" />
+                                            <TextBlock
+                                                Margin="6,0,0,0"
+                                                FontSize="{DynamicResource StdFontSize-1}"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                                                Text="{Binding StreamSecurity}" />
+                                            <TextBlock
+                                                Margin="10,0,0,0"
+                                                FontSize="{DynamicResource StdFontSize-1}"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                                                Text="{Binding SubRemarks}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </base:MyDGTemplateColumn>
+
+                    <!--  Metrics: delay + spark + speed (design: instrument row)  -->
+                    <base:MyDGTemplateColumn
+                        Width="120"
+                        ExName="DelayVal"
+                        Header="{x:Static resx:ResUI.LvTestDelay}"
+                        SortMemberPath="Delay">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel
+                                    Margin="0,0,12,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Width="88">
+                                    <TextBlock
+                                        HorizontalAlignment="Right"
+                                        FontSize="{DynamicResource StdFontSize1}"
+                                        FontWeight="Bold"
+                                        Foreground="{Binding Delay, Converter={StaticResource DelayColorConverter}}"
+                                        Text="{Binding DelayVal}" />
+                                    <Border
+                                        Height="3"
+                                        Margin="0,5,0,0"
+                                        Background="{DynamicResource MaterialDesign.Brush.Chip.Background}"
+                                        CornerRadius="99"
+                                        ClipToBounds="True">
+                                        <Border
+                                            Height="3"
+                                            HorizontalAlignment="Left"
+                                            Background="{Binding Delay, Converter={StaticResource DelayColorConverter}}"
+                                            CornerRadius="99"
+                                            Width="{Binding Delay, Converter={StaticResource DelaySparkWidthConverter}}" />
+                                    </Border>
+                                    <TextBlock
+                                        Margin="0,4,0,0"
+                                        HorizontalAlignment="Right"
+                                        FontSize="10"
+                                        Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                                        Text="{Binding SpeedVal}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </base:MyDGTemplateColumn>
+
+                    <!--  Secondary columns: kept for sort/storage but hidden by default (power users can restore via config)  -->
                     <base:MyDGTextColumn
                         Width="80"
                         Binding="{Binding ConfigType}"
                         ExName="ConfigType"
-                        Header="{x:Static resx:ResUI.LvServiceType}" />
-                    <base:MyDGTextColumn
-                        Width="150"
-                        Binding="{Binding Remarks}"
-                        ExName="Remarks"
-                        Header="{x:Static resx:ResUI.LvRemarks}" />
+                        Header="{x:Static resx:ResUI.LvServiceType}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         Width="120"
                         Binding="{Binding Address}"
                         ExName="Address"
-                        Header="{x:Static resx:ResUI.LvAddress}" />
+                        Header="{x:Static resx:ResUI.LvAddress}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         Width="60"
                         Binding="{Binding Port}"
                         ExName="Port"
-                        Header="{x:Static resx:ResUI.LvPort}" />
+                        Header="{x:Static resx:ResUI.LvPort}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         Width="100"
                         Binding="{Binding Network}"
                         ExName="Network"
-                        Header="{x:Static resx:ResUI.LvTransportProtocol}" />
+                        Header="{x:Static resx:ResUI.LvTransportProtocol}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         Width="100"
                         Binding="{Binding StreamSecurity}"
                         ExName="StreamSecurity"
-                        Header="{x:Static resx:ResUI.LvTLS}" />
+                        Header="{x:Static resx:ResUI.LvTLS}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         Width="100"
                         Binding="{Binding SubRemarks}"
                         ExName="SubRemarks"
-                        Header="{x:Static resx:ResUI.LvSubscription}" />
-                    <base:MyDGTextColumn
-                        Width="100"
-                        Binding="{Binding DelayVal}"
-                        ExName="DelayVal"
-                        Header="{x:Static resx:ResUI.LvTestDelay}"
-                        SortMemberPath="Delay">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="{x:Type TextBlock}">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="Foreground" Value="{Binding Delay, Converter={StaticResource DelayColorConverter}}" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </base:MyDGTextColumn>
+                        Header="{x:Static resx:ResUI.LvSubscription}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         Width="100"
                         Binding="{Binding SpeedVal}"
                         ExName="SpeedVal"
-                        Header="{x:Static resx:ResUI.LvTestSpeed}">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="{x:Type TextBlock}">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </base:MyDGTextColumn>
-
+                        Header="{x:Static resx:ResUI.LvTestSpeed}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         x:Name="colTodayUp"
                         Width="100"
                         Binding="{Binding TodayUp}"
                         ExName="TodayUp"
-                        Header="{x:Static resx:ResUI.LvTodayUploadDataAmount}" />
-
+                        Header="{x:Static resx:ResUI.LvTodayUploadDataAmount}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         x:Name="colIpInfo"
                         Width="100"
                         Binding="{Binding IpInfo}"
                         ExName="IpInfo"
-                        Header="{x:Static resx:ResUI.LvTestIpInfo}" />
-
+                        Header="{x:Static resx:ResUI.LvTestIpInfo}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         x:Name="colTodayDown"
                         Width="100"
                         Binding="{Binding TodayDown}"
                         ExName="TodayDown"
-                        Header="{x:Static resx:ResUI.LvTodayDownloadDataAmount}" />
+                        Header="{x:Static resx:ResUI.LvTodayDownloadDataAmount}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         x:Name="colTotalUp"
                         Width="100"
                         Binding="{Binding TotalUp}"
                         ExName="TotalUp"
-                        Header="{x:Static resx:ResUI.LvTotalUploadDataAmount}" />
+                        Header="{x:Static resx:ResUI.LvTotalUploadDataAmount}"
+                        Visibility="Collapsed" />
                     <base:MyDGTextColumn
                         x:Name="colTotalDown"
                         Width="100"
                         Binding="{Binding TotalDown}"
                         ExName="TotalDown"
-                        Header="{x:Static resx:ResUI.LvTotalDownloadDataAmount}" />
+                        Header="{x:Static resx:ResUI.LvTotalDownloadDataAmount}"
+                        Visibility="Collapsed" />
                 </DataGrid.Columns>
             </DataGrid>
         </DockPanel>
+        <StackPanel
+            x:Name="pnlEmptyProfiles"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsHitTestVisible="False"
+            Visibility="Collapsed">
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="{DynamicResource StdFontSize1}"
+                FontWeight="SemiBold"
+                Foreground="{DynamicResource DesignInk2Brush}"
+                Opacity="0.95"
+                Text="暂无节点" />
+            <TextBlock
+                Margin="0,8,0,0"
+                HorizontalAlignment="Center"
+                Foreground="{DynamicResource DesignInk3Brush}"
+                Text="从订阅导入，或使用上方 + 添加节点" />
+        </StackPanel>
     </Grid>
 </reactiveui:ReactiveUserControl>

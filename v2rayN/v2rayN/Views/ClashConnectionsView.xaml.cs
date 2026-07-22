@@ -1,3 +1,6 @@
+using System.Collections.Specialized;
+using System.Reactive.Disposables;
+using System.Windows;
 using System.Windows.Controls;
 using v2rayN.Base;
 
@@ -30,6 +33,25 @@ public partial class ClashConnectionsView
             this.Bind(ViewModel, vm => vm.HostFilter, v => v.txtHostFilter.Text).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.ConnectionCloseAllCmd, v => v.btnConnectionCloseAll).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.AutoRefresh, v => v.togAutoRefresh.IsChecked).DisposeWith(disposables);
+
+            void RefreshEmpty()
+            {
+                if (pnlEmptyConnections == null || ViewModel == null)
+                {
+                    return;
+                }
+
+                var empty = ViewModel.ConnectionItems == null || ViewModel.ConnectionItems.Count == 0;
+                pnlEmptyConnections.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            NotifyCollectionChangedEventHandler onItems = (_, _) => RefreshEmpty();
+            if (ViewModel?.ConnectionItems is INotifyCollectionChanged ncc)
+            {
+                ncc.CollectionChanged += onItems;
+                Disposable.Create(() => ncc.CollectionChanged -= onItems).DisposeWith(disposables);
+            }
+            RefreshEmpty();
 
             AppEvents.AppExitRequested
                 .AsObservable()

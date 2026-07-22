@@ -27,7 +27,7 @@
 
             <Button
                 x:Name="btnConnectionCloseAll"
-                Classes="IconButton Success"
+                Classes="IconButton Danger"
                 Margin="{StaticResource MarginLr8}"
                 ToolTip.Tip="{x:Static resx:ResUI.menuConnectionCloseAll}">
                 <Button.Content>
@@ -60,7 +60,7 @@
             AutoGenerateColumns="False"
             BorderThickness="1"
             CanUserResizeColumns="True"
-            GridLinesVisibility="All"
+            GridLinesVisibility="Horizontal"
             HeadersVisibility="Column"
             IsReadOnly="True"
             ItemsSource="{Binding ConnectionItems}">

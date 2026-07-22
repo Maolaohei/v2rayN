@@ -77,18 +77,19 @@
                 </WrapPanel>
                 <DataGrid
                     x:Name="lstProfiles"
-                    materialDesign:DataGridAssist.CellPadding="2,2"
+                    materialDesign:DataGridAssist.CellPadding="4,6"
                     AutoGenerateColumns="False"
-                    BorderThickness="1"
+                    BorderThickness="0"
                     CanUserAddRows="False"
                     CanUserResizeRows="False"
                     CanUserSortColumns="False"
                     EnableRowVirtualization="True"
                     Focusable="True"
-                    GridLinesVisibility="All"
-                    HeadersVisibility="All"
+                    GridLinesVisibility="Horizontal"
+                    HeadersVisibility="Column"
                     IsReadOnly="True"
                     RowHeaderWidth="40"
+                    RowHeight="34"
                     SelectionMode="Single"
                     Style="{StaticResource DefDataGrid}">
                     <DataGrid.InputBindings>

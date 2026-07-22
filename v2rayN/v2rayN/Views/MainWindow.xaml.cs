@@ -26,7 +26,6 @@ public partial class MainWindow
         menuCheckUpdate.Click += MenuCheckUpdate_Click;
         btnNewUpdate.Click += MenuCheckUpdate_Click;
         menuBackupAndRestore.Click += MenuBackupAndRestore_Click;
-
         ViewModel = new MainWindowViewModel(UpdateViewHandler);
 
         switch (_config.UiItem.MainGirdOrientation)
@@ -37,6 +36,15 @@ public partial class MainWindow
                 tabClashProxies.Content ??= new ClashProxiesView();
                 tabClashConnections.Content ??= new ClashConnectionsView();
                 gridMain.Visibility = Visibility.Visible;
+                // Ensure side pill tabs and content stay in sync after content assignment.
+                if (lstSideTabs != null)
+                {
+                    lstSideTabs.SelectedIndex = 0;
+                }
+                if (tabMain != null)
+                {
+                    tabMain.SelectedIndex = 0;
+                }
                 break;
 
             case EGirdOrientation.Vertical:
@@ -107,14 +115,37 @@ public partial class MainWindow
             switch (_config.UiItem.MainGirdOrientation)
             {
                 case EGirdOrientation.Horizontal:
-                    this.OneWayBind(ViewModel, vm => vm.ShowClashUI, v => v.tabMsgView.Visibility).DisposeWith(disposables);
-                    this.OneWayBind(ViewModel, vm => vm.ShowClashUI, v => v.tabClashProxies.Visibility).DisposeWith(disposables);
-                    this.OneWayBind(ViewModel, vm => vm.ShowClashUI, v => v.tabClashConnections.Visibility).DisposeWith(disposables);
+                    // Design: 信息 / 代理 / 连接 always visible (no clash-gate hide).
+                    // Views handle empty data when core has no Clash API.
+                    tabMsgView.Visibility = Visibility.Visible;
+                    tabClashProxies.Visibility = Visibility.Visible;
+                    tabClashConnections.Visibility = Visibility.Visible;
+                    if (lstSideTabs != null)
+                    {
+                        foreach (var item in lstSideTabs.Items)
+                        {
+                            if (item is System.Windows.Controls.ListBoxItem lbi)
+                            {
+                                lbi.Visibility = Visibility.Visible;
+                            }
+                        }
+                    }
+
                     this.Bind(ViewModel, vm => vm.TabMainSelectedIndex, v => v.tabMain.SelectedIndex).DisposeWith(disposables);
+                    this.WhenAnyValue(x => x.ViewModel!.TabMainSelectedIndex)
+                        .ObserveOn(RxSchedulers.MainThreadScheduler)
+                        .Subscribe(idx =>
+                        {
+                            if (lstSideTabs != null && lstSideTabs.SelectedIndex != idx && idx >= 0 && idx < lstSideTabs.Items.Count)
+                            {
+                                lstSideTabs.SelectedIndex = idx;
+                            }
+                        })
+                        .DisposeWith(disposables);
                     break;
 
                 case EGirdOrientation.Vertical:
-                    this.OneWayBind(ViewModel, vm => vm.ShowClashUI, v => v.tabMsgView1.Visibility).DisposeWith(disposables);
+                    // Vertical layout: info always on; clash tabs gated.
                     this.OneWayBind(ViewModel, vm => vm.ShowClashUI, v => v.tabClashProxies1.Visibility).DisposeWith(disposables);
                     this.OneWayBind(ViewModel, vm => vm.ShowClashUI, v => v.tabClashConnections1.Visibility).DisposeWith(disposables);
                     this.Bind(ViewModel, vm => vm.TabMainSelectedIndex, v => v.tabMain1.SelectedIndex).DisposeWith(disposables);
@@ -445,6 +476,32 @@ public partial class MainWindow
         else if (_config.UiItem.MainGirdOrientation == EGirdOrientation.Vertical)
         {
             ConfigHandler.SaveMainGirdHeight(_config, gridMain1.RowDefinitions[0].ActualHeight, gridMain1.RowDefinitions[2].ActualHeight);
+        }
+    }
+
+    private void LstSideTabs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (tabMain == null || lstSideTabs == null)
+        {
+            return;
+        }
+
+        var index = lstSideTabs.SelectedIndex;
+        if (index < 0)
+        {
+            return;
+        }
+
+        // Keep TabControl content in sync with pill selection.
+        if (tabMain.SelectedIndex != index)
+        {
+            tabMain.SelectedIndex = index;
+        }
+
+        // Push into VM so other layouts / logic see the same selection.
+        if (ViewModel != null && ViewModel.TabMainSelectedIndex != index)
+        {
+            ViewModel.TabMainSelectedIndex = index;
         }
     }
 

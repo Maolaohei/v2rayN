@@ -45,7 +45,8 @@
                 Grid.Column="0"
                 VerticalAlignment="Center"
                 Style="{StaticResource ToolbarTextBlock}"
-                Text="{x:Static resx:ResUI.TbSettingsColor}" />
+                Text="{x:Static resx:ResUI.TbSettingsColor}"
+                Visibility="Collapsed" />
             <ComboBox
                 x:Name="cmbSwatches"
                 Grid.Row="2"
@@ -53,7 +54,8 @@
                 Width="120"
                 Margin="{StaticResource Margin8}"
                 DisplayMemberPath="Name"
-                Style="{StaticResource DefComboBox}" />
+                Style="{StaticResource DefComboBox}"
+                Visibility="Collapsed" />
 
             <TextBlock
                 Grid.Row="3"

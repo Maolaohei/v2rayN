@@ -111,7 +111,7 @@
                     CanUserResizeRows="False"
                     CanUserSortColumns="False"
                     EnableRowVirtualization="True"
-                    GridLinesVisibility="All"
+                    GridLinesVisibility="Horizontal"
                     HeadersVisibility="Column"
                     IsReadOnly="True"
                     Style="{StaticResource DefDataGrid}">

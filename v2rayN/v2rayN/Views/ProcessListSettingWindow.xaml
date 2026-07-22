@@ -46,27 +46,27 @@
             Margin="{StaticResource Margin4}"
             DockPanel.Dock="Bottom"
             FontSize="12"
-            Foreground="Gray"
+            Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
             Text="当前生效: 0 个进程" />
 
         <Border
             Margin="{StaticResource Margin4}"
             DockPanel.Dock="Top"
-            Padding="8"
-            BorderBrush="LightGray"
+            Padding="12"
+            BorderBrush="{DynamicResource MaterialDesign.Brush.TextBox.OutlineBorder}"
             BorderThickness="1"
-            CornerRadius="4"
-            Background="#F5F5F5">
+            CornerRadius="10"
+            Background="{DynamicResource MaterialDesign.Brush.Card.Background}">
             <StackPanel>
                 <TextBlock
                     Margin="0,0,0,4"
-                    FontWeight="Bold"
+                    FontWeight="SemiBold"
                     Text="劫持状态" />
                 <TextBlock
                     x:Name="txtModeSummary"
                     Margin="0,0,0,6"
                     FontSize="12"
-                    Foreground="#333"
+                    Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
                     Text="当前模式: 检查中..." />
                 <Grid Margin="0,0,0,6">
                     <Grid.ColumnDefinitions>
@@ -81,13 +81,13 @@
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="WinDivert 驱动" />
                     <TextBlock x:Name="txtWinDivert" Grid.Row="0" Grid.Column="1" Text="检查中..." />
-                    <TextBlock x:Name="txtWinDivertPath" Grid.Row="0" Grid.Column="2" Foreground="Gray" Text="" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="txtWinDivertPath" Grid.Row="0" Grid.Column="2" Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}" Text="" TextTrimming="CharacterEllipsis" />
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="ProxyBridgeCore" />
                     <TextBlock x:Name="txtProxyBridge" Grid.Row="1" Grid.Column="1" Text="检查中..." />
-                    <TextBlock x:Name="txtProxyBridgePath" Grid.Row="1" Grid.Column="2" Foreground="Gray" Text="" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="txtProxyBridgePath" Grid.Row="1" Grid.Column="2" Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}" Text="" TextTrimming="CharacterEllipsis" />
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="NetBridgeBridge" />
                     <TextBlock x:Name="txtNetBridgeBridge" Grid.Row="2" Grid.Column="1" Text="检查中..." />
-                    <TextBlock x:Name="txtNetBridgeBridgeInfo" Grid.Row="2" Grid.Column="2" Foreground="Gray" Text="" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="txtNetBridgeBridgeInfo" Grid.Row="2" Grid.Column="2" Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}" Text="" TextTrimming="CharacterEllipsis" />
                 </Grid>
                 <StackPanel
                     Margin="0,4,0,0"
@@ -162,7 +162,7 @@
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
                                 IsHitTestVisible="False"
-                                Foreground="Gray"
+                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                                 FontSize="12"
                                 Text="搜索进程名或应用名" />
                         </Grid>
@@ -226,7 +226,7 @@
                             Margin="6,0,0,0"
                             VerticalAlignment="Center"
                             IsHitTestVisible="False"
-                            Foreground="Gray"
+                            Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                             FontSize="12"
                             Text="输入进程名或搜索..." />
                     </Grid>

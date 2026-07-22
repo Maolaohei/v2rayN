@@ -255,6 +255,16 @@ public partial class ProfilesView : ReactiveUserControl<ProfilesViewModel>
     private void LstProfiles_LoadingRow(object? sender, DataGridRowEventArgs e)
     {
         e.Row.Header = $" {e.Row.Index + 1}";
+
+        // Soft active-row wash (mock: blue-soft background + left indicator).
+        if (e.Row.DataContext is ProfileItemModel item && item.IsActive)
+        {
+            e.Row.Classes.Add("ActiveProfile");
+        }
+        else
+        {
+            e.Row.Classes.Remove("ActiveProfile");
+        }
     }
 
     //private void LstProfiles_ColumnHeader_Click(object? sender, RoutedEventArgs e)

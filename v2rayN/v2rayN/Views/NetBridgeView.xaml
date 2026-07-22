@@ -15,84 +15,78 @@
     x:TypeArguments="vms:NetBridgeViewModel"
     Style="{StaticResource ViewGlobal}"
     mc:Ignorable="d">
-    <DockPanel Margin="{StaticResource Margin8}">
-        <StackPanel
-            Margin="{StaticResource Margin8}"
-            DockPanel.Dock="Top"
-            Orientation="Horizontal">
-
-            <ToggleButton
-                x:Name="togEnableNetBridge"
-                Margin="{StaticResource Margin8}"
-                HorizontalAlignment="Left" />
-
-            <TextBlock
-                Width="500"
-                Margin="{StaticResource Margin8}"
-                VerticalAlignment="Center"
-                Style="{StaticResource ToolbarTextBlock}"
-                Text="{x:Static resx:ResUI.TbEnableNetBridge}"
-                TextWrapping="Wrap" />
-        </StackPanel>
-
-        <StackPanel
-            Margin="{StaticResource Margin8}"
-            DockPanel.Dock="Top"
-            Orientation="Horizontal">
-
-            <ToggleButton
-                x:Name="togEnabletDnsViaProxy"
-                Margin="{StaticResource Margin8}"
-                HorizontalAlignment="Left" />
-
-            <TextBlock
-                Width="500"
-                Margin="{StaticResource Margin8}"
-                VerticalAlignment="Center"
-                Style="{StaticResource ToolbarTextBlock}"
-                Text="{x:Static resx:ResUI.TbEnabletDnsViaProxy}"
-                TextWrapping="Wrap" />
-        </StackPanel>
-
+    <Border Style="{StaticResource ContentCard}" Margin="{StaticResource Margin8}" Padding="14">
         <DockPanel>
             <StackPanel
-                Margin="{StaticResource Margin8}"
+                Margin="0,0,0,10"
                 DockPanel.Dock="Top"
                 Orientation="Horizontal">
-
+                <ToggleButton
+                    x:Name="togEnableNetBridge"
+                    Margin="0,0,10,0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                    materialDesign:ToggleButtonAssist.SwitchTrackOnBackground="{DynamicResource DesignSelectBrush}"
+                    materialDesign:ToggleButtonAssist.SwitchTrackOffBackground="{DynamicResource DesignChipWellBrush}" />
                 <TextBlock
-                    Width="500"
-                    Margin="{StaticResource Margin8}"
                     VerticalAlignment="Center"
                     Style="{StaticResource ToolbarTextBlock}"
+                    Text="{x:Static resx:ResUI.TbEnableNetBridge}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel
+                Margin="0,0,0,10"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal">
+                <ToggleButton
+                    x:Name="togEnabletDnsViaProxy"
+                    Margin="0,0,10,0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                    materialDesign:ToggleButtonAssist.SwitchTrackOnBackground="{DynamicResource DesignSelectBrush}"
+                    materialDesign:ToggleButtonAssist.SwitchTrackOffBackground="{DynamicResource DesignChipWellBrush}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{StaticResource ToolbarTextBlock}"
+                    Text="{x:Static resx:ResUI.TbEnabletDnsViaProxy}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel
+                Margin="0,0,0,8"
+                DockPanel.Dock="Top">
+                <TextBlock
+                    Style="{StaticResource ToolbarTextBlock}"
+                    Foreground="{DynamicResource DesignInk3Brush}"
                     Text="{x:Static resx:ResUI.NetBridgeRuleTips}"
                     TextWrapping="Wrap" />
             </StackPanel>
 
             <StackPanel
-                Margin="{StaticResource Margin8}"
+                Margin="0,10,0,0"
                 HorizontalAlignment="Right"
                 DockPanel.Dock="Bottom"
                 Orientation="Horizontal">
-
                 <Button
                     x:Name="btnSave"
-                    Width="100"
+                    MinWidth="100"
                     Content="{x:Static resx:ResUI.TbSaveNetBridgeRule}"
                     IsDefault="True"
-                    Style="{StaticResource DefButton}" />
+                    Style="{StaticResource DefButtonPrimary}" />
             </StackPanel>
 
             <TextBox
                 x:Name="txtRuleProcess"
-                Margin="{StaticResource Margin8}"
+                Margin="0,4,0,0"
                 VerticalAlignment="Stretch"
                 AcceptsReturn="True"
+                Background="{DynamicResource DesignChipWellBrush}"
+                BorderBrush="{DynamicResource DesignLineBrush}"
                 BorderThickness="1"
                 Style="{StaticResource DefTextBox}"
                 TextWrapping="Wrap"
                 VerticalScrollBarVisibility="Auto" />
-
         </DockPanel>
-    </DockPanel>
+    </Border>
 </reactiveui:ReactiveUserControl>

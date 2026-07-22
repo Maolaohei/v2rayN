@@ -25,25 +25,25 @@
                 MinWidth="100"
                 Margin="{StaticResource MarginLeftRight8}"
                 Content="{x:Static resx:ResUI.TunHealthCheckOneClickFix}"
-                Style="{StaticResource DefButton}" />
+                Style="{StaticResource DefButtonPrimary}" />
             <Button
                 x:Name="btnCopy"
                 Width="100"
                 Margin="{StaticResource MarginLeftRight8}"
                 Content="{x:Static resx:ResUI.TunHealthCheckCopyReport}"
-                Style="{StaticResource DefButton}" />
+                Style="{StaticResource DefButtonSecondary}" />
             <Button
                 x:Name="btnExport"
                 Width="100"
                 Margin="{StaticResource MarginLeftRight8}"
                 Content="{x:Static resx:ResUI.TunHealthCheckExportJson}"
-                Style="{StaticResource DefButton}" />
+                Style="{StaticResource DefButtonSecondary}" />
             <Button
                 x:Name="btnClose"
                 Width="100"
                 Content="{x:Static resx:ResUI.TunHealthCheckClose}"
                 IsCancel="True"
-                Style="{StaticResource DefButton}" />
+                Style="{StaticResource DefButtonQuiet}" />
         </StackPanel>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -75,7 +75,7 @@
                             Grid.Row="0"
                             Grid.Column="2"
                             FontSize="14"
-                            Foreground="Gray"
+                            Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                             VerticalAlignment="Center" />
                         <StackPanel
                             Grid.Row="1"
@@ -86,7 +86,7 @@
                             <TextBlock
                                 x:Name="txtScoreLabel"
                                 FontSize="14"
-                                Foreground="Gray" />
+                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}" />
                             <TextBlock
                                 x:Name="txtScore"
                                 FontSize="14"
@@ -119,12 +119,12 @@
                                                 VerticalAlignment="Center" />
                                             <TextBlock
                                                 Margin="12,0,0,0"
-                                                Foreground="Gray"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                                                 Text="{Binding StatusText}"
                                                 VerticalAlignment="Center" />
                                             <TextBlock
                                                 Margin="12,0,0,0"
-                                                Foreground="Gray"
+                                                Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                                                 FontSize="12"
                                                 Text="{Binding Duration}"
                                                 VerticalAlignment="Center" />
@@ -140,7 +140,7 @@
                                                     Orientation="Horizontal">
                                                     <TextBlock
                                                         Width="200"
-                                                        Foreground="Gray"
+                                                        Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
                                                         Text="{Binding Key}" />
                                                     <TextBlock Text="{Binding Value}" />
                                                 </StackPanel>
@@ -204,12 +204,12 @@
                                     <Border
                                         Margin="0,4"
                                         Padding="8"
-                                        Background="#FFF3E0"
+                                        Background="{DynamicResource DesignWarnSoftBrush}"
                                         CornerRadius="4">
                                         <TextBlock
                                             Text="{Binding}"
                                             TextWrapping="Wrap"
-                                            Foreground="#E65100" />
+                                            Foreground="{DynamicResource DesignWarnBrush}" />
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

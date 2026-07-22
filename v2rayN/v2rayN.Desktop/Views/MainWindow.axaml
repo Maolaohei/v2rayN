@@ -18,9 +18,11 @@
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
     <dialogHost:DialogHost
-        Background="Gray"
+        BlurBackground="True"
+        BlurBackgroundRadius="8"
         CloseOnClickAway="True"
-        DisableOpeningAnimation="True">
+        DisableOpeningAnimation="False"
+        OverlayBackground="#61000000">
         <DockPanel>
             <DockPanel Margin="{StaticResource Margin8}" DockPanel.Dock="Top">
                 <ContentControl x:Name="conTheme" DockPanel.Dock="Right" />

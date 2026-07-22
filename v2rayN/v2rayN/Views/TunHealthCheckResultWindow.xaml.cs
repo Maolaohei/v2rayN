@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Media;
 using ServiceLib.HealthCheck;
 using ServiceLib.HealthCheck.Models;
@@ -34,14 +35,31 @@ public partial class TunHealthCheckResultWindow : Window
         PopulateReport();
     }
 
+
+    private static Brush BrushFromResource(string key, Brush fallback)
+    {
+        try
+        {
+            if (Application.Current?.TryFindResource(key) is Brush brush)
+            {
+                return brush;
+            }
+        }
+        catch
+        {
+            // ignore resource lookup failures during early init
+        }
+
+        return fallback;
+    }
     private void PopulateReport()
     {
         var overallColor = _report.OverallStatus switch
         {
-            HealthCheckOverallStatus.AllPass => Brushes.Green,
-            HealthCheckOverallStatus.HasWarning => new SolidColorBrush(Color.FromRgb(0xF5, 0x7C, 0x00)),
-            HealthCheckOverallStatus.HasFailure => Brushes.Red,
-            _ => Brushes.Gray
+            HealthCheckOverallStatus.AllPass => BrushFromResource("DesignSignalBrush", Brushes.Green),
+            HealthCheckOverallStatus.HasWarning => BrushFromResource("DesignWarnBrush", new SolidColorBrush(Color.FromRgb(0xC4, 0x7B, 0x12))),
+            HealthCheckOverallStatus.HasFailure => BrushFromResource("DesignDangerBrush", Brushes.Red),
+            _ => BrushFromResource("DesignInk3Brush", Brushes.Gray)
         };
 
         var overallText = _report.OverallStatus switch
@@ -66,7 +84,7 @@ public partial class TunHealthCheckResultWindow : Window
             var avg = (int)scores.Average();
             txtScoreLabel.Text = string.Format(ResUI.TunHealthCheckScore, avg, GradeFromScore(avg)).Split(':')[0] + ":";
             txtScore.Text = $"{avg}/100 ({GradeFromScore(avg)})";
-            txtScore.Foreground = avg >= 80 ? Brushes.Green : avg >= 50 ? new SolidColorBrush(Color.FromRgb(0xF5, 0x7C, 0x00)) : Brushes.Red;
+            txtScore.Foreground = avg >= 80 ? BrushFromResource("DesignSignalBrush", Brushes.Green) : avg >= 50 ? BrushFromResource("DesignWarnBrush", new SolidColorBrush(Color.FromRgb(0xC4, 0x7B, 0x12))) : BrushFromResource("DesignDangerBrush", Brushes.Red);
         }
         else
         {
@@ -88,12 +106,12 @@ public partial class TunHealthCheckResultWindow : Window
             },
             StatusColor = r.Status switch
             {
-                HealthCheckStatus.Pass => Brushes.Green,
-                HealthCheckStatus.Warning => new SolidColorBrush(Color.FromRgb(0xF5, 0x7C, 0x00)),
-                HealthCheckStatus.Fail => Brushes.Red,
-                HealthCheckStatus.Skipped => Brushes.Gray,
-                HealthCheckStatus.Error => Brushes.Red,
-                _ => Brushes.Gray
+                HealthCheckStatus.Pass => BrushFromResource("DesignSignalBrush", Brushes.Green),
+                HealthCheckStatus.Warning => BrushFromResource("DesignWarnBrush", new SolidColorBrush(Color.FromRgb(0xC4, 0x7B, 0x12))),
+                HealthCheckStatus.Fail => BrushFromResource("DesignDangerBrush", Brushes.Red),
+                HealthCheckStatus.Skipped => BrushFromResource("DesignInk3Brush", Brushes.Gray),
+                HealthCheckStatus.Error => BrushFromResource("DesignDangerBrush", Brushes.Red),
+                _ => BrushFromResource("DesignInk3Brush", Brushes.Gray)
             },
             Duration = $"{r.Duration.TotalMilliseconds:F0}ms",
             IsExpanded = r.Status is HealthCheckStatus.Fail or HealthCheckStatus.Warning,
@@ -285,7 +303,7 @@ public partial class TunHealthCheckResultWindow : Window
     {
         public string LayerName { get; set; } = "";
         public string StatusText { get; set; } = "";
-        public Brush StatusColor { get; set; } = Brushes.Gray;
+        public Brush StatusColor { get; set; } = BrushFromResource("DesignInk3Brush", Brushes.Gray);
         public string Duration { get; set; } = "";
         public bool IsExpanded { get; set; }
         public List<DetailItem> Details { get; set; } = [];

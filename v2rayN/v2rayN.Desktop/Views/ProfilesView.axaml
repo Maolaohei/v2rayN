@@ -98,12 +98,12 @@
             <DataGrid
                 x:Name="lstProfiles"
                 AutoGenerateColumns="False"
-                BorderThickness="1"
+                BorderThickness="0"
                 CanUserReorderColumns="True"
                 CanUserResizeColumns="True"
                 Classes.InsetContent="True"
-                GridLinesVisibility="All"
-                HeadersVisibility="All"
+                GridLinesVisibility="Horizontal"
+                HeadersVisibility="Column"
                 IsReadOnly="True"
                 ItemsSource="{Binding ProfileItems}">
                 <DataGrid.KeyBindings>
@@ -215,18 +215,27 @@
                         </DataGridTemplateColumn.Header>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Margin="{StaticResource MarginLr8}" Orientation="Horizontal">
-                                    <Label
-                                        Margin="{StaticResource MarginLr4}"
-                                        Classes="Solid Red"
-                                        Content="{x:Static resx:ResUI.TipActiveServer}"
-                                        IsVisible="{Binding IsActive}"
-                                        Theme="{DynamicResource TagLabel}" />
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
+                                <DockPanel Margin="{StaticResource MarginLr4}">
+                                    <Border
+                                        Width="4"
+                                        Height="22"
+                                        Margin="0,0,8,0"
                                         VerticalAlignment="Center"
-                                        Text="{Binding Remarks}" />
-                                </StackPanel>
+                                        Background="{DynamicResource SemiColorPrimary}"
+                                        CornerRadius="2"
+                                        DockPanel.Dock="Left"
+                                        IsVisible="{Binding IsActive}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Label
+                                            Classes="Solid Blue"
+                                            Content="{x:Static resx:ResUI.TipActiveServer}"
+                                            IsVisible="{Binding IsActive}"
+                                            Theme="{DynamicResource TagLabel}" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Remarks}" />
+                                    </StackPanel>
+                                </DockPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

@@ -9,130 +9,310 @@
     xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
     xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
     xmlns:vms="clr-namespace:ServiceLib.ViewModels;assembly=ServiceLib"
-    d:DesignHeight="450"
-    d:DesignWidth="800"
+    d:DesignHeight="80"
+    d:DesignWidth="1100"
     x:TypeArguments="vms:StatusBarViewModel"
     Style="{StaticResource ViewGlobal}"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <!--  System-style segmented track: gray well + selected white pill  -->
+        <Style x:Key="StatusSegListBoxItem" TargetType="{x:Type ListBoxItem}">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesign.Brush.Foreground}" />
+            <Setter Property="FontSize" Value="{DynamicResource StdFontSize-1}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <Border
+                            x:Name="Bd"
+                            Padding="12,0"
+                            Background="{TemplateBinding Background}"
+                            BorderThickness="0"
+                            CornerRadius="7"
+                            SnapsToDevicePixels="True">
+                            <ContentPresenter
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignCardBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource DesignLineBrush}" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="1" />
+                                <Setter TargetName="Bd" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.12" Direction="270" Color="{DynamicResource DesignShadowColor}" />
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource DesignChipWellBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="StatusSegListBox" TargetType="{x:Type ListBox}">
+            <Setter Property="Background" Value="{DynamicResource DesignChipWellBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource StatusSegListBoxItem}" />
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBox}">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderThickness="0"
+                            CornerRadius="9"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style
+            x:Key="StatusGhostButton"
+            BasedOn="{StaticResource MaterialDesignOutlinedButton}"
+            TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="FontSize" Value="{DynamicResource StdFontSize-1}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DesignLineStrongBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource DesignCardBrush}" />
+            <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="9" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource DesignSurfaceBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource DesignLineStrongBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource DesignChipWellBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource DesignLineStrongBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style
+            x:Key="StatusGhostCombo"
+            BasedOn="{StaticResource MaterialDesignOutlinedComboBox}"
+            TargetType="{x:Type ComboBox}">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="FontSize" Value="{DynamicResource StdFontSize-1}" />
+            <Setter Property="Foreground" Value="{DynamicResource DesignInkBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DesignLineStrongBrush}" />
+            <Setter Property="materialDesign:TextFieldAssist.DecorationVisibility" Value="Collapsed" />
+            <Setter Property="materialDesign:HintAssist.IsFloating" Value="False" />
+            <Setter Property="materialDesign:TextFieldAssist.TextFieldCornerRadius" Value="9" />
+        </Style>
+    </UserControl.Resources>
     <Grid>
-        <materialDesign:ColorZone
-            Height="auto"
-            Margin="{StaticResource Margin4}"
-            Mode="Standard">
-            <DockPanel>
-                <StackPanel
-                    Margin="{StaticResource MarginLeftRight8}"
-                    VerticalAlignment="Center"
-                    DockPanel.Dock="Right">
-                    <TextBlock
-                        x:Name="txtSpeedProxyDisplay"
-                        HorizontalAlignment="Right"
-                        Style="{StaticResource StatusbarItem}" />
-                    <Border Margin="1" />
-                    <TextBlock
-                        x:Name="txtSpeedDirectDisplay"
-                        HorizontalAlignment="Right"
-                        Style="{StaticResource StatusbarItem}" />
-                </StackPanel>
+        <!--  Protection Capsule: floating glass bar  -->
+        <Border
+            MinHeight="68"
+            Margin="10,6,10,10"
+            Padding="14,12"
+            Background="{DynamicResource DesignCardBrush}"
+            BorderBrush="{DynamicResource DesignLineBrush}"
+            BorderThickness="1"
+            CornerRadius="16">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.08" Direction="270" Color="{DynamicResource DesignShadowColor}" />
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" MinWidth="180" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
+                <!--  Left: protection hero  -->
                 <StackPanel
-                    Width="Auto"
-                    Margin="{StaticResource MarginLeftRight8}"
+                    Grid.Column="0"
                     VerticalAlignment="Center"
-                    DockPanel.Dock="Left">
-                    <TextBlock x:Name="txtInboundDisplay" Style="{StaticResource StatusbarItem}" />
-                    <Border Margin="1" />
-                    <TextBlock x:Name="txtInboundLanDisplay" Style="{StaticResource StatusbarItem}" />
-                </StackPanel>
-
-                <StackPanel
-                    x:Name="spEnableTun"
-                    Width="Auto"
-                    Margin="{StaticResource MarginLeftRight8}"
-                    VerticalAlignment="Center"
-                    DockPanel.Dock="Left"
                     Orientation="Horizontal">
-                    <TextBlock
-                        Margin="{StaticResource MarginLeftRight8}"
+                    <Border
+                        x:Name="brdStatusOrb"
+                        Width="38"
+                        Height="38"
+                        Margin="0,0,10,0"
+                        Background="{DynamicResource DesignOrbOffBrush}"
+                        CornerRadius="12">
+                        <materialDesign:PackIcon
+                            x:Name="icoStatusOrb"
+                            Width="18"
+                            Height="18"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Foreground="White"
+                            Kind="Check" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock
+                            x:Name="txtConnectionState"
+                            FontSize="14"
+                            FontWeight="Bold"
+                            Text="—"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            x:Name="txtRunningServerDisplay"
+                            Margin="0,2,0,0"
+                            FontSize="{DynamicResource StdFontSize-1}"
+                            Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!--  Mid: mode only (no Legacy/TUN clutter)  -->
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="16,0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <ListBox
+                        x:Name="lstSystemProxy"
+                        Margin="0,0,10,0"
                         VerticalAlignment="Center"
-                        Style="{StaticResource StatusbarItem}"
-                        Text="{x:Static resx:ResUI.TbLegacyProtect}" />
-                    <ToggleButton
-                        x:Name="togEnableLegacyProtect"
-                        Margin="{StaticResource Margin4}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resx:ResUI.TbLegacyProtect}" />
+                        Style="{StaticResource StatusSegListBox}"
+                        ToolTip="{x:Static resx:ResUI.menuSystemproxy}">
+                        <!--  Short labels for segment density (design: 清除 / 系统代理 / 不改动 / PAC)  -->
+                        <ListBoxItem Content="清除" Tag="Clear" />
+                        <ListBoxItem Content="系统代理" Tag="Set" />
+                        <ListBoxItem Content="不改动" Tag="Nothing" />
+                        <ListBoxItem
+                            x:Name="lstSystemProxyPac"
+                            Content="PAC"
+                            Tag="Pac" />
+                    </ListBox>
+
+                    <!--  Routing ghost opens real ComboBox (always shows 路由 · name when closed)  -->
+                    <Grid
+                        Margin="0,0,8,0"
+                        MinWidth="140"
+                        MaxWidth="200"
+                        VerticalAlignment="Center">
+                        <ComboBox
+                            x:Name="cmbRoutings2"
+                            Height="30"
+                            VerticalAlignment="Center"
+                            AutomationProperties.Name="{x:Static resx:ResUI.menuRouting}"
+                            DisplayMemberPath="Remarks"
+                            Style="{StaticResource StatusGhostCombo}"
+                            ToolTip="{x:Static resx:ResUI.menuRouting}" />
+                        <Button
+                            x:Name="btnRoutingDisplay"
+                            Height="30"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Style="{StaticResource StatusGhostButton}"
+                            Content="路由 · —"
+                            IsHitTestVisible="True"
+                            Click="BtnRoutingDisplay_Click"
+                            ToolTip="{x:Static resx:ResUI.menuRouting}" />
+                    </Grid>
+
                     <Button
                         x:Name="btnProcessListSetting"
-                        Margin="{StaticResource Margin4}"
+                        Margin="0,0,0,0"
                         VerticalAlignment="Center"
-                        Padding="6,2"
-                        FontSize="11"
+                        Style="{StaticResource StatusGhostButton}"
                         ToolTip="选择需要劫持流量的进程"
-                        Content="..." />
-                    <Separator
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Width="1" />
-                    <TextBlock
-                        Margin="{StaticResource MarginLeftRight8}"
-                        VerticalAlignment="Center"
-                        Style="{StaticResource StatusbarItem}"
-                        Text="{x:Static resx:ResUI.TbEnableTunAs}" />
-                    <ToggleButton
-                        x:Name="togEnableTun"
-                        Margin="{StaticResource Margin4}"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        AutomationProperties.Name="{x:Static resx:ResUI.TbEnableTunAs}" />
-                    <Button
-                        x:Name="btnTunHealthCheck"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Padding="6,2"
-                        FontSize="11"
-                        ToolTip="TUN Health Check"
-                        Content="{x:Static resx:ResUI.BtnHealthCheck}" />
-                </StackPanel>
+                        Content="进程劫持" />
 
-                <StackPanel
-                    Margin="{StaticResource MarginLeftRight8}"
-                    VerticalAlignment="Center"
-                    DockPanel.Dock="Left"
-                    Orientation="Horizontal">
+                    <!--  Keep bound controls alive but off the primary surface  -->
+                    <StackPanel
+                        x:Name="spEnableTun"
+                        Width="0"
+                        Height="0"
+                        Visibility="Collapsed"
+                        Orientation="Horizontal">
+                        <ToggleButton x:Name="togEnableLegacyProtect" />
+                        <ToggleButton x:Name="togEnableTun" />
+                        <Button x:Name="btnTunHealthCheck" />
+                    </StackPanel>
+
                     <ComboBox
                         x:Name="cmbSystemProxy"
-                        Width="160"
-                        Margin="{StaticResource MarginLeftRight8}"
-                        materialDesign:HintAssist.Hint="{x:Static resx:ResUI.menuSystemproxy}"
-                        AutomationProperties.Name="{x:Static resx:ResUI.menuSystemproxy}"
-                        FontSize="{DynamicResource StdFontSize}"
-                        Style="{StaticResource MaterialDesignFloatingHintComboBox}">
+                        Width="0"
+                        Height="0"
+                        Visibility="Collapsed"
+                        IsHitTestVisible="False">
                         <ComboBoxItem Content="{x:Static resx:ResUI.menuSystemProxyClear}" />
                         <ComboBoxItem Content="{x:Static resx:ResUI.menuSystemProxySet}" />
                         <ComboBoxItem Content="{x:Static resx:ResUI.menuSystemProxyNothing}" />
                         <ComboBoxItem Content="{x:Static resx:ResUI.menuSystemProxyPac}" />
                     </ComboBox>
-
-                    <ComboBox
-                        x:Name="cmbRoutings2"
-                        Width="160"
-                        Margin="{StaticResource MarginLeftRight8}"
-                        materialDesign:HintAssist.Hint="{x:Static resx:ResUI.menuRouting}"
-                        AutomationProperties.Name="{x:Static resx:ResUI.menuRouting}"
-                        DisplayMemberPath="Remarks"
-                        FontSize="{DynamicResource StdFontSize}"
-                        Style="{StaticResource MaterialDesignFloatingHintComboBox}" />
                 </StackPanel>
 
-                <StackPanel Margin="{StaticResource MarginLeftRight8}" VerticalAlignment="Center">
-                    <TextBlock x:Name="txtRunningServerDisplay" Style="{StaticResource StatusbarItem}" />
-                    <Border Margin="1" />
-                    <TextBlock x:Name="txtRunningInfoDisplay" Style="{StaticResource StatusbarItem}" />
+                <!--  Right: rates (always reserved width so layout does not jump)  -->
+                <StackPanel
+                    Grid.Column="2"
+                    MinWidth="88"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock
+                            x:Name="txtSpeedProxyDisplay"
+                            FontSize="{DynamicResource StdFontSize-1}"
+                            FontWeight="SemiBold"
+                            HorizontalAlignment="Right"
+                            Text="↓ —"
+                            Style="{StaticResource StatusbarItem}" />
+                        <TextBlock
+                            x:Name="txtSpeedDirectDisplay"
+                            FontSize="{DynamicResource StdFontSize-1}"
+                            Foreground="{DynamicResource MaterialDesign.Brush.Foreground.Light}"
+                            HorizontalAlignment="Right"
+                            Text="↑ —"
+                            Style="{StaticResource StatusbarItem}" />
+                    </StackPanel>
+
+                    <!--  Hidden: still bound for tooltips / parity  -->
+                    <TextBlock
+                        x:Name="txtInboundDisplay"
+                        Width="0"
+                        Height="0"
+                        Visibility="Collapsed" />
+                    <TextBlock
+                        x:Name="txtInboundLanDisplay"
+                        Width="0"
+                        Height="0"
+                        Visibility="Collapsed" />
+                    <TextBlock
+                        x:Name="txtRunningInfoDisplay"
+                        Width="0"
+                        Height="0"
+                        Visibility="Collapsed" />
                 </StackPanel>
-            </DockPanel>
-        </materialDesign:ColorZone>
+            </Grid>
+        </Border>
 
         <tb:TaskbarIcon
             x:Name="tbNotify"
@@ -233,6 +413,22 @@
                             </DockPanel>
                         </MenuItem.Header>
                     </MenuItem>
+                    <Separator />
+                    <!--  Secondary: TUN / Legacy still reachable from tray  -->
+                    <MenuItem
+                        x:Name="menuEnableLegacyProtect"
+                        Height="{StaticResource MenuItemHeight}"
+                        Header="{x:Static resx:ResUI.TbLegacyProtect}"
+                        IsCheckable="True" />
+                    <MenuItem
+                        x:Name="menuEnableTun"
+                        Height="{StaticResource MenuItemHeight}"
+                        Header="{x:Static resx:ResUI.TbEnableTunAs}"
+                        IsCheckable="True" />
+                    <MenuItem
+                        x:Name="menuTunHealthCheck"
+                        Height="{StaticResource MenuItemHeight}"
+                        Header="{x:Static resx:ResUI.BtnHealthCheck}" />
                     <Separator />
                     <MenuItem
                         x:Name="menuAddServerViaClipboard2"

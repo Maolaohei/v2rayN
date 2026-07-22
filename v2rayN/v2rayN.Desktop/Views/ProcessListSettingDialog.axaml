@@ -19,21 +19,21 @@
         <Border
             Grid.Row="0"
             Margin="0,0,0,12"
-            Padding="8"
-            BorderBrush="LightGray"
+            Padding="12"
+            Background="{DynamicResource SemiColorFill0}"
+            BorderBrush="{DynamicResource SemiColorBorder}"
             BorderThickness="1"
-            CornerRadius="4"
-            Background="#F5F5F5">
+            CornerRadius="10">
             <StackPanel>
                 <TextBlock
                     Margin="0,0,0,4"
-                    FontWeight="Bold"
+                    FontWeight="SemiBold"
                     Text="劫持状态" />
                 <TextBlock
                     x:Name="txtModeSummary"
                     Margin="0,0,0,6"
                     FontSize="13"
-                    Foreground="#333"
+                    Foreground="{DynamicResource SemiColorText1}"
                     Text="当前模式: 检查中..." />
                 <Grid Margin="0,0,0,6">
                     <Grid.ColumnDefinitions>
@@ -48,13 +48,28 @@
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="WinDivert 驱动" />
                     <TextBlock x:Name="txtWinDivert" Grid.Row="0" Grid.Column="1" Text="检查中..." />
-                    <TextBlock x:Name="txtWinDivertPath" Grid.Row="0" Grid.Column="2" Foreground="Gray" Text="" />
+                    <TextBlock
+                        x:Name="txtWinDivertPath"
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Foreground="{DynamicResource SemiColorText2}"
+                        Text="" />
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="ProxyBridgeCore" />
                     <TextBlock x:Name="txtProxyBridge" Grid.Row="1" Grid.Column="1" Text="检查中..." />
-                    <TextBlock x:Name="txtProxyBridgePath" Grid.Row="1" Grid.Column="2" Foreground="Gray" Text="" />
+                    <TextBlock
+                        x:Name="txtProxyBridgePath"
+                        Grid.Row="1"
+                        Grid.Column="2"
+                        Foreground="{DynamicResource SemiColorText2}"
+                        Text="" />
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="NetBridgeBridge" />
                     <TextBlock x:Name="txtNetBridgeBridge" Grid.Row="2" Grid.Column="1" Text="检查中..." />
-                    <TextBlock x:Name="txtNetBridgeBridgeInfo" Grid.Row="2" Grid.Column="2" Foreground="Gray" Text="" />
+                    <TextBlock
+                        x:Name="txtNetBridgeBridgeInfo"
+                        Grid.Row="2"
+                        Grid.Column="2"
+                        Foreground="{DynamicResource SemiColorText2}"
+                        Text="" />
                 </Grid>
                 <StackPanel Margin="0,4,0,0" Orientation="Horizontal" Spacing="8">
                     <TextBlock VerticalAlignment="Center" Text="转发模式:" />
@@ -120,9 +135,9 @@
                                 x:Name="txtSearchWatermark"
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
-                                IsHitTestVisible="False"
-                                Foreground="Gray"
                                 FontSize="12"
+                                Foreground="{DynamicResource SemiColorText2}"
+                                IsHitTestVisible="False"
                                 Text="搜索进程名或应用名" />
                         </Grid>
                         <CheckBox
@@ -140,10 +155,10 @@
                         x:Name="lstProcesses"
                         BorderThickness="1"
                         MaxHeight="260"
-                        SelectionMode="Extended"
-                        VerticalScrollBarVisibility="Auto">
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        SelectionMode="Multiple">
                         <ListBox.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:CompileBindings="False">
                                 <CheckBox
                                     Margin="4,2"
                                     Content="{Binding DisplayName}"
@@ -169,9 +184,9 @@
                                 x:Name="txtActiveSearchWatermark"
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
-                                IsHitTestVisible="False"
-                                Foreground="Gray"
                                 FontSize="12"
+                                Foreground="{DynamicResource SemiColorText2}"
+                                IsHitTestVisible="False"
                                 Text="搜索进程名" />
                         </Grid>
                         <Button
@@ -188,13 +203,13 @@
                             x:Name="btnPresetBrowser"
                             Margin="0,2,4,2"
                             Padding="8,4"
-                            ToolTip="chrome, firefox, edge, brave, opera, vivaldi, arc"
+                            ToolTip.Tip="chrome, firefox, edge, brave, opera, vivaldi, arc"
                             Content="{x:Static resx:ResUI.ProcessListPresetBrowser}" />
                         <Button
                             x:Name="btnPresetDev"
                             Margin="0,2,4,2"
                             Padding="8,4"
-                            ToolTip="VS Code, Cursor, git, node, python, dotnet, claude, curl, wget, powershell"
+                            ToolTip.Tip="VS Code, Cursor, git, node, python, dotnet, claude, curl, wget, powershell"
                             Content="{x:Static resx:ResUI.ProcessListPresetDev}" />
                         <Button
                             x:Name="btnPresetAll"
@@ -211,8 +226,8 @@
                         x:Name="lstActiveProcesses"
                         BorderThickness="1"
                         MaxHeight="260"
-                        SelectionMode="Extended"
-                        VerticalScrollBarVisibility="Auto" />
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        SelectionMode="Multiple" />
                 </DockPanel>
             </TabItem>
         </TabControl>
@@ -222,7 +237,7 @@
             Grid.Row="3"
             Margin="0,0,0,8"
             FontSize="12"
-            Foreground="Gray"
+            Foreground="{DynamicResource SemiColorText2}"
             Text="当前生效: 0 个进程" />
 
         <CheckBox

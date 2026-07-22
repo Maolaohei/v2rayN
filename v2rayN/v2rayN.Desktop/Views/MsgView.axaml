@@ -36,7 +36,7 @@
             <Button
                 x:Name="btnClear"
                 Margin="{StaticResource MarginLr8}"
-                Classes="IconButton Success"
+                Classes="IconButton Danger"
                 Click="menuMsgViewClear_Click"
                 ToolTip.Tip="{x:Static resx:ResUI.menuMsgViewClear}">
                 <Button.Content>
